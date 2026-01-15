@@ -1,0 +1,13 @@
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Backups / temp
+*_BACKUP_*
+*.bak
+*.old

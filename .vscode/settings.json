@@ -1,0 +1,37 @@
+{
+  "Lua.runtime.version": "Lua 5.1",
+  "Lua.runtime.path": [
+    "?.lua",
+    "?/init.lua"
+  ],
+  "Lua.diagnostics.globals": [
+    "CreateFrame",
+    "UIParent",
+    "GameTooltip",
+    "GetItemInfo",
+    "GetContainerItemInfo",
+    "GetContainerItemCooldown",
+    "GetSpellCooldown",
+    "GetSpellInfo",
+    "InCombatLockdown",
+    "UnitLevel",
+    "UnitClass",
+    "UnitName",
+    "UnitGUID",
+    "SlashCmdList",
+    "SLASH_DYNAMICBAR1",
+    "C_Timer"
+  ],
+  "Lua.workspace.library": [
+    "E:/dev/wow-api"
+  ],
+  "Lua.workspace.checkThirdParty": false,
+  "Lua.telemetry.enable": false,
+
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+
+}

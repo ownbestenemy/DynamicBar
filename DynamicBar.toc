@@ -1,0 +1,14 @@
+## Interface-BCC: 20505
+## Title: DynamicBar
+## Notes: Lightweight AutoBar-style dynamic buttons (TBC Classic)
+## Author: Mark Sheldahl
+## Version: 0.1.0
+## SavedVariables: DynamicBarDB
+
+Core.lua
+
+Data/BagChache.lua
+
+UI/Buttons.lua
+UI/Actions.lua
+UI/UI.lua
