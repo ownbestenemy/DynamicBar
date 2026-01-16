@@ -20,20 +20,31 @@ function Actions:Clear(btn)
   btn:SetAttribute("type2", nil)
   btn:SetAttribute("macrotext2", nil)
 
-  btn:SetScript("OnEnter", nil)
-  btn:SetScript("OnLeave", nil)
+  -- DO NOT wipe OnEnter/OnLeave here.
+  -- Flyouts bind hover behavior; tooltips are set during AssignMacro().
+  -- If you nil these, you will intermittently kill flyouts on rebuild.
 
   if btn._dynIcon then btn._dynIcon:SetTexture(nil) end
 end
 
 function Actions:SetTooltipItem(btn, itemID)
-  btn:SetScript("OnEnter", function(self)
+  -- Preserve whatever OnEnter/OnLeave is already on the button (e.g., Flyouts)
+  local prevEnter = btn:GetScript("OnEnter")
+  btn:SetScript("OnEnter", function(self, ...)
+    if prevEnter then prevEnter(self, ...) end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetItemByID(itemID)
     GameTooltip:Show()
   end)
-  btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+  local prevLeave = btn:GetScript("OnLeave")
+  btn:SetScript("OnLeave", function(self, ...)
+    if prevLeave then prevLeave(self, ...) end
+    GameTooltip:Hide()
+  end)
 end
+
+
 
 function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   if InCombatLockdown() then return end
@@ -48,6 +59,17 @@ function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   btn:SetAttribute("type2", "macro")
   btn:SetAttribute("macrotext2", macroText)
 
-  if btn._dynIcon then btn._dynIcon:SetTexture(iconTexture) end
+    -- Ensure the button has an icon texture we can set.
+  local icon = btn._dynIcon or btn.icon
+  if not icon then
+    icon = btn:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("TOPLEFT", 2, -2)
+    icon:SetPoint("BOTTOMRIGHT", -2, 2)
+    btn._dynIcon = icon
+    btn.icon = icon
+  end
+
+  icon:SetTexture(iconTexture)
+
   if tooltipItemID then self:SetTooltipItem(btn, tooltipItemID) end
 end

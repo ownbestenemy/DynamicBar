@@ -64,57 +64,229 @@ local function EnsureButtons()
   end
 end
 
+local function GetItemTex(itemID)
+  local tex = select(10, GetItemInfoInstant(itemID))
+  if not tex then
+    tex = select(10, GetItemInfo(itemID))
+  end
+  if not tex then
+    tex = "Interface\\Icons\\INV_Misc_QuestionMark"
+  end
+  return tex
+end
+
 local function AssignHearth()
   if not UI.buttons[1] then return end
   if InCombatLockdown() then return end
 
   local cache = DB.Data and DB.Data.BagCache
-  local cats = DB.Data and DB.Data.Categories
+  local cats  = DB.Data and DB.Data.Categories
   if not cache or not cats or not cats.Hearth then return end
 
   local itemID = cache:FindFirst(cats.Hearth)
-  if not itemID then
-    return -- no hearth item found; button stays empty
-  end
+  if not itemID then return end
 
-  local _, _, _, _, _, _, _, _, _, tex = GetItemInfo(itemID)
-  if not tex then
-    if C_Timer and C_Timer.After then
-      C_Timer.After(0.5, function()
-        if not InCombatLockdown() then AssignHearth() end
-      end)
-    end
-    return
-  end
-
-  UI.Actions:AssignMacro(UI.buttons[1], "/use item:" .. itemID, tex, itemID)
+  UI.Actions:AssignMacro(UI.buttons[1], "/use item:" .. itemID, GetItemTex(itemID), itemID)
 end
 
-local function AssignFood()
+local function AssignFoodNonBuff()
   if not UI.buttons[2] then return end
   if InCombatLockdown() then return end
 
   local resolver = DB.Data and DB.Data.Resolver
   if not resolver then return end
 
-  local itemID = resolver:FindBestPlainFood()
+  local itemID, flyout = resolver:ResolveFoodNonBuff()
   if not itemID then
+    UI._foodNonBuffFlyout = {}
     return
   end
 
-  local _, _, _, _, _, _, _, _, _, tex = GetItemInfo(itemID)
-  if not tex then
-    if C_Timer and C_Timer.After then
-      C_Timer.After(0.5, function()
-        if not InCombatLockdown() then AssignFood() end
-      end)
+  UI.Actions:AssignMacro(UI.buttons[2], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._foodNonBuffFlyout = flyout or {}
+end
+
+local function AssignFoodBuff()
+  if not UI.buttons[3] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveFoodBuff()
+  if not itemID then
+    UI._foodBuffFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[3], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._foodBuffFlyout = flyout or {}
+end
+
+local function AssignHealthPotion()
+  if not UI.buttons[5] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveHealthPotion()
+  if not itemID then
+    UI._healthPotionFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[5], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._healthPotionFlyout = flyout or {}
+end
+
+local function AssignManaPotion()
+  if not UI.buttons[6] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveManaPotion()
+  if not itemID then
+    UI._manaPotionFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[6], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._manaPotionFlyout = flyout or {}
+end
+
+local function AssignDrink()
+  if not UI.buttons[4] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveDrink()
+  if not itemID then
+    UI._drinkFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[4], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._drinkFlyout = flyout or {}
+end
+
+function UI:ApplyFoodNonBuffFlyout()
+  if not self.buttons[2] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._foodNonBuffFlyout or {}
+  if #list <= 1 then
+    if self.buttons[2]._dynFlyout then
+      self.buttons[2]._dynFlyout:Hide()
     end
     return
   end
 
-  UI.Actions:AssignMacro(UI.buttons[2], "/use item:" .. itemID, tex, itemID)
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[2],
+    list,
+    6,
+    function(name, parent, size)
+      return self.Buttons:CreateSecureButton(name, parent, size)
+    end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
 end
 
+function UI:ApplyFoodBuffFlyout()
+  if not self.buttons[3] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._foodBuffFlyout or {}
+  if #list <= 1 then
+    if self.buttons[3]._dynFlyout then
+      self.buttons[3]._dynFlyout:Hide()
+    end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[3],
+    list,
+    6,
+    function(name, parent, size)
+      return self.Buttons:CreateSecureButton(name, parent, size)
+    end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
+
+function UI:ApplyHealthPotionFlyout()
+  if not self.buttons[5] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._healthPotionFlyout or {}
+  if #list <= 1 then
+    if self.buttons[5]._dynFlyout then self.buttons[5]._dynFlyout:Hide() end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[5], list, 6,
+    function(name, parent, size) return self.Buttons:CreateSecureButton(name, parent, size) end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
+
+function UI:ApplyManaPotionFlyout()
+  if not self.buttons[6] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._manaPotionFlyout or {}
+  if #list <= 1 then
+    if self.buttons[6]._dynFlyout then self.buttons[6]._dynFlyout:Hide() end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[6], list, 6,
+    function(name, parent, size) return self.Buttons:CreateSecureButton(name, parent, size) end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
+
+function UI:ApplyDrinkFlyout()
+  if not self.buttons[4] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._drinkFlyout or {}
+  if #list <= 1 then
+    if self.buttons[4]._dynFlyout then self.buttons[4]._dynFlyout:Hide() end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[4],
+    list,
+    6,
+    function(name, parent, size) return self.Buttons:CreateSecureButton(name, parent, size) end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
 
 function UI:Rebuild()
   if not DynamicBarDB.profile.enabled then
@@ -134,5 +306,14 @@ function UI:Rebuild()
   end
 
   AssignHearth()
-  AssignFood()
+  AssignFoodNonBuff()
+  AssignFoodBuff()
+  AssignDrink()
+  AssignHealthPotion()
+  AssignManaPotion()
+  self:ApplyFoodNonBuffFlyout()
+  self:ApplyFoodBuffFlyout()
+  self:ApplyDrinkFlyout()
+  self:ApplyHealthPotionFlyout()
+  self:ApplyManaPotionFlyout()
 end

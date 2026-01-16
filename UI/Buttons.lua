@@ -28,6 +28,7 @@ function Buttons:CreateSecureButton(name, parent, size)
   icon:SetPoint("TOPLEFT", 2, -2)
   icon:SetPoint("BOTTOMRIGHT", -2, 2)
   btn._dynIcon = icon
+  btn.icon = icon
 
   -- Highlight
   local hl = btn:CreateTexture(nil, "HIGHLIGHT")

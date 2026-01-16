@@ -7,11 +7,12 @@
 
 Core.lua
 
+Data/BagCache.lua
 Data/Categories.lua
 Data/Resolver.lua
 Data/Classifier.lua
-Data/BagCache.lua
 
 UI/Buttons.lua
 UI/Actions.lua
+UI/Flyouts.lua
 UI/UI.lua
