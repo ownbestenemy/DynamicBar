@@ -4,6 +4,33 @@ DB.UI = DB.UI or {}
 DB.UI.Actions = DB.UI.Actions or {}
 local Actions = DB.UI.Actions
 
+local function EnsureCountText(btn)
+  local fs = btn._dynCountText
+  if fs then return fs end
+
+  fs = btn:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+  fs:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -2, 2)
+  fs:SetJustifyH("RIGHT")
+  fs:Hide()
+
+  btn._dynCountText = fs
+  return fs
+end
+
+local function UpdateCountText(btn, itemID)
+  local fs = EnsureCountText(btn)
+  local cache = DynamicBar and DynamicBar.Data and DynamicBar.Data.BagCache
+  local count = (cache and itemID and cache:GetCount(itemID)) or 0
+
+  if count and count > 1 then
+    fs:SetText(count)
+    fs:Show()
+  else
+    fs:SetText("")
+    fs:Hide()
+  end
+end
+
 function Actions:Clear(btn)
   if InCombatLockdown() then return end
 
@@ -23,6 +50,10 @@ function Actions:Clear(btn)
   -- DO NOT wipe OnEnter/OnLeave here.
   -- Flyouts bind hover behavior; tooltips are set during AssignMacro().
   -- If you nil these, you will intermittently kill flyouts on rebuild.
+if btn._dynCountText then
+  btn._dynCountText:SetText("")
+  btn._dynCountText:Hide()
+end
 
   if btn._dynIcon then btn._dynIcon:SetTexture(nil) end
 end
@@ -70,6 +101,11 @@ function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   end
 
   icon:SetTexture(iconTexture)
+  if tooltipItemID then
+  UpdateCountText(btn, tooltipItemID)
+else
+  if btn._dynCountText then btn._dynCountText:Hide() end
+end
 
   if tooltipItemID then self:SetTooltipItem(btn, tooltipItemID) end
 end
