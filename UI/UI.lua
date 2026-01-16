@@ -64,22 +64,57 @@ local function EnsureButtons()
   end
 end
 
-local function AssignHearthstone()
+local function AssignHearth()
   if not UI.buttons[1] then return end
   if InCombatLockdown() then return end
 
-  local _, _, _, _, _, _, _, _, _, tex = GetItemInfo(6948)
+  local cache = DB.Data and DB.Data.BagCache
+  local cats = DB.Data and DB.Data.Categories
+  if not cache or not cats or not cats.Hearth then return end
+
+  local itemID = cache:FindFirst(cats.Hearth)
+  if not itemID then
+    return -- no hearth item found; button stays empty
+  end
+
+  local _, _, _, _, _, _, _, _, _, tex = GetItemInfo(itemID)
   if not tex then
     if C_Timer and C_Timer.After then
       C_Timer.After(0.5, function()
-        if not InCombatLockdown() then AssignHearthstone() end
+        if not InCombatLockdown() then AssignHearth() end
       end)
     end
     return
   end
 
-  UI.Actions:AssignMacro(UI.buttons[1], "/use item:6948", tex, 6948)
+  UI.Actions:AssignMacro(UI.buttons[1], "/use item:" .. itemID, tex, itemID)
 end
+
+local function AssignFood()
+  if not UI.buttons[2] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID = resolver:FindBestPlainFood()
+  if not itemID then
+    return
+  end
+
+  local _, _, _, _, _, _, _, _, _, tex = GetItemInfo(itemID)
+  if not tex then
+    if C_Timer and C_Timer.After then
+      C_Timer.After(0.5, function()
+        if not InCombatLockdown() then AssignFood() end
+      end)
+    end
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[2], "/use item:" .. itemID, tex, itemID)
+end
+
 
 function UI:Rebuild()
   if not DynamicBarDB.profile.enabled then
@@ -98,5 +133,6 @@ function UI:Rebuild()
     UI.Actions:Clear(UI.buttons[i])
   end
 
-  AssignHearthstone()
+  AssignHearth()
+  AssignFood()
 end

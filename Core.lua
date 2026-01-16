@@ -45,6 +45,14 @@ local function DPrint(msg)
   end
 end
 
+local function RebuildBagCache()
+  if DynamicBar.Data and DynamicBar.Data.BagCache then
+    DynamicBar.Data.BagCache:Rebuild()
+    DPrint("Bag cache rebuilt")
+  end
+end
+
+
 -- Combat lockdown handling: queue a rebuild if we can't touch secure attributes right now.
 DynamicBar._needsRebuild = false
 function DynamicBar:RequestRebuild(reason)
@@ -53,6 +61,25 @@ function DynamicBar:RequestRebuild(reason)
   if not InCombatLockdown() then
     self:Rebuild("request")
   end
+end
+
+DynamicBar._bagTimer = nil
+
+local function RebuildBagCache()
+  if DynamicBar.Data and DynamicBar.Data.BagCache then
+    DynamicBar.Data.BagCache:Rebuild()
+    DPrint("Bag cache rebuilt")
+  end
+end
+
+local function ScheduleBagRefresh()
+  if DynamicBar._bagTimer then return end
+  DynamicBar._bagTimer = true
+  C_Timer.After(0.15, function()
+    DynamicBar._bagTimer = nil
+    RebuildBagCache()
+    DynamicBar:RequestRebuild("bags")
+  end)
 end
 
 function DynamicBar:Rebuild(reason)
@@ -74,8 +101,9 @@ end
 -- Event frame
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
+f:RegisterEvent("PLAYER_ENTERING_WORLD") -- helps when bags/spells settle after load
 f:RegisterEvent("PLAYER_REGEN_ENABLED")
-f:RegisterEvent("BAG_UPDATE_DELAYED")
+f:RegisterEvent("BAG_UPDATE")            -- Anniversary-safe bag change event
 f:RegisterEvent("SPELLS_CHANGED")
 
 f:SetScript("OnEvent", function(_, event, ...)
@@ -90,6 +118,7 @@ f:SetScript("OnEvent", function(_, event, ...)
     end
 
     -- Build once on login
+    RebuildBagCache()
     DynamicBar:RequestRebuild("login")
 
   elseif event == "PLAYER_REGEN_ENABLED" then
@@ -98,9 +127,12 @@ f:SetScript("OnEvent", function(_, event, ...)
       DynamicBar:Rebuild("combat ended")
     end
 
-  elseif event == "BAG_UPDATE_DELAYED" then
-    -- Bag contents changed: later this will rebuild cache, then refresh buttons
-    DynamicBar:RequestRebuild("bags")
+  elseif event == "PLAYER_ENTERING_WORLD" then
+  -- Bags are often fully populated here vs. at PLAYER_LOGIN
+    DynamicBar:RequestRebuild("entering world")
+
+  elseif event == "BAG_UPDATE" then
+    ScheduleBagRefresh()
 
   elseif event == "SPELLS_CHANGED" then
     -- Learned/forgot spells: impacts mount/hearth-like spell picks, etc.
