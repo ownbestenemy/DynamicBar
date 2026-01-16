@@ -66,28 +66,39 @@ local function Resolve(predicate, sortField)
   return list[1], list
 end
 
-local function ResolveByPriorityList(list)
+function Resolver:_ResolveElixirByTag(isTagFn)
   local cache = DB.Data and DB.Data.BagCache
-  if not cache then return nil, {} end
+  local cls   = DB.Data and DB.Data.Classifier
+  local cats  = DB.Data and DB.Data.Categories
+  if not cache or not cls or not cats or not cats.AllElixirs then return nil, {} end
 
   local have = {}
-  for i = 1, #list do
-    local id = list[i]
+  for i = 1, #cats.AllElixirs do
+    local id = cats.AllElixirs[i]
     if (cache.counts[id] or 0) > 0 then
-      have[#have + 1] = id
+      local info = cls:InspectItem(id)
+      if info and not info.pending and isTagFn(info) then
+        have[#have + 1] = id
+      end
     end
   end
 
-  if #have == 0 then
-    return nil, {}
-  end
+  if #have == 0 then return nil, {} end
+  return have[1], have  -- order is Wowhead order unless you later add a priority list
+end
 
-  return have[1], have
+function Resolver:ResolveBattleElixir()
+  return self:_ResolveElixirByTag(function(info) return info.isBattleElixir end)
+end
+
+function Resolver:ResolveGuardianElixir()
+  return self:_ResolveElixirByTag(function(info) return info.isGuardianElixir end)
 end
 
 function Resolver:ResolveDrink()
   return Resolve(function(info) return info.isDrink end, "mana")
 end
+
 
 function Resolver:ResolveHealthPotion()
   local cats = DB.Data and DB.Data.Categories

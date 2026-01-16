@@ -32,9 +32,14 @@ end
 local function LayoutBar()
   local cfg = GetCfg()
   local buttons = cfg.buttons or 8
-  local spacing = cfg.spacing or 4
+  local spacing = cfg.spacing or 6
+  local padding = cfg.padding or 6
 
-  UI.bar:SetSize((BUTTON_SIZE * buttons) + (spacing * (buttons - 1)), BUTTON_SIZE)
+  UI.bar:SetSize(
+    (padding * 2) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1)),
+    BUTTON_SIZE
+  )
+
 
   for i = 1, buttons do
     local btn = UI.buttons[i]
@@ -42,7 +47,7 @@ local function LayoutBar()
 
     btn:ClearAllPoints()
     if i == 1 then
-      btn:SetPoint("LEFT", UI.bar, "LEFT", 0, 0)
+      btn:SetPoint("LEFT", UI.bar, "LEFT", padding, 0)
     else
       btn:SetPoint("LEFT", UI.buttons[i - 1], "RIGHT", spacing, 0)
     end
@@ -155,6 +160,40 @@ local function AssignManaPotion()
 
   UI.Actions:AssignMacro(UI.buttons[6], "/use item:" .. itemID, GetItemTex(itemID), itemID)
   UI._manaPotionFlyout = flyout or {}
+end
+
+local function AssignBattleElixir()
+  if not UI.buttons[7] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveBattleElixir()
+  if not itemID then
+    UI._battleElixirFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[7], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._battleElixirFlyout = flyout or {}
+end
+
+local function AssignGuardianElixir()
+  if not UI.buttons[8] then return end
+  if InCombatLockdown() then return end
+
+  local resolver = DB.Data and DB.Data.Resolver
+  if not resolver then return end
+
+  local itemID, flyout = resolver:ResolveGuardianElixir()
+  if not itemID then
+    UI._guardianElixirFlyout = {}
+    return
+  end
+
+  UI.Actions:AssignMacro(UI.buttons[8], "/use item:" .. itemID, GetItemTex(itemID), itemID)
+  UI._guardianElixirFlyout = flyout or {}
 end
 
 local function AssignDrink()
@@ -288,6 +327,46 @@ function UI:ApplyDrinkFlyout()
   )
 end
 
+function UI:ApplyBattleElixirFlyout()
+  if not self.buttons[7] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._battleElixirFlyout or {}
+  if #list <= 1 then
+    if self.buttons[7]._dynFlyout then self.buttons[7]._dynFlyout:Hide() end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[7], list, 6,
+    function(name, parent, size) return self.Buttons:CreateSecureButton(name, parent, size) end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
+
+function UI:ApplyGuardianElixirFlyout()
+  if not self.buttons[8] then return end
+  if InCombatLockdown() then return end
+
+  local list = self._guardianElixirFlyout or {}
+  if #list <= 1 then
+    if self.buttons[8]._dynFlyout then self.buttons[8]._dynFlyout:Hide() end
+    return
+  end
+
+  self.Flyouts:ApplyItemFlyout(
+    self.buttons[8], list, 6,
+    function(name, parent, size) return self.Buttons:CreateSecureButton(name, parent, size) end,
+    BUTTON_SIZE,
+    function(btn, itemID)
+      self.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
+    end
+  )
+end
+
 function UI:Rebuild()
   if not DynamicBarDB.profile.enabled then
     if self.bar then self.bar:Hide() end
@@ -311,9 +390,13 @@ function UI:Rebuild()
   AssignDrink()
   AssignHealthPotion()
   AssignManaPotion()
+  AssignBattleElixir()
+  AssignGuardianElixir()
   self:ApplyFoodNonBuffFlyout()
   self:ApplyFoodBuffFlyout()
   self:ApplyDrinkFlyout()
   self:ApplyHealthPotionFlyout()
   self:ApplyManaPotionFlyout()
+  self:ApplyBattleElixirFlyout()
+  self:ApplyGuardianElixirFlyout()
 end

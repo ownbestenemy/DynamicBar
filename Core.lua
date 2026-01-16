@@ -11,7 +11,8 @@ local DB_DEFAULTS = {
     bar = {
       buttons = 8,
       scale = 1.0,
-      spacing = 4,
+      spacing = 6,
+      padding = 6,
       point = "CENTER",
       relPoint = "CENTER",
       x = 0,
@@ -44,14 +45,6 @@ local function DPrint(msg)
     Print("|cff99ccffDEBUG:|r " .. tostring(msg))
   end
 end
-
-local function RebuildBagCache()
-  if DynamicBar.Data and DynamicBar.Data.BagCache then
-    DynamicBar.Data.BagCache:Rebuild()
-    DPrint("Bag cache rebuilt")
-  end
-end
-
 
 -- Combat lockdown handling: queue a rebuild if we can't touch secure attributes right now.
 DynamicBar._needsRebuild = false
@@ -104,6 +97,9 @@ f:RegisterEvent("PLAYER_LOGIN")
 f:RegisterEvent("PLAYER_ENTERING_WORLD") -- helps when bags/spells settle after load
 f:RegisterEvent("PLAYER_REGEN_ENABLED")
 f:RegisterEvent("BAG_UPDATE")            -- Anniversary-safe bag change event
+f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
+f:RegisterEvent("BANKFRAME_OPENED")
+f:RegisterEvent("BANKFRAME_CLOSED")
 f:RegisterEvent("SPELLS_CHANGED")
 
 f:SetScript("OnEvent", function(_, event, ...)
@@ -120,20 +116,24 @@ f:SetScript("OnEvent", function(_, event, ...)
     -- Build once on login
     RebuildBagCache()
     DynamicBar:RequestRebuild("login")
-
   elseif event == "PLAYER_REGEN_ENABLED" then
     -- Leaving combat: apply any queued rebuild
     if DynamicBar._needsRebuild then
       DynamicBar:Rebuild("combat ended")
     end
-
   elseif event == "PLAYER_ENTERING_WORLD" then
-  -- Bags are often fully populated here vs. at PLAYER_LOGIN
+    -- Bags are often fully populated here vs. at PLAYER_LOGIN
     DynamicBar:RequestRebuild("entering world")
-
   elseif event == "BAG_UPDATE" then
     ScheduleBagRefresh()
-
+  elseif event == "BAG_UPDATE" then
+    ScheduleBagRefresh()
+  elseif event == "PLAYERBANKSLOTS_CHANGED" then
+    ScheduleBagRefresh()
+  elseif event == "BANKFRAME_OPENED" then
+    ScheduleBagRefresh()
+  elseif event == "BANKFRAME_CLOSED" then
+    ScheduleBagRefresh()
   elseif event == "SPELLS_CHANGED" then
     -- Learned/forgot spells: impacts mount/hearth-like spell picks, etc.
     DynamicBar:RequestRebuild("spells")

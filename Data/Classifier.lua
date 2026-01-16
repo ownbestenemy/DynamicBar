@@ -110,6 +110,10 @@ function Classifier:InspectItem(itemID)
   -- Common flags
   info.hasUse = Has(j, "use:")
   info.isWellFed = Has(j, "well fed")
+  local isEating  = Has(j, "must remain seated while eating")
+  local isDrinking = Has(j, "must remain seated while drinking")
+  info.isBattleElixir   = j:find("battle elixir", 1, true) ~= nil
+  info.isGuardianElixir = j:find("guardian elixir", 1, true) ~= nil
 
   -- Restores parsing
   local restoresHealth = Has(j, "restores") and Has(j, "health")
@@ -135,7 +139,7 @@ function Classifier:InspectItem(itemID)
     return info
   end
 
-  local isFoodDrink = (itemType == "Consumable" and itemSubType == "Food & Drink")
+  local isFoodDrink = (itemType == "Consumable" and itemSubType == "Food & Drink") or isEating or isDrinking
 
   if isFoodDrink then
     if info.isWellFed then

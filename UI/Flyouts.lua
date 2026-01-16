@@ -9,8 +9,8 @@ DB.UI.Flyouts = DB.UI.Flyouts or {}
 local Flyouts = DB.UI.Flyouts
 
 Flyouts.MAX_DEFAULT = 6
-Flyouts.SPACING = 4
-Flyouts.HIDE_DELAY = 0.25
+Flyouts.SPACING = 0
+Flyouts.HIDE_DELAY = 0.05
 
 -- Internal: ensure a flyout container exists for a given anchor button
 function Flyouts:_EnsureContainer(anchorBtn)
