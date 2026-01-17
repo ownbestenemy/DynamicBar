@@ -119,3 +119,14 @@ end
 function Resolver:ResolveFoodBuff()
   return Resolve(function(info) return info.isFoodBuff end, "health")
 end
+
+function Resolver:ResolveHealthstone()
+  local cats = DB.Data and DB.Data.Categories
+  if not cats or not cats.Healthstones then return nil, {} end
+  return ResolveByPriorityList(cats.Healthstones)
+end
+
+function Resolver:ResolveBandage()
+  return Resolve(function(info) return info.isBandage end, "bandageHeal")
+end
+

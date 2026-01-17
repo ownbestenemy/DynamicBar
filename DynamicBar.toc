@@ -1,16 +1,19 @@
 ## Interface-BCC: 20505
 ## Title: DynamicBar
-## Notes: Lightweight AutoBar-style dynamic buttons (TBC Classic)
+## Notes: Dynamic bar containing consumables items
 ## Author: Mark Sheldahl
-## Version: 0.1.0
+## Version: 0.4
 ## SavedVariables: DynamicBarDB
 
+embeds.xml
 Core.lua
 
-Data/BagCache.lua
+Debug.lua
+
 Data/Categories.lua
-Data/Resolver.lua
+Data/BagCache.lua
 Data/Classifier.lua
+Data/Resolver.lua
 
 UI/Buttons.lua
 UI/Actions.lua

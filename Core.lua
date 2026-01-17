@@ -7,9 +7,9 @@ local DB_DEFAULTS = {
     enabled = true,
     debug = false,
 
-    -- v0.1: one bar, 8 buttons by default (change later)
+    -- v0.1: one bar, 10 buttons by default (change later)
     bar = {
-      buttons = 8,
+      buttons = 10,
       scale = 1.0,
       spacing = 6,
       padding = 6,
@@ -46,6 +46,9 @@ local function DPrint(msg)
   end
 end
 
+DynamicBar.Print = Print
+DynamicBar.DPrint = DPrint
+
 -- Combat lockdown handling: queue a rebuild if we can't touch secure attributes right now.
 DynamicBar._needsRebuild = false
 function DynamicBar:RequestRebuild(reason)
@@ -57,6 +60,13 @@ function DynamicBar:RequestRebuild(reason)
 end
 
 DynamicBar._bagTimer = nil
+
+-- Some tooltip text for items (notably buff foods) can populate a beat later even
+-- when the base item info is cached. We do a bounded retry only when we detect
+-- pending items during a bag refresh. This avoids /reload spam without creating
+-- infinite rebuild loops.
+DynamicBar._pendingRetryCount = 0
+DynamicBar._pendingRetryMax = 6
 
 local function RebuildBagCache()
   if DynamicBar.Data and DynamicBar.Data.BagCache then
@@ -71,6 +81,31 @@ local function ScheduleBagRefresh()
   C_Timer.After(0.15, function()
     DynamicBar._bagTimer = nil
     RebuildBagCache()
+
+    -- If items are still pending classification due to late tooltip text, schedule
+    -- a bounded follow-up refresh. This handles "slow Well Fed" tooltips reliably.
+    local cls = DynamicBar.Data and DynamicBar.Data.Classifier
+    local cache = DynamicBar.Data and DynamicBar.Data.BagCache
+    local pending = 0
+    if cls and cache and cls.CountPendingInBagCache then
+      pending = cls:CountPendingInBagCache(cache)
+    end
+
+    if pending > 0 and DynamicBar._pendingRetryCount < DynamicBar._pendingRetryMax then
+      DynamicBar._pendingRetryCount = DynamicBar._pendingRetryCount + 1
+      C_Timer.After(0.35, function()
+        -- Only retry out of combat to avoid secure frame churn.
+        if not InCombatLockdown() then
+          ScheduleBagRefresh()
+        end
+      end)
+    elseif pending == 0 then
+      DynamicBar._pendingRetryCount = 0
+    end
+    DPrint(("Pending items after scan: %d (retry %d/%d)"):format(
+  pending, DynamicBar._pendingRetryCount, DynamicBar._pendingRetryMax
+))
+
     DynamicBar:RequestRebuild("bags")
   end)
 end
@@ -85,6 +120,9 @@ function DynamicBar:Rebuild(reason)
   self._needsRebuild = false
   DPrint("Rebuild executing" .. (reason and (": " .. reason) or ""))
 
+  -- IMPORTANT: Never schedule a rebuild *from inside* Rebuild().
+  -- That creates an out-of-combat infinite rebuild loop.
+  -- If you need a one-time "UI settle" delay on login, do it in PLAYER_LOGIN/ENTERING_WORLD.
   -- UI module will exist soon; for now this is a stub.
   if self.UI and self.UI.Rebuild then
     self.UI:Rebuild()
@@ -101,6 +139,7 @@ f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 f:RegisterEvent("BANKFRAME_OPENED")
 f:RegisterEvent("BANKFRAME_CLOSED")
 f:RegisterEvent("SPELLS_CHANGED")
+f:RegisterEvent("GET_ITEM_INFO_RECEIVED") -- item data cache fill-in (important on fresh toons)
 
 f:SetScript("OnEvent", function(_, event, ...)
   if event == "PLAYER_LOGIN" then
@@ -115,7 +154,7 @@ f:SetScript("OnEvent", function(_, event, ...)
 
     -- Build once on login
     RebuildBagCache()
-    DynamicBar:RequestRebuild("login")
+    ScheduleBagRefresh()
   elseif event == "PLAYER_REGEN_ENABLED" then
     -- Leaving combat: apply any queued rebuild
     if DynamicBar._needsRebuild then
@@ -123,8 +162,6 @@ f:SetScript("OnEvent", function(_, event, ...)
     end
   elseif event == "PLAYER_ENTERING_WORLD" then
     -- Bags are often fully populated here vs. at PLAYER_LOGIN
-    DynamicBar:RequestRebuild("entering world")
-  elseif event == "BAG_UPDATE" then
     ScheduleBagRefresh()
   elseif event == "BAG_UPDATE" then
     ScheduleBagRefresh()
@@ -137,6 +174,11 @@ f:SetScript("OnEvent", function(_, event, ...)
   elseif event == "SPELLS_CHANGED" then
     -- Learned/forgot spells: impacts mount/hearth-like spell picks, etc.
     DynamicBar:RequestRebuild("spells")
+    ScheduleBagRefresh()
+  elseif event == "GET_ITEM_INFO_RECEIVED" then
+    -- When the client asynchronously receives item data, re-scan pending tooltips.
+    -- This avoids needing any repeating timers and fixes fresh-toon "missing food" cases.
+    ScheduleBagRefresh()
   end
 end)
 
@@ -151,9 +193,30 @@ SlashCmdList.DYNAMICBAR = function(msg)
     Print("  /dbar enable  - enable the addon")
     Print("  /dbar disable - disable the addon")
     Print("  /dbar debug   - toggle debug logging")
+    Print("  /dbar dump    - dump bag/classifier/resolver state (debug on)")
+    Print("  /dbar pending - list pending items (debug on)")
     Print("  /dbar rebuild - force rebuild (out of combat)")
     return
   end
+
+  if msg == "dump" then
+    if DynamicBar.Debug and DynamicBar.Debug.Dump then
+      DynamicBar.Debug:Dump()
+    else
+      Print("Debug module not available.")
+    end
+    return
+  end
+
+  if msg == "pending" then
+    if DynamicBar.Debug and DynamicBar.Debug.DumpPending then
+      DynamicBar.Debug:DumpPending()
+    else
+      Print("Debug module not available.")
+    end
+    return
+  end
+
 
   if msg == "enable" then
     DynamicBarDB.profile.enabled = true

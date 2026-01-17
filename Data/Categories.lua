@@ -5,7 +5,7 @@ DB.Data.Categories = DB.Data.Categories or {}
 local Cats = DB.Data.Categories
 
 Cats.HealthPotions = {
-  22829, -- Super Healing Potion (TBC)
+  22829, -- Super Healing Potion
   13446, -- Major Healing Potion
   3928,  -- Superior Healing Potion
   1710,  -- Greater Healing Potion
@@ -21,10 +21,16 @@ Cats.AllElixirs = {
   5997, 2458, 3383, 3389, 3825, 8951, 9179, 8827, 13445, 13447, 32062, 32063, 32067,
   32068, 22834, 22840, 22848
 }
-
+Cats.Healthstones = {
+  22105, -- Master Healthstone
+  22104, -- Major Healthstone
+  22103, -- Greater Healthstone
+  22102, -- Healthstone
+  5512,  -- Minor Healthstone
+}
 
 Cats.ManaPotions = {
-  22832, -- Super Mana Potion (TBC)
+  22832, -- Super Mana Potion
   13444, -- Major Mana Potion
   13443, -- Superior Mana Potion
   6149,  -- Greater Mana Potion
