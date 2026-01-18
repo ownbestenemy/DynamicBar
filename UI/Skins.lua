@@ -153,6 +153,14 @@ function Skins:EnsureButtonRegions(button)
 
   -- Icon texture should already exist from Buttons.lua
   -- We preserve existing _dynIcon and don't override it
+
+  -- Create cooldown frame if it doesn't exist (standard for action buttons)
+  if not button._dynCooldown then
+    local cd = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    cd:SetAllPoints(button)
+    cd:SetDrawEdge(true)
+    button._dynCooldown = cd
+  end
 end
 
 --
@@ -192,21 +200,39 @@ end
 function Skins:ApplyBlizzardSkin(button)
   if not button._dynNormal then return end
 
-  -- Normal (background)
-  button._dynNormal:SetTexture("Interface\\Buttons\\UI-Quickslot")
+  -- Normal (background) - use proper action button texture
+  button._dynNormal:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+  button._dynNormal:SetTexCoord(0, 0, 0, 1, 1, 0, 1, 1)  -- Standard tex coords
+  button._dynNormal:ClearAllPoints()
+  button._dynNormal:SetAllPoints(button)
 
-  -- Highlight (hover)
+  -- Highlight (hover) - bright white overlay
   if button._dynHighlight then
     button._dynHighlight:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
+    button._dynHighlight:SetTexCoord(0, 1, 0, 1)
+    button._dynHighlight:ClearAllPoints()
+    button._dynHighlight:SetAllPoints(button)
   end
 
-  -- Pushed (click)
+  -- Pushed (click) - darker overlay when clicking
   if button._dynPushed then
     button._dynPushed:SetTexture("Interface\\Buttons\\UI-Quickslot-Depress")
+    button._dynPushed:SetTexCoord(0, 1, 0, 1)
+    button._dynPushed:ClearAllPoints()
+    button._dynPushed:SetAllPoints(button)
   end
 
-  -- Disabled
+  -- Disabled - grayed out look
   if button._dynDisabled then
-    button._dynDisabled:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+    button._dynDisabled:SetTexture("Interface\\Buttons\\UI-Quickslot-Depress")
+    button._dynDisabled:SetTexCoord(0, 1, 0, 1)
+    button._dynDisabled:SetVertexColor(0.5, 0.5, 0.5, 1)
+    button._dynDisabled:ClearAllPoints()
+    button._dynDisabled:SetAllPoints(button)
+  end
+
+  -- Ensure icon stays on top
+  if button._dynIcon then
+    button._dynIcon:SetDrawLayer("ARTWORK", 1)
   end
 end

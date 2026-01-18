@@ -28,19 +28,21 @@ local DB_DEFAULTS = {
 
     -- UI state for config panel
     _showAdvancedPosition = false,
+    _setupComplete = false,  -- Track if first-time setup has been shown
 
     -- one bar, 10 buttons by default
     bar = {
       buttons = 10,
       scale = 1.0,
-      spacing = 6,
-      padding = 6,
+      spacing = 2,  -- Tighter spacing like Blizzard default
+      padding = 2,  -- Tighter padding like Blizzard default
       point = "CENTER",
       relPoint = "CENTER",
       x = 0,
       y = -180,
       visibilityMode = "FADE",
       inheritElvUI = true,  -- Automatically use ElvUI spacing if available
+      locked = true,  -- Bar is locked (not draggable) by default
     },
   },
 }
@@ -163,6 +165,14 @@ function DynamicBar:OnInitialize()
   -- SavedVariables: DynamicBarDB
   self.db = LibStub("AceDB-3.0"):New("DynamicBarDB", DB_DEFAULTS, true)
 
+  -- Force character-specific profile (fixes "Default" profile issue)
+  local charKey = UnitName("player") .. " - " .. GetRealmName()
+  if self.db:GetCurrentProfile() == "Default" then
+    -- If using Default profile, switch to character-specific profile
+    -- This ensures each character gets their own _setupComplete flag
+    self.db:SetProfile(charKey)
+  end
+
   -- Expose DB_DEFAULTS for config panel reset functions
   self.DB_DEFAULTS = DB_DEFAULTS
 
@@ -212,10 +222,56 @@ function DynamicBar:OnEnable()
 end
 
 --
+-- First-time setup popup
+--
+function DynamicBar:ShowFirstTimeSetup()
+  self:DPrint("ShowFirstTimeSetup called, _setupComplete = " .. tostring(self.db.profile._setupComplete))
+  if not self.db.profile._setupComplete then
+    self:DPrint("Scheduling popup in 8 seconds...")
+    -- Delay popup to avoid conflicts with other addon popups (like ElvUI)
+    -- Longer delay (8 seconds) to allow ElvUI setup to complete
+    C_Timer.After(8, function()
+      -- Check again in case user logged out during delay
+      if not self.db.profile._setupComplete then
+        StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
+          text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
+          button1 = "Position Now",
+          button2 = "Use Default",
+          OnAccept = function()
+            -- Unlock the bar for positioning
+            self.db.profile.bar.locked = false
+            if self.UI and self.UI.UpdateLockState then
+              self.UI:UpdateLockState()
+            end
+            self:Print("Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'")
+            -- Mark setup complete after user clicks "Position Now"
+            self.db.profile._setupComplete = true
+          end,
+          OnCancel = function()
+            self:Print("Using default position. Use /dbar config to reposition later.")
+            -- Mark setup complete after user clicks "Use Default"
+            self.db.profile._setupComplete = true
+          end,
+          timeout = 0,
+          whileDead = true,
+          hideOnEscape = true,
+          preferredIndex = 3,
+        }
+        StaticPopup_Show("DYNAMICBAR_FIRST_TIME_SETUP")
+      end
+    end)
+  end
+end
+
+--
 -- Event handlers
 --
 function DynamicBar:OnPlayerEnteringWorld()
   ScheduleBagRefresh()
+
+  -- Show first-time setup on initial login (delayed to avoid ElvUI popup conflicts)
+  self:DPrint("PLAYER_ENTERING_WORLD fired, _setupComplete = " .. tostring(self.db.profile._setupComplete))
+  self:ShowFirstTimeSetup()
 end
 
 function DynamicBar:OnPlayerRegenEnabled()
@@ -260,6 +316,7 @@ function DynamicBar:HandleSlash(input)
     self:Print("  /dbar debug   - toggle debug logging")
     self:Print("  /dbar config  - open general settings")
     self:Print("  /dbar profiles - open profile management")
+    self:Print("  /dbar profileinfo - show current profile name and setup status")
     self:Print("  /dbar dump    - dump bag/classifier/resolver state (debug on)")
     self:Print("  /dbar pending - list pending items (debug on)")
     self:Print("  /dbar rebuild - force rebuild (out of combat)")
@@ -323,6 +380,30 @@ function DynamicBar:HandleSlash(input)
 
   if msg == "rebuild" then
     self:Rebuild("slash")
+    return
+  end
+
+  if msg == "resetsetup" then
+    self.db.profile._setupComplete = false
+    self:Print("First-time setup flag reset. Popup will show in 8 seconds...")
+    self:ShowFirstTimeSetup()
+    return
+  end
+
+  if msg == "profileinfo" or msg == "pinfo" then
+    local profileName = self.db:GetCurrentProfile()
+    local setupComplete = self.db.profile._setupComplete
+    local playerName = UnitName("player")
+    local realmName = GetRealmName()
+    local expectedProfile = playerName .. " - " .. realmName
+
+    self:Print("Current profile: " .. tostring(profileName))
+    self:Print("Expected profile: " .. expectedProfile)
+    self:Print("Setup complete: " .. tostring(setupComplete))
+
+    if profileName ~= expectedProfile then
+      self:Print("|cffff0000WARNING: Profile mismatch!|r")
+    end
     return
   end
 

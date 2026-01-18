@@ -190,6 +190,20 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      locked = {
+        type = "toggle",
+        name = "Lock Bar Position",
+        desc = "Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position.",
+        order = 27.5,
+        width = "full",
+        get = function() return self.db.profile.bar.locked ~= false end,
+        set = function(_, v)
+          self.db.profile.bar.locked = v
+          if self.UI and self.UI.UpdateLockState then
+            self.UI:UpdateLockState()
+          end
+        end,
+      },
       buttonSkinInfo = {
         type = "description",
         name = function()
@@ -201,7 +215,11 @@ function DynamicBar:InitConfig()
           if self.db.profile.bar.inheritElvUI and IsAddOnLoaded("ElvUI") then
             elvInfo = " | ElvUI spacing active"
           end
-          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo
+          local lockInfo = ""
+          if self.db.profile.bar.locked == false then
+            lockInfo = " | |cffff0000UNLOCKED - Drag to move|r"
+          end
+          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo .. lockInfo
         end,
         order = 28,
         fontSize = "medium",
@@ -216,7 +234,7 @@ function DynamicBar:InitConfig()
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
-              bar = { buttons = 10, scale = 1.0, spacing = 6, padding = 6 }
+              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2 }
             }
           }
           local defaults = DB_DEFAULTS.profile.bar
@@ -405,5 +423,20 @@ function DynamicBar:OpenConfig()
     return
   end
   AceConfigDialog:Open("DynamicBar")
+
+  -- Make config window movable
+  local frame = AceConfigDialog.OpenFrames["DynamicBar"]
+  if frame and frame.frame then
+    local configFrame = frame.frame
+    configFrame:SetMovable(true)
+    configFrame:EnableMouse(true)
+    configFrame:RegisterForDrag("LeftButton")
+    configFrame:SetScript("OnDragStart", function(self)
+      self:StartMoving()
+    end)
+    configFrame:SetScript("OnDragStop", function(self)
+      self:StopMovingOrSizing()
+    end)
+  end
 end
 -- End of Config.lua

@@ -17,10 +17,36 @@ local function EnsureBar()
   if UI.bar then return UI.bar end
 
   local bar = CreateFrame("Frame", BAR_NAME, UIParent)
-  bar:EnableMouse(false)
   bar:SetClampedToScreen(true)
   bar:SetFrameStrata("MEDIUM")
   bar:SetFrameLevel(100)
+  bar:EnableMouse(false)  -- Start locked
+  bar:SetMovable(true)
+  bar:RegisterForDrag("LeftButton")
+
+  -- Drag start
+  bar:SetScript("OnDragStart", function(self)
+    if not InCombatLockdown() then
+      self:StartMoving()
+    end
+  end)
+
+  -- Drag stop - save position
+  bar:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+
+    -- Save the new position
+    local cfg = UI:GetBarConfig()
+    if cfg then
+      local point, _, relPoint, x, y = self:GetPoint()
+      cfg.point = point or "CENTER"
+      cfg.relPoint = relPoint or "CENTER"
+      cfg.x = x or 0
+      cfg.y = y or 0
+
+      DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+    end
+  end)
 
   UI.bar = bar
   return bar
@@ -182,6 +208,119 @@ local function ApplySlotFlyout(slot)
   )
 end
 
+-- Update bar lock state
+function UI:UpdateLockState()
+  if not self.bar then return end
+
+  local cfg = self:GetBarConfig()
+  if not cfg then return end
+
+  local locked = cfg.locked ~= false  -- Default to locked
+
+  -- Create background overlay frame if it doesn't exist
+  if not self.bar._lockOverlay then
+    -- Create a frame that sits on top of all buttons and handles dragging
+    local overlay = CreateFrame("Frame", nil, self.bar)
+    overlay:SetAllPoints(self.bar)
+    overlay:SetFrameStrata("HIGH")  -- Higher than buttons
+    overlay:SetFrameLevel(200)  -- Much higher than button levels (110+)
+    overlay:EnableMouse(true)  -- Capture clicks for dragging
+    overlay:RegisterForDrag("LeftButton")
+
+    -- Drag handlers that delegate to parent bar
+    overlay:SetScript("OnDragStart", function()
+      if not InCombatLockdown() and self.bar then
+        self.bar:StartMoving()
+      end
+    end)
+
+    overlay:SetScript("OnDragStop", function()
+      if self.bar then
+        self.bar:StopMovingOrSizing()
+
+        -- Save position
+        local cfg = UI:GetBarConfig()
+        if cfg then
+          local point, _, relPoint, x, y = self.bar:GetPoint()
+          cfg.point = point or "CENTER"
+          cfg.relPoint = relPoint or "CENTER"
+          cfg.x = x or 0
+          cfg.y = y or 0
+          DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+        end
+      end
+    end)
+
+    -- Green background texture
+    local bg = overlay:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(overlay)
+    bg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bg:SetVertexColor(0, 1, 0, 0.4)  -- Bright green, 40% opacity
+
+    -- "DRAG ME" text label
+    local label = overlay:CreateFontString(nil, "OVERLAY")
+    label:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+    label:SetText("DRAG ME")
+    label:SetPoint("CENTER", overlay, "CENTER", 0, 10)
+    label:SetTextColor(1, 1, 1, 1)
+
+    -- "Save & Lock" button
+    local lockBtn = CreateFrame("Button", nil, overlay)
+    lockBtn:SetSize(100, 24)
+    lockBtn:SetPoint("CENTER", overlay, "CENTER", 0, -15)
+
+    -- Button background
+    local btnBg = lockBtn:CreateTexture(nil, "BACKGROUND")
+    btnBg:SetAllPoints(lockBtn)
+    btnBg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    btnBg:SetVertexColor(0, 0.5, 0, 0.8)
+
+    -- Button text
+    local btnText = lockBtn:CreateFontString(nil, "OVERLAY")
+    btnText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+    btnText:SetText("Save & Lock")
+    btnText:SetPoint("CENTER", lockBtn, "CENTER", 0, 0)
+    btnText:SetTextColor(1, 1, 1, 1)
+
+    -- Button click handler
+    lockBtn:SetScript("OnClick", function()
+      local cfg = UI:GetBarConfig()
+      if cfg then
+        cfg.locked = true
+        if UI.UpdateLockState then
+          UI:UpdateLockState()
+        end
+        DB:Print("Bar position saved and locked!")
+      end
+    end)
+
+    -- Button hover effect
+    lockBtn:SetScript("OnEnter", function()
+      btnBg:SetVertexColor(0, 0.7, 0, 1.0)
+    end)
+    lockBtn:SetScript("OnLeave", function()
+      btnBg:SetVertexColor(0, 0.5, 0, 0.8)
+    end)
+
+    overlay:Hide()
+    self.bar._lockOverlay = overlay
+  end
+
+  if locked then
+    self.bar:EnableMouse(false)
+    if self.bar._lockOverlay then
+      self.bar._lockOverlay:Hide()
+    end
+    DB:Print("Bar locked")
+  else
+    self.bar:EnableMouse(true)
+    if self.bar._lockOverlay then
+      self.bar._lockOverlay:Show()
+    end
+    DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+  end
+end
+
 function UI:Rebuild()
   if not DynamicBarDB or not DynamicBarDB.profile then
     if self.bar then self.bar:Hide() end
@@ -202,6 +341,7 @@ function UI:Rebuild()
   UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
+  UI:UpdateLockState()  -- Update lock/unlock state
   UI.bar:Show()
 
   local cfg = UI:GetBarConfig()
