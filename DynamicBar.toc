@@ -2,7 +2,7 @@
 ## Title: DynamicBar
 ## Notes: Dynamic bar containing consumables items
 ## Author: Mark Sheldahl
-## Version: 0.4
+## Version: 0.5-beta
 ## SavedVariables: DynamicBarDB
 
 embeds_dynamicbar.xml
