@@ -26,6 +26,9 @@ local DB_DEFAULTS = {
     enabled = true,
     debug = false,
 
+    -- UI state for config panel
+    _showAdvancedPosition = false,
+
     -- one bar, 10 buttons by default
     bar = {
       buttons = 10,
@@ -157,6 +160,9 @@ end
 function DynamicBar:OnInitialize()
   -- SavedVariables: DynamicBarDB
   self.db = LibStub("AceDB-3.0"):New("DynamicBarDB", DB_DEFAULTS, true)
+
+  -- Expose DB_DEFAULTS for config panel reset functions
+  self.DB_DEFAULTS = DB_DEFAULTS
 
   -- TEMP COMPAT: legacy code expects DynamicBarDB.profile.*
   self:ApplyProfileCompat()

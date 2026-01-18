@@ -8,18 +8,15 @@ UI.buttons = UI.buttons or {}
 local BAR_NAME = "DynamicBarMain"
 local BUTTON_SIZE = 36
 
-local function GetCfg()
-  return DynamicBarDB and DynamicBarDB.profile and DynamicBarDB.profile.bar
+-- Get bar configuration from AceDB (not global DynamicBarDB)
+function UI:GetBarConfig()
+  return DB.db and DB.db.profile and DB.db.profile.bar
 end
 
 local function EnsureBar()
   if UI.bar then return UI.bar end
 
-  local cfg = GetCfg()
   local bar = CreateFrame("Frame", BAR_NAME, UIParent)
-  bar:SetScale(cfg.scale or 1.0)
-  bar:SetPoint(cfg.point or "CENTER", UIParent, cfg.relPoint or "CENTER", cfg.x or 0, cfg.y or 0)
-
   bar:EnableMouse(false)
   bar:SetClampedToScreen(true)
   bar:SetFrameStrata("MEDIUM")
@@ -29,8 +26,21 @@ local function EnsureBar()
   return bar
 end
 
+local function UpdateBarPosition()
+  if not UI.bar then return end
+  local cfg = UI:GetBarConfig()
+  if not cfg then return end
+
+  -- Update scale
+  UI.bar:SetScale(cfg.scale or 1.0)
+
+  -- Update position
+  UI.bar:ClearAllPoints()
+  UI.bar:SetPoint(cfg.point or "CENTER", UIParent, cfg.relPoint or "CENTER", cfg.x or 0, cfg.y or 0)
+end
+
 local function LayoutBar()
-  local cfg = GetCfg()
+  local cfg = UI:GetBarConfig()
   local buttons = cfg.buttons or 10
   local spacing = cfg.spacing or 6
   local padding = cfg.padding or 6
@@ -55,16 +65,19 @@ local function LayoutBar()
 end
 
 local function EnsureButtons()
-  local cfg = GetCfg()
+  local cfg = UI:GetBarConfig()
   local buttons = cfg.buttons or 10
 
   for i = 1, buttons do
     if not UI.buttons[i] then
       local name = BAR_NAME .. "Button" .. i
       local btn = UI.Buttons:CreateSecureButton(name, UI.bar, BUTTON_SIZE)
-      btn:SetFrameStrata("DIALOG")
+      btn:SetFrameStrata("MEDIUM")
       btn:SetFrameLevel(110 + i)
       UI.buttons[i] = btn
+    else
+      -- Show previously hidden buttons when count increases
+      UI.buttons[i]:Show()
     end
   end
 end
@@ -176,17 +189,20 @@ function UI:Rebuild()
   end
 
   EnsureBar()
+  UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
   UI.bar:Show()
 
-  local cfg = GetCfg()
+  local cfg = UI:GetBarConfig()
   if not cfg then
     DB:Print("Failed to get bar configuration")
     return
   end
 
   local n = cfg.buttons or 10
+
+  -- Clear all currently assigned buttons
   for i = 1, n do
     if UI.buttons[i] then
       UI.Actions:Clear(UI.buttons[i])
@@ -203,6 +219,14 @@ function UI:Rebuild()
     ApplySlotFlyout(slot)
 
     nextButtonIdx = nextButtonIdx + 1
+  end
+
+  -- Hide any buttons beyond the current count
+  for i = n + 1, #UI.buttons do
+    if UI.buttons[i] then
+      UI.buttons[i]:Hide()
+      UI.Actions:Clear(UI.buttons[i])
+    end
   end
 end
 
