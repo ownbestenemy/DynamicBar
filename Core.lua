@@ -217,7 +217,9 @@ end
 -- First-time setup popup
 --
 function DynamicBar:ShowFirstTimeSetup()
+  self:DPrint("ShowFirstTimeSetup called, _setupComplete = " .. tostring(self.db.profile._setupComplete))
   if not self.db.profile._setupComplete then
+    self:DPrint("Scheduling popup in 8 seconds...")
     -- Delay popup to avoid conflicts with other addon popups (like ElvUI)
     -- Longer delay (8 seconds) to allow ElvUI setup to complete
     C_Timer.After(8, function()
@@ -260,6 +262,7 @@ function DynamicBar:OnPlayerEnteringWorld()
   ScheduleBagRefresh()
 
   -- Show first-time setup on initial login (delayed to avoid ElvUI popup conflicts)
+  self:DPrint("PLAYER_ENTERING_WORLD fired, _setupComplete = " .. tostring(self.db.profile._setupComplete))
   self:ShowFirstTimeSetup()
 end
 
@@ -368,6 +371,13 @@ function DynamicBar:HandleSlash(input)
 
   if msg == "rebuild" then
     self:Rebuild("slash")
+    return
+  end
+
+  if msg == "resetsetup" then
+    self.db.profile._setupComplete = false
+    self:Print("First-time setup flag reset. Popup will show in 8 seconds...")
+    self:ShowFirstTimeSetup()
     return
   end
 
