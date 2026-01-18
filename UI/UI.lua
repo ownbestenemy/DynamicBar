@@ -237,6 +237,7 @@ function UI:UpdateLockState()
     self.bar:EnableMouse(false)
     self.bar._lockBg:Hide()
     self.bar._lockBorder:Hide()
+    DB:Print("Bar locked")
   else
     self.bar:EnableMouse(true)
     -- Show visual indicator when unlocked
@@ -244,9 +245,8 @@ function UI:UpdateLockState()
     self.bar._lockBg:SetVertexColor(0, 0.5, 0, 0.3)  -- Green tint
     self.bar._lockBorder:Show()
     self.bar._lockBorder:SetVertexColor(0, 1, 0, 0.8)  -- Green border
+    DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
   end
-
-  DB:DPrint("Bar " .. (locked and "locked" or "unlocked"))
 end
 
 function UI:Rebuild()
