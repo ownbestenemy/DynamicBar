@@ -211,16 +211,31 @@ function DynamicBar:OnPlayerEnteringWorld()
 end
 
 function DynamicBar:OnPlayerRegenEnabled()
+  self:DPrint("Entering prep mode (combat ended)")
+
+  -- Rebuild to show prep mode slots
+  self:RequestRebuild("combat_leave")
+
+  -- Also process any pending rebuilds from config changes during combat
   if self._needsRebuild then
-    self:Rebuild("combat ended")
+    self:DPrint("Processing pending rebuild from combat")
+    self._needsRebuild = false
+    self:RequestRebuild("pending_from_combat")
   end
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
+  self:DPrint("Entering battle mode (combat started)")
+
   -- Combat started - hide all flyouts for clean combat UX
   if self.UI and self.UI.Flyouts and self.UI.Flyouts.HideAllImmediate then
     self.UI.Flyouts:HideAllImmediate(self.UI)
   end
+
+  -- Rebuild to show battle mode slots only
+  -- Note: This will be deferred by RequestRebuild since we're in combat
+  -- and will execute immediately after combat ends
+  self:RequestRebuild("combat_enter")
 end
 
 function DynamicBar:OnBagUpdate()

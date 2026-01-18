@@ -93,6 +93,11 @@ local function GetItemTex(itemID)
   return tex
 end
 
+-- Get current mode based on combat state
+local function GetCurrentMode()
+  return InCombatLockdown() and "battle" or "prep"
+end
+
 -- AssignHearth removed - now uses ResolveHearth() like all other slots
 
 --[[
@@ -100,30 +105,38 @@ end
   Slots are assigned to buttons sequentially - no hardcoded indices.
 
   Order follows urgency → convenience:
-  1. Emergency Conversion (Healthstone, Dark Rune)
-  2. Health Potions
-  3. Mana Potions
-  4. Battle Elixir
-  5. Guardian Elixir
-  6. Flask (future)
-  7. Bandages
-  8. Food (buff)
-  9. Food (non-buff, prep only)
-  10. Drink (prep only)
-  11. Quest/Contextual (future)
-  12. Hearthstone (always last)
+  1. Emergency Conversion (Healthstone, Dark Rune) - both modes
+  2. Health Potions - both modes
+  3. Mana Potions - both modes
+  4. Bandages - both modes (for bubble-bandage, etc.)
+  5. Battle Elixir - prep only (pre-buff)
+  6. Guardian Elixir - prep only (pre-buff)
+  7. Food (buff) - prep only
+  8. Food (non-buff) - prep only
+  9. Drink - prep only
+  10. Hearthstone (always last) - both modes
+
+  Mode switching (implicit):
+  - Battle mode (in combat): Shows slots with "battle" mode flag
+  - Prep mode (out of combat): Shows slots with "prep" mode flag
+  - Battle slots maintain same positions when switching modes
 ]]--
 local SLOT_ORDER = {
-  { resolver = "ResolveHealthstone",     flyoutField = "_healthstoneFlyout" },
-  { resolver = "ResolveHealthPotion",    flyoutField = "_healthPotionFlyout" },
-  { resolver = "ResolveManaPotion",      flyoutField = "_manaPotionFlyout" },
-  { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout" },
-  { resolver = "ResolveGuardianElixir",  flyoutField = "_guardianElixirFlyout" },
-  { resolver = "ResolveBandage",         flyoutField = "_bandageFlyout" },
-  { resolver = "ResolveFoodBuff",        flyoutField = "_foodBuffFlyout" },
-  { resolver = "ResolveFoodNonBuff",     flyoutField = "_foodNonBuffFlyout" },
-  { resolver = "ResolveDrink",           flyoutField = "_drinkFlyout" },
-  { resolver = "ResolveHearth",          flyoutField = "_hearthFlyout" },
+  -- Battle mode items (always visible)
+  { resolver = "ResolveHealthstone",     flyoutField = "_healthstoneFlyout",    modes = {"battle", "prep"} },
+  { resolver = "ResolveHealthPotion",    flyoutField = "_healthPotionFlyout",   modes = {"battle", "prep"} },
+  { resolver = "ResolveManaPotion",      flyoutField = "_manaPotionFlyout",     modes = {"battle", "prep"} },
+  { resolver = "ResolveBandage",         flyoutField = "_bandageFlyout",        modes = {"battle", "prep"} },
+
+  -- Prep-only items (hidden in combat)
+  { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout",   modes = {"prep"} },
+  { resolver = "ResolveGuardianElixir",  flyoutField = "_guardianElixirFlyout", modes = {"prep"} },
+  { resolver = "ResolveFoodBuff",        flyoutField = "_foodBuffFlyout",       modes = {"prep"} },
+  { resolver = "ResolveFoodNonBuff",     flyoutField = "_foodNonBuffFlyout",    modes = {"prep"} },
+  { resolver = "ResolveDrink",           flyoutField = "_drinkFlyout",          modes = {"prep"} },
+
+  -- Always last (both modes)
+  { resolver = "ResolveHearth",          flyoutField = "_hearthFlyout",         modes = {"battle", "prep"} },
 }
 
 local function AssignResolverSlot(slot)
@@ -200,6 +213,7 @@ function UI:Rebuild()
     return
   end
 
+  local currentMode = GetCurrentMode()
   local n = cfg.buttons or 10
 
   -- Clear all currently assigned buttons
@@ -209,20 +223,30 @@ function UI:Rebuild()
     end
   end
 
-  -- Assign slots sequentially based on SLOT_ORDER priority (no hardcoded indices)
+  -- Assign slots sequentially, filtering by current mode
   local nextButtonIdx = 1
   for _, slot in ipairs(SLOT_ORDER) do
     if nextButtonIdx > n then break end
 
-    slot.idx = nextButtonIdx  -- Dynamically assign button index
-    AssignResolverSlot(slot)
-    ApplySlotFlyout(slot)
+    -- Check if this slot is valid for current mode
+    local validForMode = false
+    for _, mode in ipairs(slot.modes or {"prep"}) do
+      if mode == currentMode then
+        validForMode = true
+        break
+      end
+    end
 
-    nextButtonIdx = nextButtonIdx + 1
+    if validForMode then
+      slot.idx = nextButtonIdx  -- Dynamically assign button index
+      AssignResolverSlot(slot)
+      ApplySlotFlyout(slot)
+      nextButtonIdx = nextButtonIdx + 1
+    end
   end
 
   -- Hide any buttons beyond the current count
-  for i = n + 1, #UI.buttons do
+  for i = nextButtonIdx, #UI.buttons do
     if UI.buttons[i] then
       UI.buttons[i]:Hide()
       UI.Actions:Clear(UI.buttons[i])
