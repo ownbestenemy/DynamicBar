@@ -120,11 +120,80 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      layoutMode = {
+        type = "select",
+        name = "Bar Layout",
+        desc = "Choose how buttons are arranged",
+        order = 23,
+        values = {
+          HORIZONTAL = "Horizontal (Default)",
+          VERTICAL = "Vertical",
+          GRID = "Grid",
+        },
+        sorting = { "HORIZONTAL", "VERTICAL", "GRID" },
+        width = "full",
+        get = function() return self.db.profile.bar.layoutMode or "HORIZONTAL" end,
+        set = function(_, v)
+          self.db.profile.bar.layoutMode = v
+
+          -- Auto-calculate grid dimensions when switching to GRID mode
+          if v == "GRID" and not self.db.profile.bar.gridRows then
+            local buttons = self.db.profile.bar.buttons or 10
+            -- Default to 2 rows for most button counts
+            self.db.profile.bar.gridRows = 2
+            self.db.profile.bar.gridCols = math.ceil(buttons / 2)
+          end
+
+          if not InCombatLockdown() then
+            self:RequestRebuild("layout_mode")
+          end
+        end,
+      },
+      gridRows = {
+        type = "range",
+        name = "Grid Rows",
+        desc = "Number of rows in grid layout",
+        order = 24,
+        min = 1,
+        max = 12,
+        step = 1,
+        width = "normal",
+        hidden = function()
+          return (self.db.profile.bar.layoutMode or "HORIZONTAL") ~= "GRID"
+        end,
+        get = function() return self.db.profile.bar.gridRows or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.gridRows = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("grid_rows")
+          end
+        end,
+      },
+      gridCols = {
+        type = "range",
+        name = "Grid Columns",
+        desc = "Number of columns in grid layout",
+        order = 25,
+        min = 1,
+        max = 12,
+        step = 1,
+        width = "normal",
+        hidden = function()
+          return (self.db.profile.bar.layoutMode or "HORIZONTAL") ~= "GRID"
+        end,
+        get = function() return self.db.profile.bar.gridCols or 5 end,
+        set = function(_, v)
+          self.db.profile.bar.gridCols = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("grid_cols")
+          end
+        end,
+      },
       scale = {
         type = "range",
         name = "Bar Scale",
         desc = "Overall scale of the bar and all buttons",
-        order = 23,
+        order = 26,
         min = 0.5,
         max = 2.0,
         step = 0.05,
@@ -138,37 +207,147 @@ function DynamicBar:InitConfig()
           end
         end,
       },
-      spacing = {
+      spacingH = {
         type = "range",
-        name = "Button Spacing",
+        name = function()
+          local mode = self.db.profile.bar.layoutMode or "HORIZONTAL"
+          if mode == "VERTICAL" then return "Spacing"
+          else return "Horizontal Spacing" end
+        end,
         desc = "Horizontal space between buttons (pixels)",
-        order = 24,
+        order = 27,
         min = 0,
         max = 20,
         step = 1,
-        width = "full",
-        get = function() return self.db.profile.bar.spacing end,
+        width = "normal",
+        get = function() return self.db.profile.bar.spacingH or self.db.profile.bar.spacing or 2 end,
         set = function(_, v)
-          self.db.profile.bar.spacing = math.max(0, math.min(20, v))
+          self.db.profile.bar.spacingH = v
           if not InCombatLockdown() then
-            self:RequestRebuild("spacing")
+            self:RequestRebuild("spacing_h")
+          end
+        end,
+      },
+      spacingV = {
+        type = "range",
+        name = "Vertical Spacing",
+        desc = "Vertical space between buttons (pixels)",
+        order = 28,
+        min = 0,
+        max = 20,
+        step = 1,
+        width = "normal",
+        hidden = function()
+          return (self.db.profile.bar.layoutMode or "HORIZONTAL") == "HORIZONTAL"
+        end,
+        get = function() return self.db.profile.bar.spacingV or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.spacingV = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("spacing_v")
           end
         end,
       },
       padding = {
         type = "range",
         name = "Edge Padding",
-        desc = "Space on left and right edges of the bar (pixels)",
-        order = 25,
+        desc = "Space on edges of the bar (pixels) - use Advanced Padding for per-edge control",
+        order = 29,
         min = 0,
         max = 20,
         step = 1,
         width = "full",
         get = function() return self.db.profile.bar.padding end,
         set = function(_, v)
-          self.db.profile.bar.padding = math.max(0, math.min(20, v))
+          self.db.profile.bar.padding = v
+          -- Also update new pad* fields for backward compatibility
+          self.db.profile.bar.padLeft = v
+          self.db.profile.bar.padRight = v
+          self.db.profile.bar.padTop = v
+          self.db.profile.bar.padBottom = v
           if not InCombatLockdown() then
             self:RequestRebuild("padding")
+          end
+        end,
+      },
+      showAdvancedPadding = {
+        type = "toggle",
+        name = "Show Advanced Padding",
+        desc = "Adjust padding for each edge separately",
+        order = 29.1,
+        width = "full",
+        get = function() return self.db.profile._showAdvancedPadding end,
+        set = function(_, v) self.db.profile._showAdvancedPadding = v end,
+      },
+      padLeft = {
+        type = "range",
+        name = "Left Padding",
+        desc = "Space on left edge (pixels)",
+        order = 29.2,
+        min = 0,
+        max = 20,
+        step = 1,
+        width = "half",
+        hidden = function() return not self.db.profile._showAdvancedPadding end,
+        get = function() return self.db.profile.bar.padLeft or self.db.profile.bar.padding or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.padLeft = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("pad_left")
+          end
+        end,
+      },
+      padRight = {
+        type = "range",
+        name = "Right Padding",
+        desc = "Space on right edge (pixels)",
+        order = 29.3,
+        min = 0,
+        max = 20,
+        step = 1,
+        width = "half",
+        hidden = function() return not self.db.profile._showAdvancedPadding end,
+        get = function() return self.db.profile.bar.padRight or self.db.profile.bar.padding or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.padRight = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("pad_right")
+          end
+        end,
+      },
+      padTop = {
+        type = "range",
+        name = "Top Padding",
+        desc = "Space on top edge (pixels)",
+        order = 29.4,
+        min = 0,
+        max = 20,
+        step = 1,
+        width = "half",
+        hidden = function() return not self.db.profile._showAdvancedPadding end,
+        get = function() return self.db.profile.bar.padTop or self.db.profile.bar.padding or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.padTop = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("pad_top")
+          end
+        end,
+      },
+      padBottom = {
+        type = "range",
+        name = "Bottom Padding",
+        desc = "Space on bottom edge (pixels)",
+        order = 29.5,
+        min = 0,
+        max = 20,
+        step = 1,
+        width = "half",
+        hidden = function() return not self.db.profile._showAdvancedPadding end,
+        get = function() return self.db.profile.bar.padBottom or self.db.profile.bar.padding or 2 end,
+        set = function(_, v)
+          self.db.profile.bar.padBottom = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("pad_bottom")
           end
         end,
       },
@@ -176,7 +355,7 @@ function DynamicBar:InitConfig()
         type = "select",
         name = "Unavailable Items",
         desc = "How to display prep items during combat (food, elixirs, drink)",
-        order = 26,
+        order = 30,
         values = {
           FADE = "Fade Out (Recommended)",
           HIDE = "Hide Completely",
@@ -196,12 +375,13 @@ function DynamicBar:InitConfig()
       inheritElvUI = {
         type = "toggle",
         name = "Use ElvUI Spacing",
-        desc = "Automatically inherit button spacing and padding from ElvUI (if installed)",
-        order = 27,
+        desc = "Automatically inherit button spacing and padding from ElvUI (horizontal mode only)",
+        order = 31,
         width = "full",
         disabled = function()
-          -- Disable if ElvUI not installed
-          return not (IsAddOnLoaded("ElvUI") and ElvUI and ElvUI[1])
+          -- Disable if ElvUI not installed or not in horizontal mode
+          local mode = self.db.profile.bar.layoutMode or "HORIZONTAL"
+          return (mode ~= "HORIZONTAL") or not (IsAddOnLoaded("ElvUI") and ElvUI and ElvUI[1])
         end,
         get = function() return self.db.profile.bar.inheritElvUI end,
         set = function(_, v)
@@ -215,7 +395,7 @@ function DynamicBar:InitConfig()
         type = "toggle",
         name = "Lock Bar Position",
         desc = "Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position.",
-        order = 27.5,
+        order = 32,
         width = "full",
         get = function() return self.db.profile.bar.locked ~= false end,
         set = function(_, v)
@@ -242,25 +422,50 @@ function DynamicBar:InitConfig()
           end
           return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo .. lockInfo
         end,
-        order = 28,
+        order = 33,
         fontSize = "medium",
       },
       resetLayout = {
         type = "execute",
         name = "Reset Layout",
         desc = "Reset all layout settings to default values",
-        order = 30,
+        order = 34,
         confirm = true,
-        confirmText = "Reset button count, scale, spacing, and padding to defaults?",
+        confirmText = "Reset button count, scale, layout mode, spacing, and padding to defaults?",
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
-              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2, visibilityMode = "FADE" }
+              bar = {
+                buttons = 10,
+                scale = 1.0,
+                layoutMode = "HORIZONTAL",
+                gridRows = 2,
+                gridCols = 5,
+                spacingH = 2,
+                spacingV = 2,
+                padLeft = 2,
+                padRight = 2,
+                padTop = 2,
+                padBottom = 2,
+                spacing = 2,
+                padding = 2,
+                visibilityMode = "FADE",
+              }
             }
           }
           local defaults = DB_DEFAULTS.profile.bar
           self.db.profile.bar.buttons = defaults.buttons
           self.db.profile.bar.scale = defaults.scale
+          self.db.profile.bar.layoutMode = defaults.layoutMode
+          self.db.profile.bar.gridRows = defaults.gridRows
+          self.db.profile.bar.gridCols = defaults.gridCols
+          self.db.profile.bar.spacingH = defaults.spacingH
+          self.db.profile.bar.spacingV = defaults.spacingV
+          self.db.profile.bar.padLeft = defaults.padLeft
+          self.db.profile.bar.padRight = defaults.padRight
+          self.db.profile.bar.padTop = defaults.padTop
+          self.db.profile.bar.padBottom = defaults.padBottom
+          -- Keep deprecated fields for backward compatibility
           self.db.profile.bar.spacing = defaults.spacing
           self.db.profile.bar.padding = defaults.padding
           self.db.profile.bar.visibilityMode = defaults.visibilityMode

@@ -34,8 +34,28 @@ local DB_DEFAULTS = {
     bar = {
       buttons = 10,
       scale = 1.0,
-      spacing = 2,  -- Tighter spacing like Blizzard default
-      padding = 2,  -- Tighter padding like Blizzard default
+
+      -- Layout mode selection
+      layoutMode = "HORIZONTAL",  -- HORIZONTAL | VERTICAL | GRID
+
+      -- Grid dimensions (only used when layoutMode = "GRID")
+      gridRows = 2,
+      gridCols = 5,
+
+      -- Spacing (separate horizontal/vertical for grid layouts)
+      spacingH = 2,  -- Horizontal spacing between buttons
+      spacingV = 2,  -- Vertical spacing between buttons (grid/vertical modes)
+
+      -- Per-edge padding
+      padLeft = 2,
+      padRight = 2,
+      padTop = 2,
+      padBottom = 2,
+
+      -- Backward compatibility (deprecated, use spacingH and pad* instead)
+      spacing = 2,   -- Maps to spacingH
+      padding = 2,   -- Maps to padLeft/padRight
+
       point = "CENTER",
       relPoint = "CENTER",
       x = 0,

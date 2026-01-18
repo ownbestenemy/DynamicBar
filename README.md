@@ -45,9 +45,15 @@ DynamicBar is a role-first, context-aware consumable action bar for WoW TBC Clas
 Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 
 **Bar Layout:**
+- **Layout Modes:**
+  - **Horizontal** (default) - Single row of buttons
+  - **Vertical** - Single column of buttons
+  - **Grid** - Customizable rows × columns (e.g., 2×5, 3×4, 5×2)
 - Button count (1-12)
-- Scale, spacing, padding
-- ElvUI spacing inheritance
+- Scale adjustments
+- Horizontal and vertical spacing (grid mode supports both independently)
+- Edge padding (basic unified padding or advanced per-edge control)
+- ElvUI spacing inheritance (horizontal mode only)
 
 **Bar Position:**
 - Presets: Bottom Center, Top Center, Screen Center, Custom

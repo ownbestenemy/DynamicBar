@@ -65,38 +65,120 @@ local function UpdateBarPosition()
   UI.bar:SetPoint(cfg.point or "CENTER", UIParent, cfg.relPoint or "CENTER", cfg.x or 0, cfg.y or 0)
 end
 
-local function LayoutBar()
-  local cfg = UI:GetBarConfig()
+-- Horizontal layout (default, backward compatible)
+local function LayoutBarHorizontal(cfg)
   local buttons = cfg.buttons or 10
-  local spacing = cfg.spacing or 6
-  local padding = cfg.padding or 6
+  local spacing = cfg.spacingH or cfg.spacing or 2
+  local padLeft = cfg.padLeft or cfg.padding or 2
+  local padRight = cfg.padRight or cfg.padding or 2
 
-  -- Inherit ElvUI spacing/padding if enabled
+  -- Inherit ElvUI spacing if enabled
   if cfg.inheritElvUI and DB.UI.Skins then
     local elvSettings = DB.UI.Skins:GetElvUIBarSettings()
     if elvSettings then
       spacing = elvSettings.buttonspacing
-      padding = elvSettings.backdropSpacing
-      DB:DPrint("Using ElvUI spacing: " .. spacing .. ", padding: " .. padding)
+      padLeft = elvSettings.backdropSpacing
+      padRight = elvSettings.backdropSpacing
+      DB:DPrint("Using ElvUI spacing: " .. spacing .. ", padding: " .. padLeft)
     end
   end
 
-  UI.bar:SetSize(
-    (padding * 2) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1)),
-    BUTTON_SIZE
-  )
+  -- Calculate bar dimensions
+  local width = (padLeft + padRight) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1))
+  UI.bar:SetSize(width, BUTTON_SIZE)
 
-
+  -- Position buttons left-to-right
   for i = 1, buttons do
     local btn = UI.buttons[i]
     if not btn then break end
 
     btn:ClearAllPoints()
     if i == 1 then
-      btn:SetPoint("LEFT", UI.bar, "LEFT", padding, 0)
+      btn:SetPoint("LEFT", UI.bar, "LEFT", padLeft, 0)
     else
       btn:SetPoint("LEFT", UI.buttons[i - 1], "RIGHT", spacing, 0)
     end
+  end
+end
+
+-- Vertical layout (new)
+local function LayoutBarVertical(cfg)
+  local buttons = cfg.buttons or 10
+  local spacing = cfg.spacingV or 2
+  local padTop = cfg.padTop or 2
+  local padBottom = cfg.padBottom or 2
+
+  -- Calculate bar dimensions
+  local height = (padTop + padBottom) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1))
+  UI.bar:SetSize(BUTTON_SIZE, height)
+
+  -- Position buttons bottom-to-top
+  for i = 1, buttons do
+    local btn = UI.buttons[i]
+    if not btn then break end
+
+    btn:ClearAllPoints()
+    if i == 1 then
+      btn:SetPoint("BOTTOM", UI.bar, "BOTTOM", 0, padBottom)
+    else
+      btn:SetPoint("BOTTOM", UI.buttons[i - 1], "TOP", 0, spacing)
+    end
+  end
+end
+
+-- Grid layout (new)
+local function LayoutBarGrid(cfg)
+  local rows = cfg.gridRows or 2
+  local cols = cfg.gridCols or 5
+  local buttons = cfg.buttons or 10
+  local spacingH = cfg.spacingH or cfg.spacing or 2
+  local spacingV = cfg.spacingV or 2
+  local padLeft = cfg.padLeft or cfg.padding or 2
+  local padRight = cfg.padRight or cfg.padding or 2
+  local padTop = cfg.padTop or 2
+  local padBottom = cfg.padBottom or 2
+
+  -- Calculate bar dimensions
+  local width = (padLeft + padRight) + (BUTTON_SIZE * cols) + (spacingH * (cols - 1))
+  local height = (padTop + padBottom) + (BUTTON_SIZE * rows) + (spacingV * (rows - 1))
+  UI.bar:SetSize(width, height)
+
+  -- Position buttons in grid (fill row-by-row, left-to-right, bottom-to-top)
+  local btnIndex = 0
+  for row = rows, 1, -1 do  -- Bottom row = row 1, top row = row N
+    for col = 1, cols do
+      btnIndex = btnIndex + 1
+      if btnIndex > buttons then break end
+
+      local btn = UI.buttons[btnIndex]
+      if not btn then break end
+
+      -- Calculate position
+      local xOffset = padLeft + ((col - 1) * (BUTTON_SIZE + spacingH))
+      local yOffset = padBottom + ((row - 1) * (BUTTON_SIZE + spacingV))
+
+      btn:ClearAllPoints()
+      btn:SetPoint("BOTTOMLEFT", UI.bar, "BOTTOMLEFT", xOffset, yOffset)
+    end
+    if btnIndex >= buttons then break end
+  end
+end
+
+-- Main layout dispatcher
+local function LayoutBar()
+  local cfg = UI:GetBarConfig()
+  local mode = cfg.layoutMode or "HORIZONTAL"
+
+  if mode == "HORIZONTAL" then
+    LayoutBarHorizontal(cfg)
+  elseif mode == "VERTICAL" then
+    LayoutBarVertical(cfg)
+  elseif mode == "GRID" then
+    LayoutBarGrid(cfg)
+  else
+    -- Fallback to horizontal for unknown modes
+    DB:DPrint("Unknown layout mode: " .. tostring(mode) .. ", using HORIZONTAL")
+    LayoutBarHorizontal(cfg)
   end
 end
 
