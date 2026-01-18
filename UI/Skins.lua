@@ -73,6 +73,26 @@ function Skins:GetActiveSkinName()
 end
 
 --
+-- Get ElvUI action bar settings (spacing, padding, size)
+--
+function Skins:GetElvUIBarSettings()
+  if not IsAddOnLoaded("ElvUI") then return nil end
+
+  local E = ElvUI and ElvUI[1]
+  if not E or not E.db or not E.db.actionbar then return nil end
+
+  -- Use bar1 settings as reference (most common)
+  local bar1 = E.db.actionbar.bar1
+  if not bar1 then return nil end
+
+  return {
+    buttonsize = bar1.buttonsize or 32,
+    buttonspacing = bar1.buttonspacing or 2,
+    backdropSpacing = bar1.backdropSpacing or 2,
+  }
+end
+
+--
 -- Apply skin to a button
 --
 function Skins:ApplyButtonSkin(button)

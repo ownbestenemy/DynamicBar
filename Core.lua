@@ -39,6 +39,8 @@ local DB_DEFAULTS = {
       relPoint = "CENTER",
       x = 0,
       y = -180,
+      visibilityMode = "FADE",
+      inheritElvUI = true,  -- Automatically use ElvUI spacing if available
     },
   },
 }

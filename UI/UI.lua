@@ -45,6 +45,16 @@ local function LayoutBar()
   local spacing = cfg.spacing or 6
   local padding = cfg.padding or 6
 
+  -- Inherit ElvUI spacing/padding if enabled
+  if cfg.inheritElvUI and DB.UI.Skins then
+    local elvSettings = DB.UI.Skins:GetElvUIBarSettings()
+    if elvSettings then
+      spacing = elvSettings.buttonspacing
+      padding = elvSettings.backdropSpacing
+      DB:DPrint("Using ElvUI spacing: " .. spacing .. ", padding: " .. padding)
+    end
+  end
+
   UI.bar:SetSize(
     (padding * 2) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1)),
     BUTTON_SIZE

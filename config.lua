@@ -169,6 +169,24 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      inheritElvUI = {
+        type = "toggle",
+        name = "Use ElvUI Spacing",
+        desc = "Automatically inherit button spacing and padding from ElvUI (if installed)",
+        order = 27,
+        width = "full",
+        disabled = function()
+          -- Disable if ElvUI not installed
+          return not (IsAddOnLoaded("ElvUI") and ElvUI and ElvUI[1])
+        end,
+        get = function() return self.db.profile.bar.inheritElvUI end,
+        set = function(_, v)
+          self.db.profile.bar.inheritElvUI = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("inherit_elvui")
+          end
+        end,
+      },
       buttonSkinInfo = {
         type = "description",
         name = function()
@@ -176,9 +194,13 @@ function DynamicBar:InitConfig()
           if self.UI and self.UI.Skins then
             skinName = self.UI.Skins:GetActiveSkinName() or "Unknown"
           end
-          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)"
+          local elvInfo = ""
+          if self.db.profile.bar.inheritElvUI and IsAddOnLoaded("ElvUI") then
+            elvInfo = " | ElvUI spacing active"
+          end
+          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo
         end,
-        order = 27,
+        order = 28,
         fontSize = "medium",
       },
       resetLayout = {
