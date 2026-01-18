@@ -423,5 +423,20 @@ function DynamicBar:OpenConfig()
     return
   end
   AceConfigDialog:Open("DynamicBar")
+
+  -- Make config window movable
+  local frame = AceConfigDialog.OpenFrames["DynamicBar"]
+  if frame and frame.frame then
+    local configFrame = frame.frame
+    configFrame:SetMovable(true)
+    configFrame:EnableMouse(true)
+    configFrame:RegisterForDrag("LeftButton")
+    configFrame:SetScript("OnDragStart", function(self)
+      self:StartMoving()
+    end)
+    configFrame:SetScript("OnDragStop", function(self)
+      self:StopMovingOrSizing()
+    end)
+  end
 end
 -- End of Config.lua

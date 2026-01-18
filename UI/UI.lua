@@ -261,8 +261,46 @@ function UI:UpdateLockState()
     local label = overlay:CreateFontString(nil, "OVERLAY")
     label:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
     label:SetText("DRAG ME")
-    label:SetPoint("CENTER", overlay, "CENTER", 0, 0)
+    label:SetPoint("CENTER", overlay, "CENTER", 0, 10)
     label:SetTextColor(1, 1, 1, 1)
+
+    -- "Save & Lock" button
+    local lockBtn = CreateFrame("Button", nil, overlay)
+    lockBtn:SetSize(100, 24)
+    lockBtn:SetPoint("CENTER", overlay, "CENTER", 0, -15)
+
+    -- Button background
+    local btnBg = lockBtn:CreateTexture(nil, "BACKGROUND")
+    btnBg:SetAllPoints(lockBtn)
+    btnBg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    btnBg:SetVertexColor(0, 0.5, 0, 0.8)
+
+    -- Button text
+    local btnText = lockBtn:CreateFontString(nil, "OVERLAY")
+    btnText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+    btnText:SetText("Save & Lock")
+    btnText:SetPoint("CENTER", lockBtn, "CENTER", 0, 0)
+    btnText:SetTextColor(1, 1, 1, 1)
+
+    -- Button click handler
+    lockBtn:SetScript("OnClick", function()
+      local cfg = UI:GetBarConfig()
+      if cfg then
+        cfg.locked = true
+        if UI.UpdateLockState then
+          UI:UpdateLockState()
+        end
+        DB:Print("Bar position saved and locked!")
+      end
+    end)
+
+    -- Button hover effect
+    lockBtn:SetScript("OnEnter", function()
+      btnBg:SetVertexColor(0, 0.7, 0, 1.0)
+    end)
+    lockBtn:SetScript("OnLeave", function()
+      btnBg:SetVertexColor(0, 0.5, 0, 0.8)
+    end)
 
     overlay:Hide()
     self.bar._lockOverlay = overlay
