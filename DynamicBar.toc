@@ -16,6 +16,7 @@ Data/BagCache.lua
 Data/Classifier.lua
 Data/Resolver.lua
 
+UI/Skins.lua
 UI/Buttons.lua
 UI/Actions.lua
 UI/Flyouts.lua
