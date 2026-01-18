@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git log:*)",
       "Bash(git commit:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git merge --no-ff features/battle-prep -m \"$\\(cat <<''EOF''\nMerge features/battle-prep: Battle/Prep mode system\n\nImplements implicit mode switching for combat-aware consumable management.\n\n## Battle Mode \\(In Combat\\)\n- Emergency items only \\(Healthstone, Health/Mana potions, Bandages\\)\n- Frozen layout - no button changes during combat\n- Muscle memory protection\n- Grey-out unavailable items \\(cooldown, range, etc.\\)\n\n## Prep Mode \\(Out of Combat\\)\n- Full consumable suite \\(elixirs, food, drink, utility\\)\n- Dynamic reflow allowed\n- Item reassignment permitted\n\n## Configuration Options\n- Visibility mode: Hide vs Grey-out unavailable items\n- Per-slot battle/prep assignment\n- Combat safety validation\n\n## Technical Implementation\n- Race condition fixes for InCombatLockdown\\(\\)\n- Proper event handling for combat state changes\n- No secure frame updates during combat\n\nCompletes Design Contract requirements for implicit mode switching.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git merge --no-ff features/battle-prep -m \"$\\(cat <<''EOF''\nMerge features/battle-prep: Battle/Prep mode system\n\nImplements implicit mode switching for combat-aware consumable management.\n\nBattle Mode \\(In Combat\\): Emergency items only, frozen layout, grey-out unavailable\nPrep Mode \\(Out of Combat\\): Full consumable suite, dynamic reflow allowed\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
