@@ -5,6 +5,9 @@ DB.UI = DB.UI or {}
 DB.UI.Skins = DB.UI.Skins or {}
 local Skins = DB.UI.Skins
 
+-- Cache global function (TBC/Vanilla compatibility)
+local IsAddOnLoaded = IsAddOnLoaded or (C_AddOns and C_AddOns.IsAddOnLoaded)
+
 -- Skin detection state
 Skins.skinSource = nil       -- "ElvUI", "Masque", or "Blizzard"
 Skins.applyElvUI = false     -- ElvUI S:HandleButton available
@@ -41,7 +44,7 @@ end
 -- Detect ElvUI
 --
 function Skins:DetectElvUI()
-  if not IsAddOnLoaded("ElvUI") then return false end
+  if not IsAddOnLoaded or not IsAddOnLoaded("ElvUI") then return false end
 
   local E = ElvUI and ElvUI[1]
   if not E then return false end
@@ -76,7 +79,7 @@ end
 -- Get ElvUI action bar settings (spacing, padding, size)
 --
 function Skins:GetElvUIBarSettings()
-  if not IsAddOnLoaded("ElvUI") then return nil end
+  if not IsAddOnLoaded or not IsAddOnLoaded("ElvUI") then return nil end
 
   local E = ElvUI and ElvUI[1]
   if not E or not E.db or not E.db.actionbar then return nil end

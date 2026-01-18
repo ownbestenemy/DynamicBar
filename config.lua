@@ -1,6 +1,9 @@
 local ADDON_NAME = ...
 local DynamicBar = LibStub("AceAddon-3.0"):GetAddon("DynamicBar")
 
+-- Cache global function (TBC/Vanilla compatibility)
+local IsAddOnLoaded = IsAddOnLoaded or (C_AddOns and C_AddOns.IsAddOnLoaded)
+
 function DynamicBar:InitConfig()
   local AceConfig = LibStub("AceConfig-3.0", true)
   local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
