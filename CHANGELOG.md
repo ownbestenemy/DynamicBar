@@ -30,9 +30,12 @@
 - **Profile management UI** - Full AceDB profile support
 
 ### Added - Debug Tools
+- **Persistent debug logging** - Debug messages saved to SavedVariables for easy bug reporting
+- `/dbar debug` - Toggle debug logging (now logs to chat AND SavedVariables)
+- `/dbar debuglog` - Display persistent debug log (last 100 entries)
+- `/dbar clearlog` - Clear debug log
 - `/dbar profileinfo` - Show current profile name and setup status
 - `/dbar resetsetup` - Re-trigger first-time setup popup
-- `/dbar debug` - Toggle debug logging
 - Enhanced debug output for combat mode transitions
 
 ### Fixed
@@ -88,7 +91,7 @@
 
 ## Development Notes
 
-All versions co-authored by Claude Sonnet 4.5 (Anthropic) with human direction and testing.
+All versions co-authored by Claude Sonnet 4.5 (Anthropic) with human direction and testing along with human coding input.
 
 ### Version Numbering
 - **0.x-beta:** Beta testing phase

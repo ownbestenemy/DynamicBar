@@ -45,6 +45,12 @@ local DB_DEFAULTS = {
       locked = true,  -- Bar is locked (not draggable) by default
     },
   },
+
+  -- Global (non-profile) debug log (shared across characters for easier support)
+  global = {
+    debugLog = {},  -- Array of {timestamp, message} entries
+    debugLogMaxEntries = 100,  -- Keep last 100 entries
+  },
 }
 
 --
@@ -60,8 +66,68 @@ end
 function DynamicBar:DPrint(msg)
   if msg == nil then msg = self end
   if self.db and self.db.profile and self.db.profile.debug then
-    self:Print("|cff99ccffDEBUG:|r " .. tostring(msg))
+    local message = tostring(msg)
+    self:Print("|cff99ccffDEBUG:|r " .. message)
+
+    -- Log to SavedVariables for persistent debugging
+    self:LogDebugMessage(message)
   end
+end
+
+-- Log debug message to SavedVariables (persistent across sessions)
+function DynamicBar:LogDebugMessage(msg)
+  if not self.db or not self.db.global then return end
+
+  local log = self.db.global.debugLog
+  local maxEntries = self.db.global.debugLogMaxEntries or 100
+
+  -- Add timestamp
+  local timestamp = date("%Y-%m-%d %H:%M:%S")
+  local entry = {
+    time = timestamp,
+    message = tostring(msg),
+  }
+
+  -- Append to log
+  table.insert(log, entry)
+
+  -- Trim to max size (keep last N entries)
+  while #log > maxEntries do
+    table.remove(log, 1)
+  end
+end
+
+-- Show debug log to chat
+function DynamicBar:ShowDebugLog()
+  if not self.db or not self.db.global then
+    self:Print("Debug log not available.")
+    return
+  end
+
+  local log = self.db.global.debugLog or {}
+  if #log == 0 then
+    self:Print("Debug log is empty. Enable debug mode with /dbar debug")
+    return
+  end
+
+  self:Print(("=== Debug Log (%d entries) ==="):format(#log))
+  for i, entry in ipairs(log) do
+    self:Print(("[%d] %s - %s"):format(i, entry.time or "??:??:??", entry.message or ""))
+  end
+  self:Print("=== End Debug Log ===")
+  self:Print("To share with addon author: Copy messages above or check SavedVariables/DynamicBarDB.lua")
+end
+
+-- Clear debug log
+function DynamicBar:ClearDebugLog()
+  if not self.db or not self.db.global then
+    self:Print("Debug log not available.")
+    return
+  end
+
+  local count = #(self.db.global.debugLog or {})
+  self.db.global.debugLog = {}
+  self:Print(("Debug log cleared (%d entries removed)."):format(count))
 end
 
 --
@@ -341,6 +407,8 @@ function DynamicBar:HandleSlash(input)
     self:Print("  /dbar profileinfo - show current profile name and setup status")
     self:Print("  /dbar dump    - dump bag/classifier/resolver state (debug on)")
     self:Print("  /dbar pending - list pending items (debug on)")
+    self:Print("  /dbar debuglog - show persistent debug log (last 100 entries)")
+    self:Print("  /dbar clearlog - clear persistent debug log")
     self:Print("  /dbar rebuild - force rebuild (out of combat)")
     return
   end
@@ -426,6 +494,16 @@ function DynamicBar:HandleSlash(input)
     if profileName ~= expectedProfile then
       self:Print("|cffff0000WARNING: Profile mismatch!|r")
     end
+    return
+  end
+
+  if msg == "debuglog" then
+    self:ShowDebugLog()
+    return
+  end
+
+  if msg == "clearlog" then
+    self:ClearDebugLog()
     return
   end
 

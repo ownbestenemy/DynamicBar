@@ -2,7 +2,7 @@
 
 **Version:** 0.5-beta
 **Author:** Mark Sheldahl
-**AI-Assisted Development:** This addon was created with assistance from Claude (Anthropic). While AI helped with code generation and problem-solving, all design decisions, testing, and creative direction came from human input.
+**AI-Assisted Development:** This addon was created with assistance from Claude (Anthropic). While AI helped with code generation and problem-solving, all design decisions, testing, and creative direction came from human input and assisted in code creation.
 
 ## About
 
@@ -133,8 +133,17 @@ However, all creative decisions, feature prioritization, testing, and user exper
 **Report Issues:**
 - Include WoW version (TBC Classic 2.5.x)
 - Steps to reproduce
-- Any error messages from `/dbar debug`
+- Enable debug mode with `/dbar debug` and reproduce the issue
+- Use `/dbar debuglog` to view persistent debug messages
+- Share debug log by copying chat output or finding it in `WTF/Account/YourAccount/SavedVariables/DynamicBarDB.lua` (global.debugLog section)
 - Other installed addons (especially UI/action bar addons)
+
+**Debug Commands:**
+- `/dbar debug` - Toggle debug mode (logs to chat and SavedVariables)
+- `/dbar debuglog` - Display persistent debug log (last 100 entries)
+- `/dbar clearlog` - Clear debug log
+- `/dbar dump` - Dump current bag/item state
+- `/dbar pending` - List items pending classification
 
 ## License
 
