@@ -217,22 +217,33 @@ function UI:UpdateLockState()
 
   local locked = cfg.locked ~= false  -- Default to locked
 
+  -- Create background texture if it doesn't exist
+  if not self.bar._lockBg then
+    local bg = self.bar:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bg:SetAllPoints(self.bar)
+    bg:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Background")
+    bg:Hide()
+    self.bar._lockBg = bg
+
+    local border = self.bar:CreateTexture(nil, "BACKGROUND", nil, -7)
+    border:SetAllPoints(self.bar)
+    border:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+    border:SetTexCoord(0, 1, 0, 1)
+    border:Hide()
+    self.bar._lockBorder = border
+  end
+
   if locked then
     self.bar:EnableMouse(false)
-    self.bar:SetBackdrop(nil)  -- Remove visual indicator
+    self.bar._lockBg:Hide()
+    self.bar._lockBorder:Hide()
   else
     self.bar:EnableMouse(true)
-    -- Add visual indicator when unlocked
-    self.bar:SetBackdrop({
-      bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-      edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-      tile = true,
-      tileSize = 16,
-      edgeSize = 16,
-      insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    self.bar:SetBackdropColor(0, 0.5, 0, 0.3)  -- Green tint when unlocked
-    self.bar:SetBackdropBorderColor(0, 1, 0, 0.8)  -- Green border
+    -- Show visual indicator when unlocked
+    self.bar._lockBg:Show()
+    self.bar._lockBg:SetVertexColor(0, 0.5, 0, 0.3)  -- Green tint
+    self.bar._lockBorder:Show()
+    self.bar._lockBorder:SetVertexColor(0, 1, 0, 0.8)  -- Green border
   end
 
   DB:DPrint("Bar " .. (locked and "locked" or "unlocked"))
