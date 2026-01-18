@@ -308,6 +308,7 @@ function DynamicBar:HandleSlash(input)
     self:Print("  /dbar debug   - toggle debug logging")
     self:Print("  /dbar config  - open general settings")
     self:Print("  /dbar profiles - open profile management")
+    self:Print("  /dbar profileinfo - show current profile name and setup status")
     self:Print("  /dbar dump    - dump bag/classifier/resolver state (debug on)")
     self:Print("  /dbar pending - list pending items (debug on)")
     self:Print("  /dbar rebuild - force rebuild (out of combat)")
@@ -378,6 +379,14 @@ function DynamicBar:HandleSlash(input)
     self.db.profile._setupComplete = false
     self:Print("First-time setup flag reset. Popup will show in 8 seconds...")
     self:ShowFirstTimeSetup()
+    return
+  end
+
+  if msg == "profileinfo" or msg == "pinfo" then
+    local profileName = self.db:GetCurrentProfile()
+    local setupComplete = self.db.profile._setupComplete
+    self:Print("Current profile: " .. tostring(profileName))
+    self:Print("Setup complete: " .. tostring(setupComplete))
     return
   end
 
