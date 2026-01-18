@@ -130,3 +130,9 @@ function Resolver:ResolveBandage()
   return Resolve(function(info) return info.isBandage end, "bandageHeal")
 end
 
+function Resolver:ResolveHearth()
+  local cats = DB.Data and DB.Data.Categories
+  if not cats or not cats.Hearth then return nil, {} end
+  return ResolveByPriorityList(cats.Hearth)
+end
+

@@ -1,0 +1,207 @@
+Dynamic Consumable Bar — Design Contract (Beta)
+1. Purpose
+
+This addon provides a role-first, context-aware consumable action bar for WoW Classic / TBC that reduces cognitive load under pressure while remaining predictable, deterministic, and fully compliant with Blizzard’s UI and automation policies.
+
+The addon assists decision-making but never automates gameplay.
+
+2. Core Principles
+
+Player Intent First: Buttons represent capabilities, not fixed items.
+
+Trust Over Cleverness: Behavior must be explainable and stable.
+
+No Automation: The addon never performs actions without explicit player input.
+
+Combat Safety: No layout or meaning changes during combat.
+
+WoW ToS Compliance: No protected actions are automated or conditionally triggered.
+
+3. Bar Structure
+
+Single bar, maximum 12 buttons
+
+Dynamic footprint: Only relevant buttons appear
+
+Role-first ordering (urgency → convenience)
+
+Visually flat (beta): no skins, separators, or visual grouping
+
+Role-First Order (Conceptual)
+
+Emergency Conversion (Healthstone, Dark Rune, etc.)
+
+Health Potions
+
+Mana Potions
+
+Battle Elixir
+
+Guardian Elixir
+
+Flask
+
+Bandages
+
+Food / Drink (prep only)
+
+Quest / Contextual Items
+
+Weapon Buffs / Oils
+
+Misc Utility
+
+Hearthstone (always last)
+
+Low-urgency buttons never float ahead of higher-urgency groups.
+
+4. Modes (Implicit)
+
+The bar operates in two implicit modes:
+
+Battle Mode
+
+Active only while in combat
+
+Contents:
+
+Emergency Conversion
+
+Health Potions
+
+Mana Potions
+
+(Optional) Bandages
+
+Frozen layout and meaning
+
+No reflow, no reassignment
+
+Prep Mode
+
+Active out of combat
+
+Expanded contents (buffs, food, utility)
+
+Reflow allowed
+
+Item reassignment allowed
+
+Mode switching is implicit (no indicators in beta).
+
+5. Button Behavior
+
+Buttons may change assigned item only out of combat
+
+Buttons never change meaning mid-combat
+
+A button may exist in one mode and not the other
+
+All actions require explicit player input (click or keybind)
+
+6. Unusable Actions
+
+Relevant but temporarily unusable actions are shown greyed-out
+
+Greyed-out buttons:
+
+Cannot be clicked
+
+Cannot fire via keybind
+
+Are informational only
+
+Buttons are hidden entirely if the player lacks the capability (e.g., no item in bags)
+
+Greyed-out means “not now”, never “not configured”.
+
+7. Profiles
+
+Per-character profiles only
+
+Optional Copy-From-Profile action
+
+One-time copy
+
+No live linking
+
+No account-wide shared profiles in beta
+
+8. Ace3 Usage Policy
+
+Ace3 may be used only for:
+
+SavedVariables / profiles
+
+Options UI
+
+Slash commands
+
+Debug toggles
+
+Ace3 must never:
+
+Drive combat logic
+
+Select items
+
+Control secure actions
+
+Influence protected behavior
+
+Core logic must remain Ace-independent.
+
+9. World of Warcraft ToS / UI Policy Compliance
+
+This addon explicitly avoids all prohibited behaviors, including but not limited to:
+
+❌ No automatic item use
+
+❌ No conditional execution of protected actions
+
+❌ No combat decision automation
+
+❌ No reading or reacting to protected state to fire actions
+
+❌ No secure attribute changes in combat
+
+✔ All actions require a hardware event
+✔ All logic resolves before the click
+✔ Secure templates and Blizzard-approved APIs only
+✔ Behavior mirrors Blizzard default UI constraints
+
+If Blizzard’s default UI could not legally perform the action, this addon will not either.
+
+10. Beta Evaluation Criteria
+
+Success is defined by:
+
+Reduced hesitation in combat
+
+No surprise behavior
+
+Stable muscle memory
+
+Minimal need to open bags
+
+Player trust without explanation
+
+Failure indicators:
+
+“I wasn’t sure what it would do”
+
+Mid-combat visual changes
+
+Accidental or unexpected actions
+
+11. Non-Goals (Explicit)
+
+No DPS rotation assistance
+
+No AI decision-making
+
+No combat scripting
+
+No visual theming in beta
+
+No export/import strings in beta

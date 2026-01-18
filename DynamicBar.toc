@@ -5,10 +5,11 @@
 ## Version: 0.4
 ## SavedVariables: DynamicBarDB
 
-embeds.xml
+embeds_dynamicbar.xml
 Core.lua
 
 Debug.lua
+Config.lua
 
 Data/Categories.lua
 Data/BagCache.lua

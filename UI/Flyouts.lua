@@ -92,10 +92,40 @@ function Flyouts:_HideLater(flyoutFrame)
   C_Timer.After(Flyouts.HIDE_DELAY, function()
     flyoutFrame._hideTimer = nil
     if flyoutFrame._wantHide then
-      flyoutFrame:Hide()
-      flyoutFrame._wantHide = false
+      -- Combat-safe hide: only hide if not in combat
+      if not InCombatLockdown() then
+        flyoutFrame:Hide()
+        flyoutFrame._wantHide = false
+      else
+        -- Still in combat - retry after combat ends
+        -- Don't clear _wantHide so we remember to hide later
+        Flyouts:_ScheduleHideAfterCombat(flyoutFrame)
+      end
     end
   end)
+end
+
+-- Internal: schedule a hide for when combat ends
+function Flyouts:_ScheduleHideAfterCombat(flyoutFrame)
+  if flyoutFrame._combatHideScheduled then return end
+  flyoutFrame._combatHideScheduled = true
+
+  -- Poll for combat end (lightweight check every 0.5s)
+  local function checkCombat()
+    if not InCombatLockdown() and flyoutFrame._wantHide then
+      flyoutFrame:Hide()
+      flyoutFrame._wantHide = false
+      flyoutFrame._combatHideScheduled = false
+    elseif InCombatLockdown() and flyoutFrame._wantHide then
+      -- Still in combat, check again soon
+      C_Timer.After(0.5, checkCombat)
+    else
+      -- No longer want to hide, cancel
+      flyoutFrame._combatHideScheduled = false
+    end
+  end
+
+  C_Timer.After(0.5, checkCombat)
 end
 
 -- Internal: bind hover handlers to anchor + flyout frame once
@@ -138,8 +168,10 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
   local flyout = self:_EnsureContainer(anchorBtn)
   self:_BindHover(anchorBtn, flyout)
 
+  -- Combat-safe: cannot modify flyouts during combat
   if InCombatLockdown() then
-    flyout:Hide()
+    -- Just mark as wanting to hide, don't actually hide (protected in combat)
+    flyout._wantHide = true
     return
   end
 
@@ -191,11 +223,26 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
 end
 
 function Flyouts:HideAll(UI)
+  if InCombatLockdown() then return end
   if not UI or not UI.buttons then return end
   for i = 1, #UI.buttons do
     local b = UI.buttons[i]
     if b and b._dynFlyout then
       b._dynFlyout:Hide()
+    end
+  end
+end
+
+-- Hide all flyouts immediately, even during combat (flyout containers are non-secure frames)
+function Flyouts:HideAllImmediate(UI)
+  if not UI or not UI.buttons then return end
+  for i = 1, #UI.buttons do
+    local b = UI.buttons[i]
+    if b and b._dynFlyout then
+      -- Flyout container is a regular Frame (not secure), safe to hide in combat
+      b._dynFlyout:Hide()
+      b._dynFlyout._wantHide = false  -- Clear pending hide requests
+      b._dynFlyout._combatHideScheduled = false  -- Cancel any scheduled cleanup
     end
   end
 end

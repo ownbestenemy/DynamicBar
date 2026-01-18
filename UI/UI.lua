@@ -22,7 +22,7 @@ local function EnsureBar()
 
   bar:EnableMouse(false)
   bar:SetClampedToScreen(true)
-  bar:SetFrameStrata("DIALOG")
+  bar:SetFrameStrata("MEDIUM")
   bar:SetFrameLevel(100)
 
   UI.bar = bar
@@ -80,31 +80,37 @@ local function GetItemTex(itemID)
   return tex
 end
 
-local function AssignHearth()
-  if not UI.buttons[1] then return end
-  if InCombatLockdown() then return end
+-- AssignHearth removed - now uses ResolveHearth() like all other slots
 
-  local cache = DB.Data and DB.Data.BagCache
-  local cats  = DB.Data and DB.Data.Categories
-  if not cache or not cats or not cats.Hearth then return end
+--[[
+  SLOT_ORDER defines the role-first priority ordering per Design Contract.
+  Slots are assigned to buttons sequentially - no hardcoded indices.
 
-  local itemID = cache:FindFirst(cats.Hearth)
-  if not itemID then return end
-
-  UI.Actions:AssignMacro(UI.buttons[1], "/use item:" .. itemID, GetItemTex(itemID), itemID)
-end
-
--- Slot metadata for resolver-driven buttons (keeps UI.lua DRY)
-local SLOTS = {
-  { idx = 2, resolver = "ResolveFoodNonBuff", flyoutField = "_foodNonBuffFlyout" },
-  { idx = 3, resolver = "ResolveFoodBuff",    flyoutField = "_foodBuffFlyout" },
-  { idx = 4, resolver = "ResolveDrink",       flyoutField = "_drinkFlyout" },
-  { idx = 5, resolver = "ResolveHealthPotion",flyoutField = "_healthPotionFlyout" },
-  { idx = 6, resolver = "ResolveManaPotion",  flyoutField = "_manaPotionFlyout" },
-  { idx = 7, resolver = "ResolveBattleElixir",flyoutField = "_battleElixirFlyout" },
-  { idx = 8, resolver = "ResolveGuardianElixir",flyoutField = "_guardianElixirFlyout" },
-  { idx = 9, resolver = "ResolveHealthstone", flyoutField = "_healthstoneFlyout" },
-  { idx = 10,resolver = "ResolveBandage",     flyoutField = "_bandageFlyout" },
+  Order follows urgency → convenience:
+  1. Emergency Conversion (Healthstone, Dark Rune)
+  2. Health Potions
+  3. Mana Potions
+  4. Battle Elixir
+  5. Guardian Elixir
+  6. Flask (future)
+  7. Bandages
+  8. Food (buff)
+  9. Food (non-buff, prep only)
+  10. Drink (prep only)
+  11. Quest/Contextual (future)
+  12. Hearthstone (always last)
+]]--
+local SLOT_ORDER = {
+  { resolver = "ResolveHealthstone",     flyoutField = "_healthstoneFlyout" },
+  { resolver = "ResolveHealthPotion",    flyoutField = "_healthPotionFlyout" },
+  { resolver = "ResolveManaPotion",      flyoutField = "_manaPotionFlyout" },
+  { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout" },
+  { resolver = "ResolveGuardianElixir",  flyoutField = "_guardianElixirFlyout" },
+  { resolver = "ResolveBandage",         flyoutField = "_bandageFlyout" },
+  { resolver = "ResolveFoodBuff",        flyoutField = "_foodBuffFlyout" },
+  { resolver = "ResolveFoodNonBuff",     flyoutField = "_foodNonBuffFlyout" },
+  { resolver = "ResolveDrink",           flyoutField = "_drinkFlyout" },
+  { resolver = "ResolveHearth",          flyoutField = "_hearthFlyout" },
 }
 
 local function AssignResolverSlot(slot)
@@ -154,8 +160,18 @@ local function ApplySlotFlyout(slot)
 end
 
 function UI:Rebuild()
+  if not DynamicBarDB or not DynamicBarDB.profile then
+    if self.bar then self.bar:Hide() end
+    return
+  end
+
   if not DynamicBarDB.profile.enabled then
     if self.bar then self.bar:Hide() end
+    return
+  end
+
+  if not UI.Actions or not UI.Buttons or not UI.Flyouts then
+    DB:Print("UI modules not loaded")
     return
   end
 
@@ -165,19 +181,28 @@ function UI:Rebuild()
   UI.bar:Show()
 
   local cfg = GetCfg()
-  local n = cfg.buttons or 10
-  for i = 1, n do
-    UI.Actions:Clear(UI.buttons[i])
+  if not cfg then
+    DB:Print("Failed to get bar configuration")
+    return
   end
 
-  AssignHearth()
-
-  -- Resolver-driven slots (food/drink/potions/elixirs/etc)
-  for _, slot in ipairs(SLOTS) do
-    if slot.idx <= n then
-      AssignResolverSlot(slot)
-      ApplySlotFlyout(slot)
+  local n = cfg.buttons or 10
+  for i = 1, n do
+    if UI.buttons[i] then
+      UI.Actions:Clear(UI.buttons[i])
     end
+  end
+
+  -- Assign slots sequentially based on SLOT_ORDER priority (no hardcoded indices)
+  local nextButtonIdx = 1
+  for _, slot in ipairs(SLOT_ORDER) do
+    if nextButtonIdx > n then break end
+
+    slot.idx = nextButtonIdx  -- Dynamically assign button index
+    AssignResolverSlot(slot)
+    ApplySlotFlyout(slot)
+
+    nextButtonIdx = nextButtonIdx + 1
   end
 end
 
