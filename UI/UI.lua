@@ -219,18 +219,22 @@ function UI:UpdateLockState()
 
   -- Create background texture if it doesn't exist
   if not self.bar._lockBg then
-    local bg = self.bar:CreateTexture(nil, "BACKGROUND", nil, -8)
+    -- Bright green background overlay (OVERLAY layer so it's on top)
+    local bg = self.bar:CreateTexture(nil, "OVERLAY", nil, 7)
     bg:SetAllPoints(self.bar)
-    bg:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Background")
+    bg:SetTexture("Interface\\Buttons\\WHITE8X8")  -- Solid color texture
+    bg:SetVertexColor(0, 1, 0, 0.5)  -- Bright green, 50% opacity
     bg:Hide()
     self.bar._lockBg = bg
 
-    local border = self.bar:CreateTexture(nil, "BACKGROUND", nil, -7)
-    border:SetAllPoints(self.bar)
-    border:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
-    border:SetTexCoord(0, 1, 0, 1)
-    border:Hide()
-    self.bar._lockBorder = border
+    -- Create a text label for extra visibility
+    local label = self.bar:CreateFontString(nil, "OVERLAY")
+    label:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    label:SetText("DRAG ME")
+    label:SetPoint("CENTER", self.bar, "CENTER", 0, 0)
+    label:SetTextColor(1, 1, 1, 1)
+    label:Hide()
+    self.bar._lockLabel = label
   end
 
   if locked then
