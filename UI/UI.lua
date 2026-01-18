@@ -246,14 +246,34 @@ function UI:Rebuild()
     AssignResolverSlot(slot)
     ApplySlotFlyout(slot)
 
-    -- Grey out and disable if not valid for current mode
+    -- Apply visibility mode for unavailable slots
     if UI.buttons[i] then
+      local visMode = cfg.visibilityMode or "FADE"
+
       if not validForMode then
-        UI.buttons[i]:SetAlpha(0.4)  -- Grey appearance
-        UI.buttons[i]:EnableMouse(false)  -- Disable clicks
+        -- Unavailable slot - apply user's chosen visibility mode
+        if visMode == "FADE" then
+          UI.buttons[i]:SetAlpha(0.3)  -- Fade to 30%
+          UI.buttons[i]:EnableMouse(false)
+          UI.buttons[i]:Show()  -- Ensure visible (might be hidden from previous mode)
+        elseif visMode == "HIDE" then
+          UI.buttons[i]:Hide()  -- Completely hidden
+          UI.buttons[i]:SetAlpha(1.0)  -- Reset alpha for when it shows again
+          UI.buttons[i]:EnableMouse(false)
+        elseif visMode == "GREY" then
+          UI.buttons[i]:SetAlpha(0.4)  -- Grey appearance (original behavior)
+          UI.buttons[i]:EnableMouse(false)
+          UI.buttons[i]:Show()
+        else  -- ALWAYS
+          UI.buttons[i]:SetAlpha(1.0)  -- Full visibility
+          UI.buttons[i]:EnableMouse(true)  -- Allow clicks
+          UI.buttons[i]:Show()
+        end
       else
-        UI.buttons[i]:SetAlpha(1.0)  -- Normal appearance
-        UI.buttons[i]:EnableMouse(true)  -- Enable clicks
+        -- Available slot - always full visibility and clickable
+        UI.buttons[i]:SetAlpha(1.0)
+        UI.buttons[i]:EnableMouse(true)
+        UI.buttons[i]:Show()
       end
     end
   end
@@ -263,13 +283,6 @@ function UI:Rebuild()
     if UI.buttons[i] then
       UI.buttons[i]:Hide()
       UI.Actions:Clear(UI.buttons[i])
-    end
-  end
-
-  -- Ensure all slot buttons are shown (even if greyed)
-  for i = 1, math.min(#SLOT_ORDER, n) do
-    if UI.buttons[i] then
-      UI.buttons[i]:Show()
     end
   end
 end

@@ -39,6 +39,7 @@ local DB_DEFAULTS = {
       relPoint = "CENTER",
       x = 0,
       y = -180,
+      visibilityMode = "FADE",  -- How to display unavailable items: FADE, HIDE, GREY, ALWAYS
     },
   },
 }
