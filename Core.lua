@@ -34,8 +34,8 @@ local DB_DEFAULTS = {
     bar = {
       buttons = 10,
       scale = 1.0,
-      spacing = 6,
-      padding = 6,
+      spacing = 2,  -- Tighter spacing like Blizzard default
+      padding = 2,  -- Tighter padding like Blizzard default
       point = "CENTER",
       relPoint = "CENTER",
       x = 0,
@@ -230,7 +230,7 @@ function DynamicBar:ShowFirstTimeSetup()
           if self.UI and self.UI.UpdateLockState then
             self.UI:UpdateLockState()
           end
-          self:Print("Bar unlocked! Drag it to your preferred position, then lock it via /dbar config")
+          self:Print("Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'")
         end,
         OnCancel = function()
           self:Print("Using default position. Use /dbar config to reposition later.")

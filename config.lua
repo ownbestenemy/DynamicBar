@@ -234,7 +234,7 @@ function DynamicBar:InitConfig()
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
-              bar = { buttons = 10, scale = 1.0, spacing = 6, padding = 6 }
+              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2 }
             }
           }
           local defaults = DB_DEFAULTS.profile.bar
