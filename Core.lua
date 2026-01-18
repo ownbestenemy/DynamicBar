@@ -385,8 +385,17 @@ function DynamicBar:HandleSlash(input)
   if msg == "profileinfo" or msg == "pinfo" then
     local profileName = self.db:GetCurrentProfile()
     local setupComplete = self.db.profile._setupComplete
+    local playerName = UnitName("player")
+    local realmName = GetRealmName()
+    local expectedProfile = playerName .. " - " .. realmName
+
     self:Print("Current profile: " .. tostring(profileName))
+    self:Print("Expected profile: " .. expectedProfile)
     self:Print("Setup complete: " .. tostring(setupComplete))
+
+    if profileName ~= expectedProfile then
+      self:Print("|cffff0000WARNING: Profile mismatch!|r")
+    end
     return
   end
 
