@@ -28,6 +28,7 @@ local DB_DEFAULTS = {
 
     -- UI state for config panel
     _showAdvancedPosition = false,
+    _setupComplete = false,  -- Track if first-time setup has been shown
 
     -- one bar, 10 buttons by default
     bar = {
@@ -213,10 +214,48 @@ function DynamicBar:OnEnable()
 end
 
 --
+-- First-time setup popup
+--
+function DynamicBar:ShowFirstTimeSetup()
+  if not self.db.profile._setupComplete then
+    -- Delay popup to avoid conflicts with other addon popups (like ElvUI)
+    C_Timer.After(3, function()
+      StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
+        text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
+        button1 = "Position Now",
+        button2 = "Use Default",
+        OnAccept = function()
+          -- Unlock the bar for positioning
+          self.db.profile.bar.locked = false
+          if self.UI and self.UI.UpdateLockState then
+            self.UI:UpdateLockState()
+          end
+          self:Print("Bar unlocked! Drag it to your preferred position, then lock it via /dbar config")
+        end,
+        OnCancel = function()
+          self:Print("Using default position. Use /dbar config to reposition later.")
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+      }
+      StaticPopup_Show("DYNAMICBAR_FIRST_TIME_SETUP")
+    end)
+
+    -- Mark setup as complete so we don't show this again
+    self.db.profile._setupComplete = true
+  end
+end
+
+--
 -- Event handlers
 --
 function DynamicBar:OnPlayerEnteringWorld()
   ScheduleBagRefresh()
+
+  -- Show first-time setup on initial login (delayed to avoid ElvUI popup conflicts)
+  self:ShowFirstTimeSetup()
 end
 
 function DynamicBar:OnPlayerRegenEnabled()
