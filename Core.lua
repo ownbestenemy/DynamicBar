@@ -165,6 +165,14 @@ function DynamicBar:OnInitialize()
   -- SavedVariables: DynamicBarDB
   self.db = LibStub("AceDB-3.0"):New("DynamicBarDB", DB_DEFAULTS, true)
 
+  -- Force character-specific profile (fixes "Default" profile issue)
+  local charKey = UnitName("player") .. " - " .. GetRealmName()
+  if self.db:GetCurrentProfile() == "Default" then
+    -- If using Default profile, switch to character-specific profile
+    -- This ensures each character gets their own _setupComplete flag
+    self.db:SetProfile(charKey)
+  end
+
   -- Expose DB_DEFAULTS for config panel reset functions
   self.DB_DEFAULTS = DB_DEFAULTS
 
