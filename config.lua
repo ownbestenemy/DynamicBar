@@ -172,6 +172,27 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      visibilityMode = {
+        type = "select",
+        name = "Unavailable Items",
+        desc = "How to display prep items during combat (food, elixirs, drink)",
+        order = 26,
+        values = {
+          FADE = "Fade Out (Recommended)",
+          HIDE = "Hide Completely",
+          GREY = "Grey Out",
+          ALWAYS = "Always Show All",
+        },
+        sorting = { "FADE", "HIDE", "GREY", "ALWAYS" },
+        width = "full",
+        get = function() return self.db.profile.bar.visibilityMode or "FADE" end,
+        set = function(_, v)
+          self.db.profile.bar.visibilityMode = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("visibility_mode")
+          end
+        end,
+      },
       inheritElvUI = {
         type = "toggle",
         name = "Use ElvUI Spacing",
@@ -228,13 +249,13 @@ function DynamicBar:InitConfig()
         type = "execute",
         name = "Reset Layout",
         desc = "Reset all layout settings to default values",
-        order = 29,
+        order = 30,
         confirm = true,
         confirmText = "Reset button count, scale, spacing, and padding to defaults?",
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
-              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2 }
+              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2, visibilityMode = "FADE" }
             }
           }
           local defaults = DB_DEFAULTS.profile.bar
@@ -242,6 +263,7 @@ function DynamicBar:InitConfig()
           self.db.profile.bar.scale = defaults.scale
           self.db.profile.bar.spacing = defaults.spacing
           self.db.profile.bar.padding = defaults.padding
+          self.db.profile.bar.visibilityMode = defaults.visibilityMode
           if not InCombatLockdown() then
             self:RequestRebuild("reset_layout")
           end

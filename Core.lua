@@ -40,7 +40,7 @@ local DB_DEFAULTS = {
       relPoint = "CENTER",
       x = 0,
       y = -180,
-      visibilityMode = "FADE",
+      visibilityMode = "FADE",  -- How to display unavailable items: FADE, HIDE, GREY, ALWAYS
       inheritElvUI = true,  -- Automatically use ElvUI spacing if available
       locked = true,  -- Bar is locked (not draggable) by default
     },
@@ -63,6 +63,11 @@ function DynamicBar:DPrint(msg)
     self:Print("|cff99ccffDEBUG:|r " .. tostring(msg))
   end
 end
+
+--
+-- Combat state tracking
+--
+DynamicBar._inCombat = false
 
 --
 -- Rebuild orchestration
@@ -275,16 +280,33 @@ function DynamicBar:OnPlayerEnteringWorld()
 end
 
 function DynamicBar:OnPlayerRegenEnabled()
+  -- Set flag BEFORE rebuild to avoid race condition
+  self._inCombat = false
+  self:DPrint("Entering prep mode (combat ended)")
+
+  -- Rebuild to show prep mode slots
+  self:RequestRebuild("combat_leave")
+
+  -- Also process any pending rebuilds from config changes during combat
   if self._needsRebuild then
-    self:Rebuild("combat ended")
+    self:DPrint("Processing pending rebuild from combat")
+    self._needsRebuild = false
+    self:RequestRebuild("pending_from_combat")
   end
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
+  -- Set flag BEFORE rebuild to avoid race condition with InCombatLockdown()
+  self._inCombat = true
+  self:DPrint("Entering battle mode (combat started)")
+
   -- Combat started - hide all flyouts for clean combat UX
   if self.UI and self.UI.Flyouts and self.UI.Flyouts.HideAllImmediate then
     self.UI.Flyouts:HideAllImmediate(self.UI)
   end
+
+  -- Rebuild to show battle mode slots only
+  self:RequestRebuild("combat_enter")
 end
 
 function DynamicBar:OnBagUpdate()
