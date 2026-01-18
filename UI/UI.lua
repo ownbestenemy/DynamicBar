@@ -217,36 +217,43 @@ function UI:UpdateLockState()
 
   local locked = cfg.locked ~= false  -- Default to locked
 
-  -- Create background texture if it doesn't exist
-  if not self.bar._lockBg then
-    -- Bright green background overlay (OVERLAY layer so it's on top)
-    local bg = self.bar:CreateTexture(nil, "OVERLAY", nil, 7)
-    bg:SetAllPoints(self.bar)
-    bg:SetTexture("Interface\\Buttons\\WHITE8X8")  -- Solid color texture
-    bg:SetVertexColor(0, 1, 0, 0.5)  -- Bright green, 50% opacity
-    bg:Hide()
-    self.bar._lockBg = bg
+  -- Create background overlay frame if it doesn't exist
+  if not self.bar._lockOverlay then
+    -- Create a frame that sits on top of all buttons
+    local overlay = CreateFrame("Frame", nil, self.bar)
+    overlay:SetAllPoints(self.bar)
+    overlay:SetFrameStrata("HIGH")  -- Higher than buttons
+    overlay:SetFrameLevel(200)  -- Much higher than button levels (110+)
+    overlay:EnableMouse(false)  -- Don't block clicks
 
-    -- Create a text label for extra visibility
-    local label = self.bar:CreateFontString(nil, "OVERLAY")
-    label:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    -- Green background texture
+    local bg = overlay:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(overlay)
+    bg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bg:SetVertexColor(0, 1, 0, 0.4)  -- Bright green, 40% opacity
+
+    -- "DRAG ME" text label
+    local label = overlay:CreateFontString(nil, "OVERLAY")
+    label:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
     label:SetText("DRAG ME")
-    label:SetPoint("CENTER", self.bar, "CENTER", 0, 0)
+    label:SetPoint("CENTER", overlay, "CENTER", 0, 0)
     label:SetTextColor(1, 1, 1, 1)
-    label:Hide()
-    self.bar._lockLabel = label
+
+    overlay:Hide()
+    self.bar._lockOverlay = overlay
   end
 
   if locked then
     self.bar:EnableMouse(false)
-    self.bar._lockBg:Hide()
-    self.bar._lockLabel:Hide()
+    if self.bar._lockOverlay then
+      self.bar._lockOverlay:Hide()
+    end
     DB:Print("Bar locked")
   else
     self.bar:EnableMouse(true)
-    -- Show visual indicator when unlocked
-    self.bar._lockBg:Show()
-    self.bar._lockLabel:Show()
+    if self.bar._lockOverlay then
+      self.bar._lockOverlay:Show()
+    end
     DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
   end
 end
