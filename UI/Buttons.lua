@@ -18,23 +18,17 @@ function Buttons:CreateSecureButton(name, parent, size)
   btn:EnableMouse(true)
   self:RegisterSecureClicks(btn)
 
-  -- Background
-  local bg = btn:CreateTexture(nil, "BACKGROUND")
-  bg:SetAllPoints(btn)
-  bg:SetTexture("Interface\\Buttons\\UI-Quickslot2")
-
-  -- Icon
+  -- Icon (created first, preserved by skins)
   local icon = btn:CreateTexture(nil, "ARTWORK")
   icon:SetPoint("TOPLEFT", 2, -2)
   icon:SetPoint("BOTTOMRIGHT", -2, 2)
   btn._dynIcon = icon
   btn.icon = icon
 
-  -- Highlight
-  local hl = btn:CreateTexture(nil, "HIGHLIGHT")
-  hl:SetAllPoints(btn)
-  hl:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
-  hl:SetBlendMode("ADD")
+  -- Apply skin (creates background, highlight, pushed, disabled textures)
+  if DB.UI.Skins then
+    DB.UI.Skins:ApplyButtonSkin(btn)
+  end
 
   return btn
 end

@@ -198,6 +198,12 @@ function DynamicBar:OnEnable()
   self:RegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
   self:RegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
 
+  -- Initialize button skinning system
+  if self.UI and self.UI.Skins then
+    self.UI.Skins:Initialize()
+    self:DPrint("Button skin: " .. (self.UI.Skins:GetActiveSkinName() or "Unknown"))
+  end
+
   -- Initial build
   RebuildBagCache()
   ScheduleBagRefresh()

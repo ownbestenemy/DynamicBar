@@ -169,6 +169,18 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      buttonSkinInfo = {
+        type = "description",
+        name = function()
+          local skinName = "Unknown"
+          if self.UI and self.UI.Skins then
+            skinName = self.UI.Skins:GetActiveSkinName() or "Unknown"
+          end
+          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)"
+        end,
+        order = 27,
+        fontSize = "medium",
+      },
       resetLayout = {
         type = "execute",
         name = "Reset Layout",
