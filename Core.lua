@@ -219,32 +219,37 @@ end
 function DynamicBar:ShowFirstTimeSetup()
   if not self.db.profile._setupComplete then
     -- Delay popup to avoid conflicts with other addon popups (like ElvUI)
-    C_Timer.After(3, function()
-      StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
-        text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
-        button1 = "Position Now",
-        button2 = "Use Default",
-        OnAccept = function()
-          -- Unlock the bar for positioning
-          self.db.profile.bar.locked = false
-          if self.UI and self.UI.UpdateLockState then
-            self.UI:UpdateLockState()
-          end
-          self:Print("Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'")
-        end,
-        OnCancel = function()
-          self:Print("Using default position. Use /dbar config to reposition later.")
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3,
-      }
-      StaticPopup_Show("DYNAMICBAR_FIRST_TIME_SETUP")
+    -- Longer delay (8 seconds) to allow ElvUI setup to complete
+    C_Timer.After(8, function()
+      -- Check again in case user logged out during delay
+      if not self.db.profile._setupComplete then
+        StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
+          text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
+          button1 = "Position Now",
+          button2 = "Use Default",
+          OnAccept = function()
+            -- Unlock the bar for positioning
+            self.db.profile.bar.locked = false
+            if self.UI and self.UI.UpdateLockState then
+              self.UI:UpdateLockState()
+            end
+            self:Print("Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'")
+            -- Mark setup complete after user clicks "Position Now"
+            self.db.profile._setupComplete = true
+          end,
+          OnCancel = function()
+            self:Print("Using default position. Use /dbar config to reposition later.")
+            -- Mark setup complete after user clicks "Use Default"
+            self.db.profile._setupComplete = true
+          end,
+          timeout = 0,
+          whileDead = true,
+          hideOnEscape = true,
+          preferredIndex = 3,
+        }
+        StaticPopup_Show("DYNAMICBAR_FIRST_TIME_SETUP")
+      end
     end)
-
-    -- Mark setup as complete so we don't show this again
-    self.db.profile._setupComplete = true
   end
 end
 
