@@ -225,12 +225,15 @@ function UI:Rebuild()
     end
   end
 
-  -- Assign slots sequentially, filtering by current mode
-  local nextButtonIdx = 1
-  for _, slot in ipairs(SLOT_ORDER) do
-    if nextButtonIdx > n then break end
+  -- Assign ALL slots sequentially (no mode filtering)
+  -- Slots will be greyed/disabled if not valid for current mode
+  -- This preserves muscle memory - buttons never change position
+  for i, slot in ipairs(SLOT_ORDER) do
+    if i > n then break end
 
-    -- Check if this slot is valid for current mode
+    slot.idx = i  -- Sequential assignment (no gaps)
+
+    -- Check if slot is valid for current mode
     local validForMode = false
     for _, mode in ipairs(slot.modes or {"prep"}) do
       if mode == currentMode then
@@ -239,19 +242,34 @@ function UI:Rebuild()
       end
     end
 
-    if validForMode then
-      slot.idx = nextButtonIdx  -- Dynamically assign button index
-      AssignResolverSlot(slot)
-      ApplySlotFlyout(slot)
-      nextButtonIdx = nextButtonIdx + 1
+    -- Assign item regardless of mode
+    AssignResolverSlot(slot)
+    ApplySlotFlyout(slot)
+
+    -- Grey out and disable if not valid for current mode
+    if UI.buttons[i] then
+      if not validForMode then
+        UI.buttons[i]:SetAlpha(0.4)  -- Grey appearance
+        UI.buttons[i]:EnableMouse(false)  -- Disable clicks
+      else
+        UI.buttons[i]:SetAlpha(1.0)  -- Normal appearance
+        UI.buttons[i]:EnableMouse(true)  -- Enable clicks
+      end
     end
   end
 
-  -- Hide any buttons beyond the current count
-  for i = nextButtonIdx, #UI.buttons do
+  -- Hide any buttons beyond configured button count
+  for i = #SLOT_ORDER + 1, #UI.buttons do
     if UI.buttons[i] then
       UI.buttons[i]:Hide()
       UI.Actions:Clear(UI.buttons[i])
+    end
+  end
+
+  -- Ensure all slot buttons are shown (even if greyed)
+  for i = 1, math.min(#SLOT_ORDER, n) do
+    if UI.buttons[i] then
+      UI.buttons[i]:Show()
     end
   end
 end
