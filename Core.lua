@@ -41,6 +41,7 @@ local DB_DEFAULTS = {
       y = -180,
       visibilityMode = "FADE",
       inheritElvUI = true,  -- Automatically use ElvUI spacing if available
+      locked = true,  -- Bar is locked (not draggable) by default
     },
   },
 }

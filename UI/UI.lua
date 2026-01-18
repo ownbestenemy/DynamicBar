@@ -17,10 +17,36 @@ local function EnsureBar()
   if UI.bar then return UI.bar end
 
   local bar = CreateFrame("Frame", BAR_NAME, UIParent)
-  bar:EnableMouse(false)
   bar:SetClampedToScreen(true)
   bar:SetFrameStrata("MEDIUM")
   bar:SetFrameLevel(100)
+  bar:EnableMouse(false)  -- Start locked
+  bar:SetMovable(true)
+  bar:RegisterForDrag("LeftButton")
+
+  -- Drag start
+  bar:SetScript("OnDragStart", function(self)
+    if not InCombatLockdown() then
+      self:StartMoving()
+    end
+  end)
+
+  -- Drag stop - save position
+  bar:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+
+    -- Save the new position
+    local cfg = UI:GetBarConfig()
+    if cfg then
+      local point, _, relPoint, x, y = self:GetPoint()
+      cfg.point = point or "CENTER"
+      cfg.relPoint = relPoint or "CENTER"
+      cfg.x = x or 0
+      cfg.y = y or 0
+
+      DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+    end
+  end)
 
   UI.bar = bar
   return bar
@@ -182,6 +208,36 @@ local function ApplySlotFlyout(slot)
   )
 end
 
+-- Update bar lock state
+function UI:UpdateLockState()
+  if not self.bar then return end
+
+  local cfg = self:GetBarConfig()
+  if not cfg then return end
+
+  local locked = cfg.locked ~= false  -- Default to locked
+
+  if locked then
+    self.bar:EnableMouse(false)
+    self.bar:SetBackdrop(nil)  -- Remove visual indicator
+  else
+    self.bar:EnableMouse(true)
+    -- Add visual indicator when unlocked
+    self.bar:SetBackdrop({
+      bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+      edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+      tile = true,
+      tileSize = 16,
+      edgeSize = 16,
+      insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    })
+    self.bar:SetBackdropColor(0, 0.5, 0, 0.3)  -- Green tint when unlocked
+    self.bar:SetBackdropBorderColor(0, 1, 0, 0.8)  -- Green border
+  end
+
+  DB:DPrint("Bar " .. (locked and "locked" or "unlocked"))
+end
+
 function UI:Rebuild()
   if not DynamicBarDB or not DynamicBarDB.profile then
     if self.bar then self.bar:Hide() end
@@ -202,6 +258,7 @@ function UI:Rebuild()
   UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
+  UI:UpdateLockState()  -- Update lock/unlock state
   UI.bar:Show()
 
   local cfg = UI:GetBarConfig()

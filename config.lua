@@ -190,6 +190,20 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      locked = {
+        type = "toggle",
+        name = "Lock Bar Position",
+        desc = "Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position.",
+        order = 27.5,
+        width = "full",
+        get = function() return self.db.profile.bar.locked ~= false end,
+        set = function(_, v)
+          self.db.profile.bar.locked = v
+          if self.UI and self.UI.UpdateLockState then
+            self.UI:UpdateLockState()
+          end
+        end,
+      },
       buttonSkinInfo = {
         type = "description",
         name = function()
@@ -201,7 +215,11 @@ function DynamicBar:InitConfig()
           if self.db.profile.bar.inheritElvUI and IsAddOnLoaded("ElvUI") then
             elvInfo = " | ElvUI spacing active"
           end
-          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo
+          local lockInfo = ""
+          if self.db.profile.bar.locked == false then
+            lockInfo = " | |cffff0000UNLOCKED - Drag to move|r"
+          end
+          return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo .. lockInfo
         end,
         order = 28,
         fontSize = "medium",
