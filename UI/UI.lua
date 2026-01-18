@@ -219,12 +219,37 @@ function UI:UpdateLockState()
 
   -- Create background overlay frame if it doesn't exist
   if not self.bar._lockOverlay then
-    -- Create a frame that sits on top of all buttons
+    -- Create a frame that sits on top of all buttons and handles dragging
     local overlay = CreateFrame("Frame", nil, self.bar)
     overlay:SetAllPoints(self.bar)
     overlay:SetFrameStrata("HIGH")  -- Higher than buttons
     overlay:SetFrameLevel(200)  -- Much higher than button levels (110+)
-    overlay:EnableMouse(false)  -- Don't block clicks
+    overlay:EnableMouse(true)  -- Capture clicks for dragging
+    overlay:RegisterForDrag("LeftButton")
+
+    -- Drag handlers that delegate to parent bar
+    overlay:SetScript("OnDragStart", function()
+      if not InCombatLockdown() and self.bar then
+        self.bar:StartMoving()
+      end
+    end)
+
+    overlay:SetScript("OnDragStop", function()
+      if self.bar then
+        self.bar:StopMovingOrSizing()
+
+        -- Save position
+        local cfg = UI:GetBarConfig()
+        if cfg then
+          local point, _, relPoint, x, y = self.bar:GetPoint()
+          cfg.point = point or "CENTER"
+          cfg.relPoint = relPoint or "CENTER"
+          cfg.x = x or 0
+          cfg.y = y or 0
+          DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+        end
+      end
+    end)
 
     -- Green background texture
     local bg = overlay:CreateTexture(nil, "BACKGROUND")
