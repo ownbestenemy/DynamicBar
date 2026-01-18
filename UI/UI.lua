@@ -94,8 +94,10 @@ local function GetItemTex(itemID)
 end
 
 -- Get current mode based on combat state
+-- Uses explicit _inCombat flag instead of InCombatLockdown() to avoid
+-- race condition where PLAYER_REGEN_DISABLED fires before lockdown state syncs
 local function GetCurrentMode()
-  return InCombatLockdown() and "battle" or "prep"
+  return DB._inCombat and "battle" or "prep"
 end
 
 -- AssignHearth removed - now uses ResolveHearth() like all other slots

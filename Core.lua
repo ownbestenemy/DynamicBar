@@ -61,6 +61,11 @@ function DynamicBar:DPrint(msg)
 end
 
 --
+-- Combat state tracking
+--
+DynamicBar._inCombat = false
+
+--
 -- Rebuild orchestration
 --
 DynamicBar._needsRebuild = false
@@ -211,6 +216,8 @@ function DynamicBar:OnPlayerEnteringWorld()
 end
 
 function DynamicBar:OnPlayerRegenEnabled()
+  -- Set flag BEFORE rebuild to avoid race condition
+  self._inCombat = false
   self:DPrint("Entering prep mode (combat ended)")
 
   -- Rebuild to show prep mode slots
@@ -225,6 +232,8 @@ function DynamicBar:OnPlayerRegenEnabled()
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
+  -- Set flag BEFORE rebuild to avoid race condition with InCombatLockdown()
+  self._inCombat = true
   self:DPrint("Entering battle mode (combat started)")
 
   -- Combat started - hide all flyouts for clean combat UX
@@ -233,8 +242,6 @@ function DynamicBar:OnPlayerRegenDisabled()
   end
 
   -- Rebuild to show battle mode slots only
-  -- Note: This will be deferred by RequestRebuild since we're in combat
-  -- and will execute immediately after combat ends
   self:RequestRebuild("combat_enter")
 end
 
