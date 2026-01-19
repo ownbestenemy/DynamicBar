@@ -58,6 +58,12 @@ Cats.ManaPotions = {
   2455,  -- Minor Mana Potion
 }
 
+Cats.RejuvenationPotions = {
+  22850, -- Super Rejuvenation Potion (TBC: 1440-1760 HP + 1440-1760 Mana)
+  18253, -- Major Rejuvenation Potion (Classic: 900-1500 HP + 900-1500 Mana)
+  2456,  -- Minor Rejuvenation Potion (Classic: 90-150 HP + 90-150 Mana)
+}
+
 -- ordered highest priority first
 Cats.Hearth = {
   6948, -- Hearthstone

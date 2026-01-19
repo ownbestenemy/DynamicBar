@@ -66,6 +66,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 - Healthstone
 - Health Potions
 - Mana Potions
+- Rejuvenation Potions
 - Bandages
 
 **Prep Mode (Out of Combat):**
@@ -81,8 +82,9 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Supported Items (TBC Classic)
 
-**Health Potions:** Minor → Super → Greater → Superior → Major Healing/Rejuvenation
-**Mana Potions:** Minor → Greater → Superior → Major Mana/Rejuvenation
+**Health Potions:** Minor → Super → Greater → Superior → Major Healing
+**Mana Potions:** Minor → Greater → Superior → Major Mana
+**Rejuvenation Potions:** Minor → Major → Super Rejuvenation (restores both health + mana)
 **Healthstone:** All warlock variants
 **Battle Elixirs:** Strength, Agility, Mongoose, etc.
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.

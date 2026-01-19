@@ -77,9 +77,7 @@ end
 function Flyouts:_Show(flyoutFrame)
   if InCombatLockdown() then return end
   if flyoutFrame._count and flyoutFrame._count > 0 then
-    local a = flyoutFrame._anchor
-    flyoutFrame:SetFrameStrata(a:GetFrameStrata() or "DIALOG")
-    flyoutFrame:SetFrameLevel((a:GetFrameLevel() or 100) + 20)
+    -- Frame strata/level already set in _EnsureContainer() - no need to set on every hover
     flyoutFrame:Show()
   end
 end

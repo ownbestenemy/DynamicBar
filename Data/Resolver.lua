@@ -118,6 +118,12 @@ function Resolver:ResolveManaPotion()
   return ResolveByPriorityList(cats.ManaPotions)
 end
 
+function Resolver:ResolveRejuvenationPotion()
+  local cats = DB.Data and DB.Data.Categories
+  if not cats or not cats.RejuvenationPotions then return nil, {} end
+  return ResolveByPriorityList(cats.RejuvenationPotions)
+end
+
 function Resolver:ResolveFoodNonBuff()
   return Resolve(function(info) return info.isFood end, "health")
 end

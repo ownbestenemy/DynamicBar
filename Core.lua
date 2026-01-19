@@ -30,9 +30,9 @@ local DB_DEFAULTS = {
     _showAdvancedPosition = false,
     _setupComplete = false,  -- Track if first-time setup has been shown
 
-    -- one bar, 11 buttons by default (matches current SLOT_ORDER count with Flask)
+    -- one bar, 12 buttons by default (matches current SLOT_ORDER count with Flask + Rejuvenation Potion)
     bar = {
-      buttons = 11,
+      buttons = 12,
       scale = 1.0,
       spacing = 2,  -- Tighter spacing like Blizzard default
       padding = 2,  -- Tighter padding like Blizzard default

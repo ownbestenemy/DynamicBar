@@ -12,7 +12,11 @@
       "Bash(ls:*)",
       "Bash(git remote:*)",
       "Bash(git push:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git tag -a v0.6-beta -m \"$\\(cat <<''EOF''\nv0.6-beta: Flask support + Button Display Modes\n\nNEW FEATURES:\n- Flask Support \\(11 TBC+Classic flasks with auto-detection\\)\n- Button Display Modes \\(Smart/Static/Dynamic\\)\n\nTESTING NEEDED:\n- Flask detection and flyouts \\(need flasks in bags\\)\n- Button Display Modes in various scenarios\n- Cross-addon compatibility with ElvUI/Masque\n\nKNOWN ISSUES:\n- Flask feature untested by author \\(no access to flasks\\)\n- Button Display Modes need real-world keybind testing\n- See BETA_TESTING.md for comprehensive test guide\n\nCHANGELOG:\nhttps://github.com/yourusername/DynamicBar/blob/master/CHANGELOG.md\nEOF\n\\)\")",
+      "Bash(git -C \"e:\\\\dev\\\\addons\\\\DynamicBar\" diff UI/UI.lua)",
+      "Bash(git -C \"e:\\\\dev\\\\addons\\\\DynamicBar\" diff UI/Flyouts.lua)",
+      "Bash(git -C \"e:\\\\dev\\\\addons\\\\DynamicBar\" status --short)"
     ]
   }
 }

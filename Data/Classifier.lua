@@ -34,6 +34,7 @@ local function EmptyInfo()
     isBandage = false,
     isQuestUse = false,
     isFlask = false,
+    isRejuvenationPotion = false,
 
     health = 0,
     mana = 0,
@@ -163,8 +164,15 @@ function Classifier:InspectItem(itemID)
     end
   end
 
-  -- Never classify potions as food/drink (they can match "restores health")
+  -- Detect Rejuvenation Potions (restore both health AND mana) BEFORE general potion exclusion
   if itemType == "Consumable" and itemSubType == "Potion" then
+    if restoresHealth and restoresMana then
+      info.isRejuvenationPotion = true
+      info._final = true
+      self.cache[itemID] = info
+      return info
+    end
+    -- Never classify other potions as food/drink (they can match "restores health")
     self.cache[itemID] = info
     return info
   end

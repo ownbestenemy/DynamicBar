@@ -161,10 +161,11 @@ end
 ]]--
 local SLOT_ORDER = {
   -- Battle mode items (always visible)
-  { resolver = "ResolveHealthstone",     flyoutField = "_healthstoneFlyout",    modes = {"battle", "prep"} },
-  { resolver = "ResolveHealthPotion",    flyoutField = "_healthPotionFlyout",   modes = {"battle", "prep"} },
-  { resolver = "ResolveManaPotion",      flyoutField = "_manaPotionFlyout",     modes = {"battle", "prep"} },
-  { resolver = "ResolveBandage",         flyoutField = "_bandageFlyout",        modes = {"battle", "prep"} },
+  { resolver = "ResolveHealthstone",        flyoutField = "_healthstoneFlyout",        modes = {"battle", "prep"} },
+  { resolver = "ResolveHealthPotion",       flyoutField = "_healthPotionFlyout",       modes = {"battle", "prep"} },
+  { resolver = "ResolveManaPotion",         flyoutField = "_manaPotionFlyout",         modes = {"battle", "prep"} },
+  { resolver = "ResolveRejuvenationPotion", flyoutField = "_rejuvenationPotionFlyout", modes = {"battle", "prep"} },
+  { resolver = "ResolveBandage",            flyoutField = "_bandageFlyout",            modes = {"battle", "prep"} },
 
   -- Prep-only items (hidden in combat)
   { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout",   modes = {"prep"} },
@@ -226,7 +227,7 @@ local function ApplySlotFlyout(slot)
 end
 
 -- Update bar lock state
-function UI:UpdateLockState()
+function UI:UpdateLockState(silent)
   if not self.bar then return end
 
   local cfg = self:GetBarConfig()
@@ -328,13 +329,17 @@ function UI:UpdateLockState()
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Hide()
     end
-    DB:Print("Bar locked")
+    if not silent then
+      DB:Print("Bar locked")
+    end
   else
     self.bar:EnableMouse(true)
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Show()
     end
-    DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+    if not silent then
+      DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+    end
   end
 end
 
@@ -358,7 +363,7 @@ function UI:Rebuild()
   UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
-  UI:UpdateLockState()  -- Update lock/unlock state
+  UI:UpdateLockState(true)  -- Update lock/unlock state (silent - no chat messages during rebuild)
   UI.bar:Show()
 
   local cfg = UI:GetBarConfig()
