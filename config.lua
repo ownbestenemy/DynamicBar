@@ -197,17 +197,35 @@ function DynamicBar:InitConfig()
         type = "select",
         name = "Empty Button Slots",
         desc = "How to handle buttons with no items assigned\n\n" ..
-               "Smart (Recommended) - Empty buttons are invisible but space is reserved (stable keybinds)\n" ..
+               "|cff00ff00Smart (Recommended)|r - Empty buttons are invisible but space is reserved\n" ..
+               "  • Keybinds remain stable (button 1 is always button 1)\n" ..
+               "  • Clean appearance without clutter\n\n" ..
                "Static - All buttons always visible, including empty slots\n" ..
-               "Dynamic - Bar shrinks/grows with items (⚠️ WARNING: Button positions shift, breaking keybinds)",
+               "  • Shows empty placeholders for unused slots\n" ..
+               "  • Keybinds remain stable\n\n" ..
+               "|cffff0000Dynamic (Advanced)|r - Bar shrinks/grows with items\n" ..
+               "  • ⚠️ WARNING: Button positions shift as items appear/disappear\n" ..
+               "  • ⚠️ Keybinds will break (button 1 may become button 3 on next rebuild)\n" ..
+               "  • Not recommended unless you never use keybinds",
         order = 26.3,
         values = {
-          SMART = "Smart - Hide Empty (Recommended)",
+          SMART = "Smart - Binding Safe (Recommended)",
           STATIC = "Static - Show All Slots",
-          DYNAMIC = "Dynamic - Auto-Collapse (Breaks Keybinds)",
+          DYNAMIC = "Dynamic - Auto-Collapse (⚠️ Breaks Keybinds)",
         },
         sorting = { "SMART", "STATIC", "DYNAMIC" },
         width = "full",
+        confirm = function(_, v)
+          -- Show confirmation dialog when switching TO Dynamic mode
+          if v == "DYNAMIC" and self.db.profile.bar.buttonDisplayMode ~= "DYNAMIC" then
+            return "⚠️ WARNING: Dynamic mode shifts button positions on every rebuild.\n\n" ..
+                   "This WILL break your keybinds - the item assigned to a keybind will change as your inventory changes.\n\n" ..
+                   "Recommended: Use Smart mode instead (binding-safe, same visual cleanup).\n\n" ..
+                   "Continue with Dynamic mode?"
+          end
+          return false  -- No confirmation for other modes
+        end,
+        confirmText = "Enable Dynamic Mode (Breaks Keybinds)?",
         get = function() return self.db.profile.bar.buttonDisplayMode or "SMART" end,
         set = function(_, v)
           self.db.profile.bar.buttonDisplayMode = v

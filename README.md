@@ -1,6 +1,6 @@
 # DynamicBar
 
-**Version:** 0.5-beta
+**Version:** 0.6
 **Author:** Mark Sheldahl
 **AI-Assisted Development:** This addon was created with assistance from Claude (Anthropic). While AI helped with code generation and problem-solving, all design decisions, testing, and creative direction came from human input and assisted in code creation.
 
@@ -59,6 +59,21 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 - **Hide Completely** - Prep items disappear in combat
 - **Grey Out** - Prep items shown but disabled
 - **Always Show All** - All items visible always
+
+**Button Display Modes:**
+- **Smart (Recommended)** - Empty buttons are hidden but space reserved (stable keybinds)
+- **Static** - All buttons always visible, including empty slots
+- **Dynamic** - Bar shrinks/grows with items (⚠️ breaks keybinds)
+
+### Keybind Stability
+
+**Important:** For stable keybinds, use **Smart** or **Static** mode.
+
+- **Smart Mode (Recommended)**: Empty buttons are hidden but button positions never change. Keybind 1 always executes button 1, even if slots 2-5 are empty.
+- **Static Mode**: All buttons always visible (including empty slots). Keybinds remain stable.
+- **Dynamic Mode**: ⚠️ Button positions shift as items appear/disappear. Keybinds will break - not recommended if you use keybinds.
+
+To set keybinds: Press `ESC` → `Key Bindings` → scroll to `DynamicBar` section.
 
 ## Battle vs Prep Mode
 
