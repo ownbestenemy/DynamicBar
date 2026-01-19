@@ -26,7 +26,7 @@ function Flyouts:_EnsureContainer(anchorBtn)
   f._buttons = {}
   f._count = 0
   f._wantHide = false
-  f._hideTimer = nil
+  f._hideTimer = false
   f._dynBound = false
 
   anchorBtn._dynFlyout = f
@@ -88,7 +88,7 @@ function Flyouts:_HideLater(flyoutFrame)
 
   flyoutFrame._hideTimer = true
   C_Timer.After(Flyouts.HIDE_DELAY, function()
-    flyoutFrame._hideTimer = nil
+    flyoutFrame._hideTimer = false
     if flyoutFrame._wantHide then
       -- Combat-safe hide: only hide if not in combat
       if not InCombatLockdown() then

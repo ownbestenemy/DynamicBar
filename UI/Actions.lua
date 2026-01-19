@@ -113,11 +113,7 @@ function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   end
 
   icon:SetTexture(iconTexture)
-  if tooltipItemID then
   UpdateCountText(btn, tooltipItemID)
-else
-  if btn._dynCountText then btn._dynCountText:Hide() end
-end
 
   if tooltipItemID then self:SetTooltipItem(btn, tooltipItemID) end
 end

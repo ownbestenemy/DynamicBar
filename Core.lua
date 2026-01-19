@@ -528,56 +528,6 @@ function DynamicBar:ApplyProfileCompat()
   end
 end
 
---[[
-  DEPRECATED-REMOVE: QueueRebuildOutOfCombat() and OnRegenEnabled_Rebuild()
-
-  These functions create a duplicate PLAYER_REGEN_ENABLED event handler that conflicts
-  with the existing OnPlayerRegenEnabled() handler (line 195). This causes double rebuilds
-  when exiting combat and introduces complexity with _waitingForRegen flag management.
-
-  The existing OnPlayerRegenEnabled() + _needsRebuild flag pattern already handles
-  combat-deferred rebuilds correctly. Use RequestRebuild() directly instead, which
-  automatically defers rebuilds during combat via the _needsRebuild flag.
-
-  Search for "DEPRECATED-REMOVE" to find all marked code for future deletion.
-]]--
-
---[[
-function DynamicBar:QueueRebuildOutOfCombat(reason)
-  if InCombatLockdown and InCombatLockdown() then
-    self._deferredRebuildReason = reason or "deferred"
-    -- one-shot: register if not already registered
-    if not self._waitingForRegen then
-      self._waitingForRegen = true
-      self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnRegenEnabled_Rebuild")
-    end
-    if self.db and self.db.profile and self.db.profile.debug then
-      self:Print("Rebuild deferred until out of combat.")
-    end
-    return
-  end
-
-  -- out of combat: do it now
-  if ScheduleBagRefresh then ScheduleBagRefresh() end
-  if self.RequestRebuild then
-    self:RequestRebuild(reason or "rebuild")
-  else
-    -- fallback if RequestRebuild is not present (should be present in your project)
-    if self.Rebuild then self:Rebuild(reason or "rebuild") end
-  end
-end
-
-function DynamicBar:OnRegenEnabled_Rebuild()
-  self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-  self._waitingForRegen = false
-
-  local reason = self._deferredRebuildReason or "regen"
-  self._deferredRebuildReason = nil
-
-  self:QueueRebuildOutOfCombat(reason)
-end
-]]--
-
 function DynamicBar:InitProfileCallbacks()
   -- AceDB callbacks fire on profile swap/copy/reset
   self.db.RegisterCallback(self, "OnProfileChanged", "OnProfileEvent")

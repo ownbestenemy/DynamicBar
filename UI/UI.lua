@@ -13,6 +13,19 @@ function UI:GetBarConfig()
   return DB.db and DB.db.profile and DB.db.profile.bar
 end
 
+-- Save current bar position to config
+local function SaveBarPosition(bar)
+  local cfg = UI:GetBarConfig()
+  if cfg and bar then
+    local point, _, relPoint, x, y = bar:GetPoint()
+    cfg.point = point or "CENTER"
+    cfg.relPoint = relPoint or "CENTER"
+    cfg.x = x or 0
+    cfg.y = y or 0
+    DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+  end
+end
+
 local function EnsureBar()
   if UI.bar then return UI.bar end
 
@@ -34,18 +47,7 @@ local function EnsureBar()
   -- Drag stop - save position
   bar:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
-
-    -- Save the new position
-    local cfg = UI:GetBarConfig()
-    if cfg then
-      local point, _, relPoint, x, y = self:GetPoint()
-      cfg.point = point or "CENTER"
-      cfg.relPoint = relPoint or "CENTER"
-      cfg.x = x or 0
-      cfg.y = y or 0
-
-      DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-    end
+    SaveBarPosition(self)
   end)
 
   UI.bar = bar
@@ -255,17 +257,7 @@ function UI:UpdateLockState(silent)
     overlay:SetScript("OnDragStop", function()
       if self.bar then
         self.bar:StopMovingOrSizing()
-
-        -- Save position
-        local cfg = UI:GetBarConfig()
-        if cfg then
-          local point, _, relPoint, x, y = self.bar:GetPoint()
-          cfg.point = point or "CENTER"
-          cfg.relPoint = relPoint or "CENTER"
-          cfg.x = x or 0
-          cfg.y = y or 0
-          DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-        end
+        SaveBarPosition(self.bar)
       end
     end)
 
@@ -366,11 +358,6 @@ function UI:Rebuild()
     return
   end
 
-  if not DB.db.profile.enabled then
-    if self.bar then self.bar:Hide() end
-    return
-  end
-
   if not UI.Actions or not UI.Buttons or not UI.Flyouts then
     DB:Print("UI modules not loaded")
     return
@@ -435,7 +422,7 @@ function UI:Rebuild()
   -- =========================================================================
   if displayMode == "DYNAMIC" then
     local btnIdx = 1
-    for i, slot in ipairs(SLOT_ORDER) do
+    for _, slot in ipairs(SLOT_ORDER) do
       if btnIdx > n then break end
 
       -- Check if slot is valid for current mode
