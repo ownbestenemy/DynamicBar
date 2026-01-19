@@ -174,14 +174,16 @@ function DynamicBar:InitConfig()
       },
       visibilityMode = {
         type = "select",
-        name = "Unavailable Items",
-        desc = "How to display prep items during combat (food, elixirs, drink)",
+        name = "Prep-Only Slots During Combat",
+        desc = "How to display prep-mode items when you enter combat\n\n" ..
+               "Prep-only items: Elixirs, Flasks, Food, Drink (not usable in combat)\n" ..
+               "Battle items always visible: Health/Mana Potions, Healthstone, Bandages",
         order = 26,
         values = {
           FADE = "Fade Out (Recommended)",
           HIDE = "Hide Completely",
-          GREY = "Grey Out",
-          ALWAYS = "Always Show All",
+          GREY = "Grey Out (Disabled)",
+          ALWAYS = "Keep Visible (Always)",
         },
         sorting = { "FADE", "HIDE", "GREY", "ALWAYS" },
         width = "full",
@@ -211,7 +213,7 @@ function DynamicBar:InitConfig()
         values = {
           SMART = "Smart - Binding Safe (Recommended)",
           STATIC = "Static - Show All Slots",
-          DYNAMIC = "Dynamic - Auto-Collapse (⚠️ Breaks Keybinds)",
+          DYNAMIC = "⚠️ EXPERT: Dynamic (Breaks Keybinds)",
         },
         sorting = { "SMART", "STATIC", "DYNAMIC" },
         width = "full",

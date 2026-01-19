@@ -101,7 +101,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 **Mana Potions:** Minor → Greater → Superior → Major Mana
 **Rejuvenation Potions:** Minor → Major → Super Rejuvenation (restores both health + mana)
 **Healthstone:** All warlock variants
-**Battle Elixirs:** Strength, Agility, Mongoose, etc.
+**Battle Elixirs:** First elixir found in bags (use flyout menu to select specific elixir if you have multiple types)
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
 **Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
 **Bandages:** Linen → Netherweave (TBC highest tier)
@@ -111,6 +111,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Known Limitations (Beta)
 
+- **English clients only** - Localization planned for future release
 - No quest/contextual items yet
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)

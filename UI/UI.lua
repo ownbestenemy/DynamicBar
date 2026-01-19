@@ -335,7 +335,23 @@ function UI:UpdateLockState(silent)
   else
     self.bar:EnableMouse(true)
     if self.bar._lockOverlay then
-      self.bar._lockOverlay:Show()
+      -- Only show "DRAG ME" text if first-time setup
+      if not DB.db.profile._setupComplete then
+        -- Show full overlay with "DRAG ME" text
+        self.bar._lockOverlay:Show()
+      else
+        -- Show subtle green border without "DRAG ME" text
+        self.bar._lockOverlay:SetBackdrop({
+          edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+          edgeSize = 16,
+        })
+        self.bar._lockOverlay:SetBackdropBorderColor(0, 1, 0, 0.5)
+        self.bar._lockOverlay:Show()
+        -- Hide the "DRAG ME" text
+        if self.bar._lockOverlay.text then
+          self.bar._lockOverlay.text:Hide()
+        end
+      end
     end
     if not silent then
       DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
@@ -344,12 +360,13 @@ function UI:UpdateLockState(silent)
 end
 
 function UI:Rebuild()
-  if not DynamicBarDB or not DynamicBarDB.profile then
+  local DB = DynamicBar
+  if not DB.db or not DB.db.profile or not DB.db.profile.enabled then
     if self.bar then self.bar:Hide() end
     return
   end
 
-  if not DynamicBarDB.profile.enabled then
+  if not DB.db.profile.enabled then
     if self.bar then self.bar:Hide() end
     return
   end

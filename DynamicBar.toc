@@ -1,11 +1,11 @@
 ## Interface-BCC: 20505
 ## Title: DynamicBar
-## Notes: Role-first, context-aware consumable action bar for TBC Classic with battle/prep mode switching
+## Notes: Role-first, context-aware consumable action bar for TBC Classic (English clients only)
 ## Author: Mark Sheldahl
-## Version: 0.6
+## Version: 0.6a
 ## SavedVariables: DynamicBarDB
 ## X-Category: Action Bars
-## X-License: All Rights Reserved
+## X-License: MIT
 ## X-Website: https://github.com/ownbestenemy/DynamicBar
 ## X-Curse-Project-ID: TBD
 

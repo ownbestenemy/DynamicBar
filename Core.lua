@@ -143,7 +143,9 @@ DynamicBar._needsRebuild = false
 function DynamicBar:RequestRebuild(reason)
   self._needsRebuild = true
   self:DPrint("Rebuild scheduled" .. (reason and (": " .. reason) or ""))
-  if not InCombatLockdown() then
+  -- Use _inCombat flag instead of InCombatLockdown() to avoid race condition
+  -- where InCombatLockdown() may still return false briefly after PLAYER_REGEN_DISABLED fires
+  if not self._inCombat then
     self:Rebuild("request")
   end
 end
