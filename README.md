@@ -89,7 +89,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 **Battle Elixirs:** Strength, Agility, Mongoose, etc.
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
 **Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
-**Bandages:** Linen → Heavy Frostweave
+**Bandages:** Linen → Netherweave (TBC highest tier)
 **Food:** All Well Fed buff food + basic conjured food
 **Drink:** All mana regeneration beverages
 **Hearthstone:** Standard hearthstone
@@ -156,7 +156,12 @@ This is pre-release software. Distribution, modification, and commercial use are
 
 ## Acknowledgments
 
+**AutoBar** by MuffinManKen pioneered smart consumable management in WoW addons. If you're looking for a mature, feature-rich solution with years of development, check out AutoBar first - it's the gold standard and has paved the way for addons like this one.
+
+DynamicBar exists because I wanted something specific: minimal footprint, explicit control over what appears when, and a codebase I understand completely. It's a personal tool I'm sharing, not a competitor. Use what works for you.
+
 Huge thanks to:
+- MuffinManKen and the AutoBar project for pioneering this addon category
 - The WoW addon development community
 - Ace3 framework maintainers
 - ElvUI, Masque, Dominos, and Bartender teams
