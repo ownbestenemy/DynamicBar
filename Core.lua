@@ -142,7 +142,7 @@ DynamicBar._inCombat = false
 DynamicBar._needsRebuild = false
 function DynamicBar:RequestRebuild(reason)
   self._needsRebuild = true
-  self:DPrint("Rebuild requested" .. (reason and (": " .. reason) or ""))
+  self:DPrint("Rebuild scheduled" .. (reason and (": " .. reason) or ""))
   if not InCombatLockdown() then
     self:Rebuild("request")
   end
@@ -216,12 +216,12 @@ function DynamicBar:Rebuild(reason)
 
   if InCombatLockdown() then
     self._needsRebuild = true
-    self:DPrint("Rebuild deferred (combat)" .. (reason and (": " .. reason) or ""))
+    self:DPrint("Rebuild queued (in combat)" .. (reason and (": " .. reason) or ""))
     return
   end
 
   self._needsRebuild = false
-  self:DPrint("Rebuild executing" .. (reason and (": " .. reason) or ""))
+  self:DPrint("Bar updated" .. (reason and (": " .. reason) or ""))
 
   -- IMPORTANT: Never schedule a rebuild *from inside* Rebuild().
   -- That creates an out-of-combat infinite rebuild loop.
@@ -356,7 +356,7 @@ function DynamicBar:OnPlayerRegenEnabled()
 
   -- Also process any pending rebuilds from config changes during combat
   if self._needsRebuild then
-    self:DPrint("Processing pending rebuild from combat")
+    self:DPrint("Rebuild triggered (combat ended)")
     self._needsRebuild = false
     self:RequestRebuild("pending_from_combat")
   end
