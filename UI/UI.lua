@@ -433,6 +433,18 @@ function UI:UpdateLockState(silent)
   end
 end
 
+-- Update button visuals during combat (item counts, depleted items)
+-- Called from BAG_UPDATE when in combat - can't modify secure attributes
+function UI:UpdateButtonsInCombat()
+  if not InCombatLockdown() then return end  -- Only for combat updates
+
+  for i, btn in ipairs(self.buttons) do
+    if btn and btn:IsShown() and UI.Actions then
+      UI.Actions:UpdateInCombat(btn)
+    end
+  end
+end
+
 function UI:Rebuild()
   local DB = DynamicBar
   if not DB.db or not DB.db.profile or not DB.db.profile.enabled then
@@ -516,18 +528,26 @@ function UI:Rebuild()
         end
       end
 
-      -- Assign slot index and try to resolve item
-      slot.idx = btnIdx
-      local itemID = AssignResolverSlot(slot)
-
-      if itemID then
-        -- Item found - assign button and increment index
-        ApplySlotFlyout(slot)
-        ApplyVisibilityMode(UI.buttons[btnIdx], validForMode)
-        btnIdx = btnIdx + 1
-      else
-        -- No item - don't increment btnIdx, slot is skipped
+      -- CRITICAL: Skip prep-only slots entirely during combat
+      -- This prevents macros from being assigned to slots that shouldn't be usable
+      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
+      if not validForMode then
         slot.idx = nil
+        -- Don't assign anything - slot is completely skipped in combat
+      else
+        -- Assign slot index and try to resolve item
+        slot.idx = btnIdx
+        local itemID = AssignResolverSlot(slot)
+
+        if itemID then
+          -- Item found - assign button and increment index
+          ApplySlotFlyout(slot)
+          ApplyVisibilityMode(UI.buttons[btnIdx], validForMode)
+          btnIdx = btnIdx + 1
+        else
+          -- No item - don't increment btnIdx, slot is skipped
+          slot.idx = nil
+        end
       end
     end
 
@@ -557,17 +577,26 @@ function UI:Rebuild()
         end
       end
 
-      -- Assign slot and check if item exists
-      local itemID = AssignResolverSlot(slot)
-
-      if not itemID then
-        -- No item - hide button but keep position reserved
-        UI.buttons[i]:Hide()
+      -- CRITICAL: Skip prep-only slots entirely during combat
+      -- This prevents macros from being assigned to slots that shouldn't be usable
+      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
+      if not validForMode then
+        -- Clear any existing macro and hide - NO macro assignment
         UI.Actions:Clear(UI.buttons[i])
+        UI.buttons[i]:Hide()
       else
-        -- Item found - apply normal visibility mode
-        ApplySlotFlyout(slot)
-        ApplyVisibilityMode(UI.buttons[i], validForMode)
+        -- Assign slot and check if item exists
+        local itemID = AssignResolverSlot(slot)
+
+        if not itemID then
+          -- No item - hide button but keep position reserved
+          UI.buttons[i]:Hide()
+          UI.Actions:Clear(UI.buttons[i])
+        else
+          -- Item found - apply normal visibility mode
+          ApplySlotFlyout(slot)
+          ApplyVisibilityMode(UI.buttons[i], validForMode)
+        end
       end
     end
 
@@ -604,18 +633,29 @@ function UI:Rebuild()
         end
       end
 
-      -- Assign item regardless of whether it exists
-      local itemID = AssignResolverSlot(slot)
-      if itemID then
-        ApplySlotFlyout(slot)
-      else
-        -- No item - clear button but keep visible (STATIC mode shows empty slots)
+      -- CRITICAL: Skip prep-only slots entirely during combat
+      -- This prevents macros from being assigned to slots that shouldn't be usable
+      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
+      if not validForMode then
+        -- Clear any existing macro - NO macro assignment for prep-only in combat
         UI.Actions:Clear(UI.buttons[i])
         if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
-      end
+        -- Apply visibility (fade/hide/grey) - button has no action
+        ApplyVisibilityMode(UI.buttons[i], false)
+      else
+        -- Assign item regardless of whether it exists
+        local itemID = AssignResolverSlot(slot)
+        if itemID then
+          ApplySlotFlyout(slot)
+        else
+          -- No item - clear button but keep visible (STATIC mode shows empty slots)
+          UI.Actions:Clear(UI.buttons[i])
+          if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
+        end
 
-      -- Always show button (even if empty)
-      ApplyVisibilityMode(UI.buttons[i], validForMode)
+        -- Always show button (even if empty)
+        ApplyVisibilityMode(UI.buttons[i], validForMode)
+      end
     end
 
     -- Show empty placeholder buttons for slots beyond SLOT_ORDER (up to configured count)

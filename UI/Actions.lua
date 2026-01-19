@@ -115,5 +115,28 @@ function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   icon:SetTexture(iconTexture)
   UpdateCountText(btn, tooltipItemID)
 
+  -- Store itemID for in-combat count checks
+  btn._dynItemID = tooltipItemID
+
   if tooltipItemID then self:SetTooltipItem(btn, tooltipItemID) end
+end
+
+-- Update button visuals during combat when item count changes
+-- Called from BAG_UPDATE - only updates visual state, not secure attributes
+function Actions:UpdateInCombat(btn)
+  if not btn._dynItemID then return end
+
+  local cache = DynamicBar and DynamicBar.Data and DynamicBar.Data.BagCache
+  local count = cache and cache:GetCount(btn._dynItemID) or 0
+
+  -- Update count text (always safe, not a secure attribute)
+  UpdateCountText(btn, btn._dynItemID)
+
+  -- If item ran out, grey/fade the button to indicate it's unavailable
+  -- The macro still exists but will do nothing when clicked
+  if count == 0 then
+    btn:SetAlpha(0.3)
+    -- Note: Can't call EnableMouse(false) on SecureActionButton in combat
+    -- but the macro will simply fail gracefully when item is gone
+  end
 end

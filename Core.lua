@@ -411,6 +411,12 @@ function DynamicBar:OnBagUpdate()
   if not ok then
     self:Print("Error scheduling bag refresh: " .. tostring(err))
   end
+
+  -- In-combat visual updates (item counts, depleted items)
+  -- Can't rebuild in combat, but we can update visuals
+  if InCombatLockdown() and self.UI and self.UI.UpdateButtonsInCombat then
+    self.UI:UpdateButtonsInCombat()
+  end
 end
 
 function DynamicBar:OnSpellsChanged()
