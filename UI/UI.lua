@@ -409,21 +409,36 @@ function UI:UpdateLockState(silent)
   else
     self.bar:EnableMouse(true)
     if self.bar._lockOverlay then
-      -- Only show "DRAG ME" text if first-time setup
-      if not DB.db.profile._setupComplete then
-        -- Show full overlay with "DRAG ME" text
-        self.bar._lockOverlay:Show()
+      -- Always show overlay for dragging functionality
+      self.bar._lockOverlay:Show()
+
+      -- Get child elements (bg texture is first child, label is fontstring)
+      local children = { self.bar._lockOverlay:GetChildren() }
+      local regions = { self.bar._lockOverlay:GetRegions() }
+
+      if DB.db.profile._setupComplete then
+        -- Subsequent unlocks: dim the background, hide text/button
+        for _, region in ipairs(regions) do
+          if region:GetObjectType() == "Texture" then
+            region:SetVertexColor(0, 1, 0, 0.15)  -- Very subtle green
+          elseif region:GetObjectType() == "FontString" then
+            region:Hide()  -- Hide "DRAG ME" text
+          end
+        end
+        for _, child in ipairs(children) do
+          child:Hide()  -- Hide "Save & Lock" button
+        end
       else
-        -- Show subtle green border without "DRAG ME" text
-        self.bar._lockOverlay:SetBackdrop({
-          edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-          edgeSize = 16,
-        })
-        self.bar._lockOverlay:SetBackdropBorderColor(0, 1, 0, 0.5)
-        self.bar._lockOverlay:Show()
-        -- Hide the "DRAG ME" text
-        if self.bar._lockOverlay.text then
-          self.bar._lockOverlay.text:Hide()
+        -- First-time setup: show full overlay
+        for _, region in ipairs(regions) do
+          if region:GetObjectType() == "Texture" then
+            region:SetVertexColor(0, 1, 0, 0.4)  -- Bright green
+          elseif region:GetObjectType() == "FontString" then
+            region:Show()  -- Show "DRAG ME" text
+          end
+        end
+        for _, child in ipairs(children) do
+          child:Show()  -- Show "Save & Lock" button
         end
       end
     end
