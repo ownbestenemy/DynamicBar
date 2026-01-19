@@ -462,10 +462,11 @@ function UI:Rebuild()
       end
     end
 
-    -- Hide unused buttons
+    -- Hide and clear unused buttons
     for i = btnIdx, n do
       if UI.buttons[i] then
         UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
       end
     end
 
@@ -535,8 +536,14 @@ function UI:Rebuild()
       end
 
       -- Assign item regardless of whether it exists
-      AssignResolverSlot(slot)
-      ApplySlotFlyout(slot)
+      local itemID = AssignResolverSlot(slot)
+      if itemID then
+        ApplySlotFlyout(slot)
+      else
+        -- No item - clear button but keep visible (STATIC mode shows empty slots)
+        UI.Actions:Clear(UI.buttons[i])
+        if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
+      end
 
       -- Always show button (even if empty)
       ApplyVisibilityMode(UI.buttons[i], validForMode)
