@@ -403,9 +403,10 @@ function UI:UpdateLockState(silent)
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Hide()
     end
-    -- Rebuild to restore normal button visibility
-    if not InCombatLockdown() then
-      self:Rebuild()
+    -- Request rebuild to restore normal button visibility (only if not already in a rebuild)
+    -- Use RequestRebuild instead of direct Rebuild to avoid recursion
+    if not silent and not InCombatLockdown() then
+      DB:RequestRebuild("lock_state")
     end
     if not silent then
       DB:Print("Bar locked")
