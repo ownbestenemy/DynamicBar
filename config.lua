@@ -193,6 +193,29 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      buttonDisplayMode = {
+        type = "select",
+        name = "Empty Button Slots",
+        desc = "How to handle buttons with no items assigned\n\n" ..
+               "Smart (Recommended) - Empty buttons are invisible but space is reserved (stable keybinds)\n" ..
+               "Static - All buttons always visible, including empty slots\n" ..
+               "Dynamic - Bar shrinks/grows with items (⚠️ WARNING: Button positions shift, breaking keybinds)",
+        order = 26.3,
+        values = {
+          SMART = "Smart - Hide Empty (Recommended)",
+          STATIC = "Static - Show All Slots",
+          DYNAMIC = "Dynamic - Auto-Collapse (Breaks Keybinds)",
+        },
+        sorting = { "SMART", "STATIC", "DYNAMIC" },
+        width = "full",
+        get = function() return self.db.profile.bar.buttonDisplayMode or "SMART" end,
+        set = function(_, v)
+          self.db.profile.bar.buttonDisplayMode = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("button_display_mode")
+          end
+        end,
+      },
       inheritElvUI = {
         type = "toggle",
         name = "Use ElvUI Spacing",
@@ -255,7 +278,7 @@ function DynamicBar:InitConfig()
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
-              bar = { buttons = 10, scale = 1.0, spacing = 2, padding = 2, visibilityMode = "FADE" }
+              bar = { buttons = 11, scale = 1.0, spacing = 2, padding = 2, visibilityMode = "FADE" }
             }
           }
           local defaults = DB_DEFAULTS.profile.bar

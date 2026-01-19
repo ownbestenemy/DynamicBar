@@ -21,6 +21,25 @@ Cats.AllElixirs = {
   5997, 2458, 3383, 3389, 3825, 8951, 9179, 8827, 13445, 13447, 32062, 32063, 32067,
   32068, 22834, 22840, 22848
 }
+
+Cats.Flasks = {
+  -- TBC Flasks (Battle - attack power, spell damage, mana regen)
+  22861, -- Flask of Blinding Light (+80 Arcane/Holy spell damage, 2hr)
+  22866, -- Flask of Pure Death (+80 Shadow/Fire spell damage, 2hr)
+  22854, -- Flask of Relentless Assault (+120 Attack Power, 2hr)
+  22853, -- Flask of Mighty Restoration (+25 MP5, 2hr)
+
+  -- TBC Flasks (Guardian - stamina, defense, resistances)
+  22851, -- Flask of Fortification (+500 HP, 1500 Armor, 2hr)
+  22849, -- Flask of Chromatic Wonder (+35 all resist, 2hr)
+
+  -- Classic Flasks (still usable in TBC)
+  13510, -- Flask of the Titans (+400 HP, 2hr)
+  13511, -- Flask of Distilled Wisdom (+2000 Mana, 2hr)
+  13512, -- Flask of Supreme Power (+70 spell damage, 2hr)
+  13513, -- Flask of Chromatic Resistance (+25 all resist, 2hr)
+}
+
 Cats.Healthstones = {
   22105, -- Master Healthstone
   22104, -- Major Healthstone

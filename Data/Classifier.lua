@@ -33,6 +33,7 @@ local function EmptyInfo()
     isDrink = false,
     isBandage = false,
     isQuestUse = false,
+    isFlask = false,
 
     health = 0,
     mana = 0,
@@ -131,6 +132,7 @@ function Classifier:InspectItem(itemID)
   local isDrinking      = Has(j, "must remain seated while drinking")
   info.isBattleElixir   = j:find("battle elixir", 1, true) ~= nil
   info.isGuardianElixir = j:find("guardian elixir", 1, true) ~= nil
+  info.isFlask          = j:find("flask", 1, true) ~= nil
 
   -- Restores parsing
   local restoresHealth  = Has(j, "restores") and Has(j, "health")
@@ -190,14 +192,14 @@ function Classifier:InspectItem(itemID)
 
   -- Mark as final once we've made a determination or captured meaningful tooltip signals.
   if not info.pending then
-    if info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking then
+    if info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.isFlask or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking then
       info._final = true
     end
   end
 
   -- Finalization: only mark as final once we have meaningful information (prevents caching an empty scan forever).
   info._final = (info.pending ~= true) and
-  (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking)
+  (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.isFlask or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking)
 
   self.cache[itemID] = info
   return info
