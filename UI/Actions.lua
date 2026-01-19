@@ -47,25 +47,37 @@ function Actions:Clear(btn)
   btn:SetAttribute("type2", nil)
   btn:SetAttribute("macrotext2", nil)
 
+  -- Clear tooltip item so hidden buttons don't show tooltips on hover
+  btn._dynTooltipItemID = nil
+
   -- DO NOT wipe OnEnter/OnLeave here.
   -- Flyouts bind hover behavior; tooltips are set during AssignMacro().
   -- If you nil these, you will intermittently kill flyouts on rebuild.
-if btn._dynCountText then
-  btn._dynCountText:SetText("")
-  btn._dynCountText:Hide()
-end
+  if btn._dynCountText then
+    btn._dynCountText:SetText("")
+    btn._dynCountText:Hide()
+  end
 
   if btn._dynIcon then btn._dynIcon:SetTexture(nil) end
 end
 
 function Actions:SetTooltipItem(btn, itemID)
+  -- Store itemID on button so we can update it without re-wrapping handlers
+  btn._dynTooltipItemID = itemID
+
+  -- Only wrap handlers ONCE per button - check if already bound
+  if btn._dynTooltipBound then return end
+  btn._dynTooltipBound = true
+
   -- Preserve whatever OnEnter/OnLeave is already on the button (e.g., Flyouts)
   local prevEnter = btn:GetScript("OnEnter")
   btn:SetScript("OnEnter", function(self, ...)
     if prevEnter then prevEnter(self, ...) end
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetItemByID(itemID)
-    GameTooltip:Show()
+    if self._dynTooltipItemID then
+      GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+      GameTooltip:SetItemByID(self._dynTooltipItemID)
+      GameTooltip:Show()
+    end
   end)
 
   local prevLeave = btn:GetScript("OnLeave")
