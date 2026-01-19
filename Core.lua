@@ -365,8 +365,6 @@ function DynamicBar:OnPlayerRegenEnabled()
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
-  -- Set flag BEFORE rebuild to avoid race condition with InCombatLockdown()
-  self._inCombat = true
   self:DPrint("Entering battle mode (combat started)")
 
   -- Combat started - hide all flyouts for clean combat UX
@@ -374,8 +372,18 @@ function DynamicBar:OnPlayerRegenDisabled()
     self.UI.Flyouts:HideAllImmediate(self.UI)
   end
 
-  -- Rebuild to show battle mode slots only
-  self:RequestRebuild("combat_enter")
+  -- Set _inCombat BEFORE rebuild so GetCurrentMode() returns "battle"
+  -- This must happen before Rebuild() reads the mode
+  self._inCombat = true
+
+  -- Request rebuild to apply battle mode visibility
+  -- Use InCombatLockdown() here since it may still be false briefly
+  if not InCombatLockdown() then
+    self:Rebuild("combat_enter")
+  else
+    self._needsRebuild = true
+    self:DPrint("Rebuild queued (combat already locked)")
+  end
 end
 
 function DynamicBar:OnBagUpdate()
