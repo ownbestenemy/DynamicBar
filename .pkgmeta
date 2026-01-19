@@ -1,0 +1,25 @@
+package-as: DynamicBar
+
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+ignore:
+  - .git
+  - .gitignore
+  - .vscode
+  - .claude
+  - BETA_TESTING.md
+  - Design Contract.txt
+  - DynamicBar-*.zip
+  - README.md
+
+externals:
+  Libs/Ace3:
+    url: https://repos.wowace.com/wow/ace3/trunk
+    tag: latest
+
+move-folders:
+  DynamicBar/Libs/Ace3: Libs/Ace3
