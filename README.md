@@ -1,6 +1,6 @@
 # DynamicBar
 
-**Version:** 0.5-beta
+**Version:** 0.6
 **Author:** Mark Sheldahl
 **AI-Assisted Development:** This addon was created with assistance from Claude (Anthropic). While AI helped with code generation and problem-solving, all design decisions, testing, and creative direction came from human input and assisted in code creation.
 
@@ -66,18 +66,35 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 - **Grey Out** - Prep items shown but disabled
 - **Always Show All** - All items visible always
 
+**Button Display Modes:**
+- **Smart (Recommended)** - Empty buttons are hidden but space reserved (stable keybinds)
+- **Static** - All buttons always visible, including empty slots
+- **Dynamic** - Bar shrinks/grows with items (⚠️ breaks keybinds)
+
+### Keybind Stability
+
+**Important:** For stable keybinds, use **Smart** or **Static** mode.
+
+- **Smart Mode (Recommended)**: Empty buttons are hidden but button positions never change. Keybind 1 always executes button 1, even if slots 2-5 are empty.
+- **Static Mode**: All buttons always visible (including empty slots). Keybinds remain stable.
+- **Dynamic Mode**: ⚠️ Button positions shift as items appear/disappear. Keybinds will break - not recommended if you use keybinds.
+
+To set keybinds: Press `ESC` → `Key Bindings` → scroll to `DynamicBar` section.
+
 ## Battle vs Prep Mode
 
 **Battle Mode (In Combat):**
 - Healthstone
 - Health Potions
 - Mana Potions
+- Rejuvenation Potions
 - Bandages
 
 **Prep Mode (Out of Combat):**
 - All battle items +
 - Battle Elixirs
 - Guardian Elixirs
+- Flasks
 - Food (buff and non-buff)
 - Drink
 - Hearthstone
@@ -86,19 +103,21 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Supported Items (TBC Classic)
 
-**Health Potions:** Minor → Super → Greater → Superior → Major Healing/Rejuvenation
-**Mana Potions:** Minor → Greater → Superior → Major Mana/Rejuvenation
+**Health Potions:** Minor → Super → Greater → Superior → Major Healing
+**Mana Potions:** Minor → Greater → Superior → Major Mana
+**Rejuvenation Potions:** Minor → Major → Super Rejuvenation (restores both health + mana)
 **Healthstone:** All warlock variants
-**Battle Elixirs:** Strength, Agility, Mongoose, etc.
+**Battle Elixirs:** First elixir found in bags (use flyout menu to select specific elixir if you have multiple types)
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
-**Bandages:** Linen → Heavy Frostweave
+**Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
+**Bandages:** Linen → Netherweave (TBC highest tier)
 **Food:** All Well Fed buff food + basic conjured food
 **Drink:** All mana regeneration beverages
 **Hearthstone:** Standard hearthstone
 
 ## Known Limitations (Beta)
 
-- No Flask category yet (coming in next release)
+- **English clients only** - Localization planned for future release
 - No quest/contextual items yet
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)
@@ -159,7 +178,12 @@ This is pre-release software. Distribution, modification, and commercial use are
 
 ## Acknowledgments
 
+**AutoBar** by MuffinManKen pioneered smart consumable management in WoW addons. If you're looking for a mature, feature-rich solution with years of development, check out AutoBar first - it's the gold standard and has paved the way for addons like this one.
+
+DynamicBar exists because I wanted something specific: minimal footprint, explicit control over what appears when, and a codebase I understand completely. It's a personal tool I'm sharing, not a competitor. Use what works for you.
+
 Huge thanks to:
+- MuffinManKen and the AutoBar project for pioneering this addon category
 - The WoW addon development community
 - Ace3 framework maintainers
 - ElvUI, Masque, Dominos, and Bartender teams

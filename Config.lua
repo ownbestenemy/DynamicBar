@@ -138,7 +138,7 @@ function DynamicBar:InitConfig()
 
           -- Auto-calculate grid dimensions when switching to GRID mode
           if v == "GRID" and not self.db.profile.bar.gridRows then
-            local buttons = self.db.profile.bar.buttons or 10
+            local buttons = self.db.profile.bar.buttons or 12
             -- Default to 2 rows for most button counts
             self.db.profile.bar.gridRows = 2
             self.db.profile.bar.gridCols = math.ceil(buttons / 2)
@@ -181,7 +181,7 @@ function DynamicBar:InitConfig()
         hidden = function()
           return (self.db.profile.bar.layoutMode or "HORIZONTAL") ~= "GRID"
         end,
-        get = function() return self.db.profile.bar.gridCols or 5 end,
+        get = function() return self.db.profile.bar.gridCols or 6 end,
         set = function(_, v)
           self.db.profile.bar.gridCols = v
           if not InCombatLockdown() then
@@ -353,14 +353,16 @@ function DynamicBar:InitConfig()
       },
       visibilityMode = {
         type = "select",
-        name = "Unavailable Items",
-        desc = "How to display prep items during combat (food, elixirs, drink)",
-        order = 30,
+        name = "Prep-Only Slots During Combat",
+        desc = "How to display prep-mode items when you enter combat\n\n" ..
+               "Prep-only items: Elixirs, Flasks, Food, Drink (not usable in combat)\n" ..
+               "Battle items always visible: Health/Mana Potions, Healthstone, Bandages",
+        order = 29.6,
         values = {
           FADE = "Fade Out (Recommended)",
           HIDE = "Hide Completely",
-          GREY = "Grey Out",
-          ALWAYS = "Always Show All",
+          GREY = "Grey Out (Disabled)",
+          ALWAYS = "Keep Visible (Always)",
         },
         sorting = { "FADE", "HIDE", "GREY", "ALWAYS" },
         width = "full",
@@ -372,11 +374,52 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      buttonDisplayMode = {
+        type = "select",
+        name = "Empty Button Slots",
+        desc = "How to handle buttons with no items assigned\n\n" ..
+               "|cff00ff00Smart (Recommended)|r - Empty buttons are invisible but space is reserved\n" ..
+               "  • Keybinds remain stable (button 1 is always button 1)\n" ..
+               "  • Clean appearance without clutter\n\n" ..
+               "Static - All buttons always visible, including empty slots\n" ..
+               "  • Shows empty placeholders for unused slots\n" ..
+               "  • Keybinds remain stable\n\n" ..
+               "|cffff0000Dynamic (Advanced)|r - Bar shrinks/grows with items\n" ..
+               "  • ⚠️ WARNING: Button positions shift as items appear/disappear\n" ..
+               "  • ⚠️ Keybinds will break (button 1 may become button 3 on next rebuild)\n" ..
+               "  • Not recommended unless you never use keybinds",
+        order = 29.7,
+        values = {
+          SMART = "Smart - Binding Safe (Recommended)",
+          STATIC = "Static - Show All Slots",
+          DYNAMIC = "⚠️ EXPERT: Dynamic (Breaks Keybinds)",
+        },
+        sorting = { "SMART", "STATIC", "DYNAMIC" },
+        width = "full",
+        confirm = function(_, v)
+          -- Show confirmation dialog when switching TO Dynamic mode
+          if v == "DYNAMIC" and self.db.profile.bar.buttonDisplayMode ~= "DYNAMIC" then
+            return "⚠️ WARNING: Dynamic mode shifts button positions on every rebuild.\n\n" ..
+                   "This WILL break your keybinds - the item assigned to a keybind will change as your inventory changes.\n\n" ..
+                   "Recommended: Use Smart mode instead (binding-safe, same visual cleanup).\n\n" ..
+                   "Continue with Dynamic mode?"
+          end
+          return false  -- No confirmation for other modes
+        end,
+        confirmText = "Enable Dynamic Mode (Breaks Keybinds)?",
+        get = function() return self.db.profile.bar.buttonDisplayMode or "SMART" end,
+        set = function(_, v)
+          self.db.profile.bar.buttonDisplayMode = v
+          if not InCombatLockdown() then
+            self:RequestRebuild("button_display_mode")
+          end
+        end,
+      },
       inheritElvUI = {
         type = "toggle",
         name = "Use ElvUI Spacing",
         desc = "Automatically inherit button spacing and padding from ElvUI (horizontal mode only)",
-        order = 31,
+        order = 29.8,
         width = "full",
         disabled = function()
           -- Disable if ElvUI not installed or not in horizontal mode
@@ -395,7 +438,7 @@ function DynamicBar:InitConfig()
         type = "toggle",
         name = "Lock Bar Position",
         desc = "Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position.",
-        order = 32,
+        order = 29.9,
         width = "full",
         get = function() return self.db.profile.bar.locked ~= false end,
         set = function(_, v)
@@ -422,25 +465,25 @@ function DynamicBar:InitConfig()
           end
           return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo .. lockInfo
         end,
-        order = 33,
+        order = 29.95,
         fontSize = "medium",
       },
       resetLayout = {
         type = "execute",
         name = "Reset Layout",
         desc = "Reset all layout settings to default values",
-        order = 34,
+        order = 29.99,
         confirm = true,
         confirmText = "Reset button count, scale, layout mode, spacing, and padding to defaults?",
         func = function()
           local DB_DEFAULTS = self.DB_DEFAULTS or {
             profile = {
               bar = {
-                buttons = 10,
+                buttons = 12,
                 scale = 1.0,
                 layoutMode = "HORIZONTAL",
                 gridRows = 2,
-                gridCols = 5,
+                gridCols = 6,
                 spacingH = 2,
                 spacingV = 2,
                 padLeft = 2,
@@ -450,6 +493,7 @@ function DynamicBar:InitConfig()
                 spacing = 2,
                 padding = 2,
                 visibilityMode = "FADE",
+                buttonDisplayMode = "SMART",
               }
             }
           }
@@ -469,6 +513,7 @@ function DynamicBar:InitConfig()
           self.db.profile.bar.spacing = defaults.spacing
           self.db.profile.bar.padding = defaults.padding
           self.db.profile.bar.visibilityMode = defaults.visibilityMode
+          self.db.profile.bar.buttonDisplayMode = defaults.buttonDisplayMode
           if not InCombatLockdown() then
             self:RequestRebuild("reset_layout")
           end

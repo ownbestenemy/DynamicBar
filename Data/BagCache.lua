@@ -75,7 +75,3 @@ end
 function BagCache:Has(itemID)
   return (self.counts[itemID] or 0) > 0
 end
-
-function BagCache:RebuildIfPossible()
-  self:Rebuild()
-end

@@ -13,6 +13,19 @@ function UI:GetBarConfig()
   return DB.db and DB.db.profile and DB.db.profile.bar
 end
 
+-- Save current bar position to config
+local function SaveBarPosition(bar)
+  local cfg = UI:GetBarConfig()
+  if cfg and bar then
+    local point, _, relPoint, x, y = bar:GetPoint()
+    cfg.point = point or "CENTER"
+    cfg.relPoint = relPoint or "CENTER"
+    cfg.x = x or 0
+    cfg.y = y or 0
+    DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+  end
+end
+
 local function EnsureBar()
   if UI.bar then return UI.bar end
 
@@ -34,18 +47,7 @@ local function EnsureBar()
   -- Drag stop - save position
   bar:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
-
-    -- Save the new position
-    local cfg = UI:GetBarConfig()
-    if cfg then
-      local point, _, relPoint, x, y = self:GetPoint()
-      cfg.point = point or "CENTER"
-      cfg.relPoint = relPoint or "CENTER"
-      cfg.x = x or 0
-      cfg.y = y or 0
-
-      DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-    end
+    SaveBarPosition(self)
   end)
 
   UI.bar = bar
@@ -243,14 +245,16 @@ end
 ]]--
 local SLOT_ORDER = {
   -- Battle mode items (always visible)
-  { resolver = "ResolveHealthstone",     flyoutField = "_healthstoneFlyout",    modes = {"battle", "prep"} },
-  { resolver = "ResolveHealthPotion",    flyoutField = "_healthPotionFlyout",   modes = {"battle", "prep"} },
-  { resolver = "ResolveManaPotion",      flyoutField = "_manaPotionFlyout",     modes = {"battle", "prep"} },
-  { resolver = "ResolveBandage",         flyoutField = "_bandageFlyout",        modes = {"battle", "prep"} },
+  { resolver = "ResolveHealthstone",        flyoutField = "_healthstoneFlyout",        modes = {"battle", "prep"} },
+  { resolver = "ResolveHealthPotion",       flyoutField = "_healthPotionFlyout",       modes = {"battle", "prep"} },
+  { resolver = "ResolveManaPotion",         flyoutField = "_manaPotionFlyout",         modes = {"battle", "prep"} },
+  { resolver = "ResolveRejuvenationPotion", flyoutField = "_rejuvenationPotionFlyout", modes = {"battle", "prep"} },
+  { resolver = "ResolveBandage",            flyoutField = "_bandageFlyout",            modes = {"battle", "prep"} },
 
   -- Prep-only items (hidden in combat)
   { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout",   modes = {"prep"} },
   { resolver = "ResolveGuardianElixir",  flyoutField = "_guardianElixirFlyout", modes = {"prep"} },
+  { resolver = "ResolveFlask",           flyoutField = "_flaskFlyout",          modes = {"prep"} },
   { resolver = "ResolveFoodBuff",        flyoutField = "_foodBuffFlyout",       modes = {"prep"} },
   { resolver = "ResolveFoodNonBuff",     flyoutField = "_foodNonBuffFlyout",    modes = {"prep"} },
   { resolver = "ResolveDrink",           flyoutField = "_drinkFlyout",          modes = {"prep"} },
@@ -261,23 +265,24 @@ local SLOT_ORDER = {
 
 local function AssignResolverSlot(slot)
   local btn = UI.buttons[slot.idx]
-  if not btn then return end
-  if InCombatLockdown() then return end
+  if not btn then return nil end
+  if InCombatLockdown() then return nil end
 
   local resolver = DB.Data and DB.Data.Resolver
-  if not resolver then return end
+  if not resolver then return nil end
 
   local fn = resolver[slot.resolver]
-  if type(fn) ~= "function" then return end
+  if type(fn) ~= "function" then return nil end
 
   local itemID, flyout = fn(resolver)
   if not itemID then
     UI[slot.flyoutField] = {}
-    return
+    return nil
   end
 
   UI.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
   UI[slot.flyoutField] = flyout or {}
+  return itemID
 end
 
 local function ApplySlotFlyout(slot)
@@ -306,7 +311,7 @@ local function ApplySlotFlyout(slot)
 end
 
 -- Update bar lock state
-function UI:UpdateLockState()
+function UI:UpdateLockState(silent)
   if not self.bar then return end
 
   local cfg = self:GetBarConfig()
@@ -334,17 +339,7 @@ function UI:UpdateLockState()
     overlay:SetScript("OnDragStop", function()
       if self.bar then
         self.bar:StopMovingOrSizing()
-
-        -- Save position
-        local cfg = UI:GetBarConfig()
-        if cfg then
-          local point, _, relPoint, x, y = self.bar:GetPoint()
-          cfg.point = point or "CENTER"
-          cfg.relPoint = relPoint or "CENTER"
-          cfg.x = x or 0
-          cfg.y = y or 0
-          DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-        end
+        SaveBarPosition(self.bar)
       end
     end)
 
@@ -408,23 +403,39 @@ function UI:UpdateLockState()
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Hide()
     end
-    DB:Print("Bar locked")
+    if not silent then
+      DB:Print("Bar locked")
+    end
   else
     self.bar:EnableMouse(true)
     if self.bar._lockOverlay then
-      self.bar._lockOverlay:Show()
+      -- Only show "DRAG ME" text if first-time setup
+      if not DB.db.profile._setupComplete then
+        -- Show full overlay with "DRAG ME" text
+        self.bar._lockOverlay:Show()
+      else
+        -- Show subtle green border without "DRAG ME" text
+        self.bar._lockOverlay:SetBackdrop({
+          edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+          edgeSize = 16,
+        })
+        self.bar._lockOverlay:SetBackdropBorderColor(0, 1, 0, 0.5)
+        self.bar._lockOverlay:Show()
+        -- Hide the "DRAG ME" text
+        if self.bar._lockOverlay.text then
+          self.bar._lockOverlay.text:Hide()
+        end
+      end
     end
-    DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+    if not silent then
+      DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+    end
   end
 end
 
 function UI:Rebuild()
-  if not DynamicBarDB or not DynamicBarDB.profile then
-    if self.bar then self.bar:Hide() end
-    return
-  end
-
-  if not DynamicBarDB.profile.enabled then
+  local DB = DynamicBar
+  if not DB.db or not DB.db.profile or not DB.db.profile.enabled then
     if self.bar then self.bar:Hide() end
     return
   end
@@ -438,7 +449,7 @@ function UI:Rebuild()
   UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
-  UI:UpdateLockState()  -- Update lock/unlock state
+  UI:UpdateLockState(true)  -- Update lock/unlock state (silent - no chat messages during rebuild)
   UI.bar:Show()
 
   local cfg = UI:GetBarConfig()
@@ -449,6 +460,8 @@ function UI:Rebuild()
 
   local currentMode = GetCurrentMode()
   local n = cfg.buttons or 10
+  local displayMode = cfg.buttonDisplayMode or "SMART"
+  local visMode = cfg.visibilityMode or "FADE"
 
   -- Clear all currently assigned buttons
   for i = 1, n do
@@ -457,64 +470,170 @@ function UI:Rebuild()
     end
   end
 
-  -- Assign ALL slots sequentially (no mode filtering)
-  -- Slots will be greyed/disabled if not valid for current mode
-  -- This preserves muscle memory - buttons never change position
-  for i, slot in ipairs(SLOT_ORDER) do
-    if i > n then break end
-
-    slot.idx = i  -- Sequential assignment (no gaps)
-
-    -- Check if slot is valid for current mode
-    local validForMode = false
-    for _, mode in ipairs(slot.modes or {"prep"}) do
-      if mode == currentMode then
-        validForMode = true
-        break
+  -- Helper: Apply visibility mode for unavailable slots
+  local function ApplyVisibilityMode(btn, validForMode)
+    if not validForMode then
+      -- Unavailable slot - apply user's chosen visibility mode
+      if visMode == "FADE" then
+        btn:SetAlpha(0.3)  -- Fade to 30%
+        btn:EnableMouse(false)
+        btn:Show()  -- Ensure visible (might be hidden from previous mode)
+      elseif visMode == "HIDE" then
+        btn:Hide()  -- Completely hidden
+        btn:SetAlpha(1.0)  -- Reset alpha for when it shows again
+        btn:EnableMouse(false)
+      elseif visMode == "GREY" then
+        btn:SetAlpha(0.4)  -- Grey appearance (original behavior)
+        btn:EnableMouse(false)
+        btn:Show()
+      else  -- ALWAYS
+        btn:SetAlpha(1.0)  -- Full visibility
+        btn:EnableMouse(true)  -- Allow clicks
+        btn:Show()
       end
-    end
-
-    -- Assign item regardless of mode
-    AssignResolverSlot(slot)
-    ApplySlotFlyout(slot)
-
-    -- Apply visibility mode for unavailable slots
-    if UI.buttons[i] then
-      local visMode = cfg.visibilityMode or "FADE"
-
-      if not validForMode then
-        -- Unavailable slot - apply user's chosen visibility mode
-        if visMode == "FADE" then
-          UI.buttons[i]:SetAlpha(0.3)  -- Fade to 30%
-          UI.buttons[i]:EnableMouse(false)
-          UI.buttons[i]:Show()  -- Ensure visible (might be hidden from previous mode)
-        elseif visMode == "HIDE" then
-          UI.buttons[i]:Hide()  -- Completely hidden
-          UI.buttons[i]:SetAlpha(1.0)  -- Reset alpha for when it shows again
-          UI.buttons[i]:EnableMouse(false)
-        elseif visMode == "GREY" then
-          UI.buttons[i]:SetAlpha(0.4)  -- Grey appearance (original behavior)
-          UI.buttons[i]:EnableMouse(false)
-          UI.buttons[i]:Show()
-        else  -- ALWAYS
-          UI.buttons[i]:SetAlpha(1.0)  -- Full visibility
-          UI.buttons[i]:EnableMouse(true)  -- Allow clicks
-          UI.buttons[i]:Show()
-        end
-      else
-        -- Available slot - always full visibility and clickable
-        UI.buttons[i]:SetAlpha(1.0)
-        UI.buttons[i]:EnableMouse(true)
-        UI.buttons[i]:Show()
-      end
+    else
+      -- Available slot - always full visibility and clickable
+      btn:SetAlpha(1.0)
+      btn:EnableMouse(true)
+      btn:Show()
     end
   end
 
-  -- Hide any buttons beyond configured button count
-  for i = #SLOT_ORDER + 1, #UI.buttons do
-    if UI.buttons[i] then
-      UI.buttons[i]:Hide()
-      UI.Actions:Clear(UI.buttons[i])
+  -- =========================================================================
+  -- DYNAMIC MODE: Collapse empty slots (breaks keybinds - button positions shift)
+  -- =========================================================================
+  if displayMode == "DYNAMIC" then
+    local btnIdx = 1
+    for _, slot in ipairs(SLOT_ORDER) do
+      if btnIdx > n then break end
+
+      -- Check if slot is valid for current mode
+      local validForMode = false
+      for _, mode in ipairs(slot.modes or {"prep"}) do
+        if mode == currentMode then
+          validForMode = true
+          break
+        end
+      end
+
+      -- Assign slot index and try to resolve item
+      slot.idx = btnIdx
+      local itemID = AssignResolverSlot(slot)
+
+      if itemID then
+        -- Item found - assign button and increment index
+        ApplySlotFlyout(slot)
+        ApplyVisibilityMode(UI.buttons[btnIdx], validForMode)
+        btnIdx = btnIdx + 1
+      else
+        -- No item - don't increment btnIdx, slot is skipped
+        slot.idx = nil
+      end
+    end
+
+    -- Hide and clear unused buttons
+    for i = btnIdx, n do
+      if UI.buttons[i] then
+        UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
+      end
+    end
+
+  -- =========================================================================
+  -- SMART MODE: Hide empty buttons but reserve space (stable keybinds)
+  -- =========================================================================
+  elseif displayMode == "SMART" then
+    for i, slot in ipairs(SLOT_ORDER) do
+      if i > n then break end
+
+      slot.idx = i
+
+      -- Check if slot is valid for current mode
+      local validForMode = false
+      for _, mode in ipairs(slot.modes or {"prep"}) do
+        if mode == currentMode then
+          validForMode = true
+          break
+        end
+      end
+
+      -- Assign slot and check if item exists
+      local itemID = AssignResolverSlot(slot)
+
+      if not itemID then
+        -- No item - hide button but keep position reserved
+        UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
+      else
+        -- Item found - apply normal visibility mode
+        ApplySlotFlyout(slot)
+        ApplyVisibilityMode(UI.buttons[i], validForMode)
+      end
+    end
+
+    -- Hide buttons beyond SLOT_ORDER (no categories defined for these slots)
+    for i = #SLOT_ORDER + 1, n do
+      if UI.buttons[i] then
+        UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
+      end
+    end
+
+    -- Hide buttons beyond configured count
+    for i = n + 1, #UI.buttons do
+      if UI.buttons[i] then
+        UI.buttons[i]:Hide()
+      end
+    end
+
+  -- =========================================================================
+  -- STATIC MODE: Always show all slots (current/legacy behavior)
+  -- =========================================================================
+  else  -- STATIC
+    for i, slot in ipairs(SLOT_ORDER) do
+      if i > n then break end
+
+      slot.idx = i
+
+      -- Check if slot is valid for current mode
+      local validForMode = false
+      for _, mode in ipairs(slot.modes or {"prep"}) do
+        if mode == currentMode then
+          validForMode = true
+          break
+        end
+      end
+
+      -- Assign item regardless of whether it exists
+      local itemID = AssignResolverSlot(slot)
+      if itemID then
+        ApplySlotFlyout(slot)
+      else
+        -- No item - clear button but keep visible (STATIC mode shows empty slots)
+        UI.Actions:Clear(UI.buttons[i])
+        if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
+      end
+
+      -- Always show button (even if empty)
+      ApplyVisibilityMode(UI.buttons[i], validForMode)
+    end
+
+    -- Show empty placeholder buttons for slots beyond SLOT_ORDER (up to configured count)
+    for i = #SLOT_ORDER + 1, n do
+      if UI.buttons[i] then
+        UI.Actions:Clear(UI.buttons[i])
+        UI.buttons[i]:SetAlpha(1.0)
+        UI.buttons[i]:EnableMouse(false)  -- No item, so not clickable
+        UI.buttons[i]:Show()  -- Show as empty placeholder
+      end
+    end
+
+    -- Hide buttons beyond configured count
+    for i = n + 1, #UI.buttons do
+      if UI.buttons[i] then
+        UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
+      end
     end
   end
 end

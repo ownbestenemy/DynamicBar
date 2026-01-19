@@ -33,6 +33,8 @@ local function EmptyInfo()
     isDrink = false,
     isBandage = false,
     isQuestUse = false,
+    isFlask = false,
+    isRejuvenationPotion = false,
 
     health = 0,
     mana = 0,
@@ -94,16 +96,12 @@ function Classifier:InspectItem(itemID)
     return cached
   end
 
-  local _, _, _, _, _, classID, subClassID = GetItemInfoInstant(itemID)
+  local classID, subClassID = select(6, GetItemInfoInstant(itemID))
 
   -- Hard exclude: Recipes (prevents false positives)
   if classID == 9 then
     local info = EmptyInfo()
-
-    -- Mark as final once we have any meaningful classification or usable text.
-    info._final = (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse
-      or info.hasUse or info.isWellFed or info.health > 0 or info.mana > 0 or isEating or isDrinking)
-
+    info._final = true  -- Recipes are always final (nothing to classify)
     self.cache[itemID] = info
     return info
   end
@@ -131,6 +129,7 @@ function Classifier:InspectItem(itemID)
   local isDrinking      = Has(j, "must remain seated while drinking")
   info.isBattleElixir   = j:find("battle elixir", 1, true) ~= nil
   info.isGuardianElixir = j:find("guardian elixir", 1, true) ~= nil
+  info.isFlask          = j:find("flask", 1, true) ~= nil
 
   -- Restores parsing
   local restoresHealth  = Has(j, "restores") and Has(j, "health")
@@ -161,8 +160,15 @@ function Classifier:InspectItem(itemID)
     end
   end
 
-  -- Never classify potions as food/drink (they can match "restores health")
+  -- Detect Rejuvenation Potions (restore both health AND mana) BEFORE general potion exclusion
   if itemType == "Consumable" and itemSubType == "Potion" then
+    if restoresHealth and restoresMana then
+      info.isRejuvenationPotion = true
+      info._final = true
+      self.cache[itemID] = info
+      return info
+    end
+    -- Never classify other potions as food/drink (they can match "restores health")
     self.cache[itemID] = info
     return info
   end
@@ -188,16 +194,11 @@ function Classifier:InspectItem(itemID)
     info.isQuestUse = true
   end
 
-  -- Mark as final once we've made a determination or captured meaningful tooltip signals.
-  if not info.pending then
-    if info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking then
-      info._final = true
-    end
-  end
-
-  -- Finalization: only mark as final once we have meaningful information (prevents caching an empty scan forever).
-  info._final = (info.pending ~= true) and
-  (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or info.hasUse or info.isWellFed or restoresHealth or restoresMana or isEating or isDrinking)
+  -- Mark as final once we have meaningful information (prevents caching an empty scan forever)
+  info._final = (not info.pending) and
+    (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or
+     info.isFlask or info.hasUse or info.isWellFed or restoresHealth or restoresMana or
+     isEating or isDrinking)
 
   self.cache[itemID] = info
   return info
