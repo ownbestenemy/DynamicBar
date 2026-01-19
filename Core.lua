@@ -143,7 +143,9 @@ DynamicBar._needsRebuild = false
 function DynamicBar:RequestRebuild(reason)
   self._needsRebuild = true
   self:DPrint("Rebuild scheduled" .. (reason and (": " .. reason) or ""))
-  if not InCombatLockdown() then
+  -- Use _inCombat flag instead of InCombatLockdown() to avoid race condition
+  -- where InCombatLockdown() may still return false briefly after PLAYER_REGEN_DISABLED fires
+  if not self._inCombat then
     self:Rebuild("request")
   end
 end
@@ -363,8 +365,6 @@ function DynamicBar:OnPlayerRegenEnabled()
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
-  -- Set flag BEFORE rebuild to avoid race condition with InCombatLockdown()
-  self._inCombat = true
   self:DPrint("Entering battle mode (combat started)")
 
   -- Combat started - hide all flyouts for clean combat UX
@@ -372,8 +372,18 @@ function DynamicBar:OnPlayerRegenDisabled()
     self.UI.Flyouts:HideAllImmediate(self.UI)
   end
 
-  -- Rebuild to show battle mode slots only
-  self:RequestRebuild("combat_enter")
+  -- Set _inCombat BEFORE rebuild so GetCurrentMode() returns "battle"
+  -- This must happen before Rebuild() reads the mode
+  self._inCombat = true
+
+  -- Request rebuild to apply battle mode visibility
+  -- Use InCombatLockdown() here since it may still be false briefly
+  if not InCombatLockdown() then
+    self:Rebuild("combat_enter")
+  else
+    self._needsRebuild = true
+    self:DPrint("Rebuild queued (combat already locked)")
+  end
 end
 
 function DynamicBar:OnBagUpdate()
@@ -517,56 +527,6 @@ function DynamicBar:ApplyProfileCompat()
     _G.DynamicBarDB.profile = self.db.profile
   end
 end
-
---[[
-  DEPRECATED-REMOVE: QueueRebuildOutOfCombat() and OnRegenEnabled_Rebuild()
-
-  These functions create a duplicate PLAYER_REGEN_ENABLED event handler that conflicts
-  with the existing OnPlayerRegenEnabled() handler (line 195). This causes double rebuilds
-  when exiting combat and introduces complexity with _waitingForRegen flag management.
-
-  The existing OnPlayerRegenEnabled() + _needsRebuild flag pattern already handles
-  combat-deferred rebuilds correctly. Use RequestRebuild() directly instead, which
-  automatically defers rebuilds during combat via the _needsRebuild flag.
-
-  Search for "DEPRECATED-REMOVE" to find all marked code for future deletion.
-]]--
-
---[[
-function DynamicBar:QueueRebuildOutOfCombat(reason)
-  if InCombatLockdown and InCombatLockdown() then
-    self._deferredRebuildReason = reason or "deferred"
-    -- one-shot: register if not already registered
-    if not self._waitingForRegen then
-      self._waitingForRegen = true
-      self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnRegenEnabled_Rebuild")
-    end
-    if self.db and self.db.profile and self.db.profile.debug then
-      self:Print("Rebuild deferred until out of combat.")
-    end
-    return
-  end
-
-  -- out of combat: do it now
-  if ScheduleBagRefresh then ScheduleBagRefresh() end
-  if self.RequestRebuild then
-    self:RequestRebuild(reason or "rebuild")
-  else
-    -- fallback if RequestRebuild is not present (should be present in your project)
-    if self.Rebuild then self:Rebuild(reason or "rebuild") end
-  end
-end
-
-function DynamicBar:OnRegenEnabled_Rebuild()
-  self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-  self._waitingForRegen = false
-
-  local reason = self._deferredRebuildReason or "regen"
-  self._deferredRebuildReason = nil
-
-  self:QueueRebuildOutOfCombat(reason)
-end
-]]--
 
 function DynamicBar:InitProfileCallbacks()
   -- AceDB callbacks fire on profile swap/copy/reset

@@ -13,6 +13,19 @@ function UI:GetBarConfig()
   return DB.db and DB.db.profile and DB.db.profile.bar
 end
 
+-- Save current bar position to config
+local function SaveBarPosition(bar)
+  local cfg = UI:GetBarConfig()
+  if cfg and bar then
+    local point, _, relPoint, x, y = bar:GetPoint()
+    cfg.point = point or "CENTER"
+    cfg.relPoint = relPoint or "CENTER"
+    cfg.x = x or 0
+    cfg.y = y or 0
+    DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
+  end
+end
+
 local function EnsureBar()
   if UI.bar then return UI.bar end
 
@@ -34,18 +47,7 @@ local function EnsureBar()
   -- Drag stop - save position
   bar:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
-
-    -- Save the new position
-    local cfg = UI:GetBarConfig()
-    if cfg then
-      local point, _, relPoint, x, y = self:GetPoint()
-      cfg.point = point or "CENTER"
-      cfg.relPoint = relPoint or "CENTER"
-      cfg.x = x or 0
-      cfg.y = y or 0
-
-      DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-    end
+    SaveBarPosition(self)
   end)
 
   UI.bar = bar
@@ -255,17 +257,7 @@ function UI:UpdateLockState(silent)
     overlay:SetScript("OnDragStop", function()
       if self.bar then
         self.bar:StopMovingOrSizing()
-
-        -- Save position
-        local cfg = UI:GetBarConfig()
-        if cfg then
-          local point, _, relPoint, x, y = self.bar:GetPoint()
-          cfg.point = point or "CENTER"
-          cfg.relPoint = relPoint or "CENTER"
-          cfg.x = x or 0
-          cfg.y = y or 0
-          DB:DPrint("Bar position saved: " .. point .. " -> " .. relPoint .. " (" .. x .. ", " .. y .. ")")
-        end
+        SaveBarPosition(self.bar)
       end
     end)
 
@@ -335,7 +327,23 @@ function UI:UpdateLockState(silent)
   else
     self.bar:EnableMouse(true)
     if self.bar._lockOverlay then
-      self.bar._lockOverlay:Show()
+      -- Only show "DRAG ME" text if first-time setup
+      if not DB.db.profile._setupComplete then
+        -- Show full overlay with "DRAG ME" text
+        self.bar._lockOverlay:Show()
+      else
+        -- Show subtle green border without "DRAG ME" text
+        self.bar._lockOverlay:SetBackdrop({
+          edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+          edgeSize = 16,
+        })
+        self.bar._lockOverlay:SetBackdropBorderColor(0, 1, 0, 0.5)
+        self.bar._lockOverlay:Show()
+        -- Hide the "DRAG ME" text
+        if self.bar._lockOverlay.text then
+          self.bar._lockOverlay.text:Hide()
+        end
+      end
     end
     if not silent then
       DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
@@ -344,12 +352,8 @@ function UI:UpdateLockState(silent)
 end
 
 function UI:Rebuild()
-  if not DynamicBarDB or not DynamicBarDB.profile then
-    if self.bar then self.bar:Hide() end
-    return
-  end
-
-  if not DynamicBarDB.profile.enabled then
+  local DB = DynamicBar
+  if not DB.db or not DB.db.profile or not DB.db.profile.enabled then
     if self.bar then self.bar:Hide() end
     return
   end
@@ -418,7 +422,7 @@ function UI:Rebuild()
   -- =========================================================================
   if displayMode == "DYNAMIC" then
     local btnIdx = 1
-    for i, slot in ipairs(SLOT_ORDER) do
+    for _, slot in ipairs(SLOT_ORDER) do
       if btnIdx > n then break end
 
       -- Check if slot is valid for current mode
@@ -445,10 +449,11 @@ function UI:Rebuild()
       end
     end
 
-    -- Hide unused buttons
+    -- Hide and clear unused buttons
     for i = btnIdx, n do
       if UI.buttons[i] then
         UI.buttons[i]:Hide()
+        UI.Actions:Clear(UI.buttons[i])
       end
     end
 
@@ -518,8 +523,14 @@ function UI:Rebuild()
       end
 
       -- Assign item regardless of whether it exists
-      AssignResolverSlot(slot)
-      ApplySlotFlyout(slot)
+      local itemID = AssignResolverSlot(slot)
+      if itemID then
+        ApplySlotFlyout(slot)
+      else
+        -- No item - clear button but keep visible (STATIC mode shows empty slots)
+        UI.Actions:Clear(UI.buttons[i])
+        if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
+      end
 
       -- Always show button (even if empty)
       ApplyVisibilityMode(UI.buttons[i], validForMode)
