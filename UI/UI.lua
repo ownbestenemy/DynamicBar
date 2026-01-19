@@ -403,11 +403,28 @@ function UI:UpdateLockState(silent)
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Hide()
     end
+    -- Rebuild to restore normal button visibility
+    if not InCombatLockdown() then
+      self:Rebuild()
+    end
     if not silent then
       DB:Print("Bar locked")
     end
   else
     self.bar:EnableMouse(true)
+
+    -- Show ALL buttons while unlocked (for precise positioning)
+    -- Users can see full bar dimensions regardless of what items they have
+    if not InCombatLockdown() then
+      local n = cfg.buttons or 12
+      for i = 1, n do
+        if self.buttons[i] then
+          self.buttons[i]:Show()
+          self.buttons[i]:SetAlpha(0.5)  -- Dimmed to indicate positioning mode
+        end
+      end
+    end
+
     if self.bar._lockOverlay then
       -- Always show overlay for dragging functionality
       self.bar._lockOverlay:Show()
