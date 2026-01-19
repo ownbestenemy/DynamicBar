@@ -30,9 +30,9 @@ local DB_DEFAULTS = {
     _showAdvancedPosition = false,
     _setupComplete = false,  -- Track if first-time setup has been shown
 
-    -- one bar, 10 buttons by default
+    -- one bar, 11 buttons by default (matches current SLOT_ORDER count with Flask)
     bar = {
-      buttons = 10,
+      buttons = 11,
       scale = 1.0,
       spacing = 2,  -- Tighter spacing like Blizzard default
       padding = 2,  -- Tighter padding like Blizzard default
@@ -41,6 +41,7 @@ local DB_DEFAULTS = {
       x = 0,
       y = -180,
       visibilityMode = "FADE",  -- How to display unavailable items: FADE, HIDE, GREY, ALWAYS
+      buttonDisplayMode = "SMART",  -- How to handle empty slots: STATIC, SMART, DYNAMIC
       inheritElvUI = true,  -- Automatically use ElvUI spacing if available
       locked = true,  -- Bar is locked (not draggable) by default
     },

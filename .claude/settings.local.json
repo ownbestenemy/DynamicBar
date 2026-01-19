@@ -9,7 +9,10 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(config\\): add visibility mode for unavailable items\n\nAdds user-configurable visibility modes for prep items during combat,\nallowing players to choose how unavailable slots appear.\n\n## Visibility Modes\n\n**FADE \\(Recommended\\)** - Fades slots to 30% opacity\n- Maintains spatial consistency \\(slots don''t reflow\\)\n- Clear visual feedback on availability\n- Slots remain visible but disabled\n\n**HIDE** - Completely hides unavailable slots\n- Cleaner appearance during combat\n- May cause button positions to shift\n\n**GREY** - Greys out slots at 40% opacity\n- Original behavior before FADE mode\n- Slightly more visible than FADE\n\n**ALWAYS** - Shows all slots at full visibility\n- No visual distinction\n- All slots remain clickable\n\n## Implementation\n\n**Core.lua:**\n- Added visibilityMode to DB_DEFAULTS \\(default: \"FADE\"\\)\n\n**UI/UI.lua:**\n- Enhanced Rebuild\\(\\) to apply visibility mode logic\n- Removed redundant Show\\(\\) loop at end\n- Consolidated visibility logic into mode-aware block\n\n**config.lua:**\n- Added visibilityMode select dropdown\n- Positioned after layout controls \\(order 26\\)\n- Triggers rebuild on change \\(if out of combat\\)\n- Included in Reset Layout functionality\n\n## Design Benefits\n\n- Player choice over combat UX \\(empowerment\\)\n- FADE default provides best balance\n- HIDE option for minimalists\n- ALWAYS option for testing/flexibility\n- Consistent with trust-over-cleverness principle\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(rsync:*)",
       "Bash(powershell:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)"
     ]
   }
 }

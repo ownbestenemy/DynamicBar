@@ -72,6 +72,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 - All battle items +
 - Battle Elixirs
 - Guardian Elixirs
+- Flasks
 - Food (buff and non-buff)
 - Drink
 - Hearthstone
@@ -85,6 +86,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 **Healthstone:** All warlock variants
 **Battle Elixirs:** Strength, Agility, Mongoose, etc.
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
+**Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
 **Bandages:** Linen → Heavy Frostweave
 **Food:** All Well Fed buff food + basic conjured food
 **Drink:** All mana regeneration beverages
@@ -92,7 +94,6 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Known Limitations (Beta)
 
-- No Flask category yet (coming in next release)
 - No quest/contextual items yet
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)
