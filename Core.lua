@@ -7,6 +7,9 @@ local ADDON_NAME = ...
 local AceAddon = LibStub("AceAddon-3.0")
 DynamicBar = AceAddon:NewAddon("DynamicBar", "AceEvent-3.0", "AceConsole-3.0")
 
+-- Localization
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
+
 DynamicBar.name = ADDON_NAME
 
 -- Standarized constants
@@ -281,9 +284,9 @@ function DynamicBar:OnInitialize()
   self:RegisterChatCommand("dynamicbar", "HandleSlash")
 
   if self.db.profile.enabled then
-    self:Print("Loaded. (/dbar)")
+    self:Print(L["Loaded. (/dbar)"])
   else
-    self:Print("Loaded (disabled). (/dbar enable)")
+    self:Print(L["Loaded (disabled). (/dbar enable)"])
   end
 
   if self.InitConfig then
@@ -337,12 +340,12 @@ function DynamicBar:ShowFirstTimeSetup()
             if self.UI and self.UI.UpdateLockState then
               self.UI:UpdateLockState()
             end
-            self:Print("Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'")
+            self:Print(L["Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'"])
             -- Mark setup complete after user clicks "Position Now"
             self.db.profile._setupComplete = true
           end,
           OnCancel = function()
-            self:Print("Using default position. Use /dbar config to reposition later.")
+            self:Print(L["Using default position. Use /dbar config to reposition later."])
             -- Mark setup complete after user clicks "Use Default"
             self.db.profile._setupComplete = true
           end,
@@ -442,25 +445,25 @@ function DynamicBar:HandleSlash(input)
   local msg = (input or ""):lower()
 
   if msg == "" or msg == "help" then
-    self:Print("Commands:")
-    self:Print("  /dbar enable  - enable the addon")
-    self:Print("  /dbar disable - disable the addon")
-    self:Print("  /dbar debug   - toggle debug logging")
-    self:Print("  /dbar config  - open general settings")
-    self:Print("  /dbar profiles - open profile management")
-    self:Print("  /dbar profileinfo - show current profile name and setup status")
-    self:Print("  /dbar dump    - dump bag/classifier/resolver state (debug on)")
-    self:Print("  /dbar pending - list pending items (debug on)")
-    self:Print("  /dbar debuglog - show persistent debug log (last 100 entries)")
-    self:Print("  /dbar clearlog - clear persistent debug log")
-    self:Print("  /dbar rebuild - force rebuild (out of combat)")
+    self:Print(L["Commands:"])
+    self:Print(L["  /dbar enable  - enable the addon"])
+    self:Print(L["  /dbar disable - disable the addon"])
+    self:Print(L["  /dbar debug   - toggle debug logging"])
+    self:Print(L["  /dbar config  - open general settings"])
+    self:Print(L["  /dbar profiles - open profile management"])
+    self:Print(L["  /dbar profileinfo - show current profile name and setup status"])
+    self:Print(L["  /dbar dump    - dump bag/classifier/resolver state (debug on)"])
+    self:Print(L["  /dbar pending - list pending items (debug on)"])
+    self:Print(L["  /dbar debuglog - show persistent debug log (last 100 entries)"])
+    self:Print(L["  /dbar clearlog - clear persistent debug log"])
+    self:Print(L["  /dbar rebuild - force rebuild (out of combat)"])
     return
   end
   if msg == "config" or msg == "options" then
     if self.OpenConfig then
       self:OpenConfig()
     else
-      self:Print("Config UI not loaded.")
+      self:Print(L["Config UI not loaded."])
     end
     return
   end
@@ -469,7 +472,7 @@ function DynamicBar:HandleSlash(input)
     if AceConfigDialog then
       AceConfigDialog:Open("DynamicBar_Profiles")
     else
-      self:Print("AceConfigDialog not loaded.")
+      self:Print(L["AceConfigDialog not loaded."])
     end
     return
   end
@@ -478,7 +481,7 @@ function DynamicBar:HandleSlash(input)
     if self.Debug and self.Debug.Dump then
       self.Debug:Dump()
     else
-      self:Print("Debug module not available.")
+      self:Print(L["Debug module not available."])
     end
     return
   end
@@ -487,14 +490,14 @@ function DynamicBar:HandleSlash(input)
     if self.Debug and self.Debug.DumpPending then
       self.Debug:DumpPending()
     else
-      self:Print("Debug module not available.")
+      self:Print(L["Debug module not available."])
     end
     return
   end
 
   if msg == "enable" then
     self.db.profile.enabled = true
-    self:Print("Enabled.")
+    self:Print(L["Enabled."])
     ScheduleBagRefresh()
     self:RequestRebuild("enabled")
     return
@@ -502,13 +505,13 @@ function DynamicBar:HandleSlash(input)
 
   if msg == "disable" then
     self.db.profile.enabled = false
-    self:Print("Disabled (UI hiding comes later).")
+    self:Print(L["Disabled (UI hiding comes later)."])
     return
   end
 
   if msg == "debug" then
     self.db.profile.debug = not self.db.profile.debug
-    self:Print("Debug " .. (self.db.profile.debug and "ON" or "OFF"))
+    self:Print("Debug " .. (self.db.profile.debug and L["Debug ON"] or L["Debug OFF"]))
     return
   end
 
@@ -519,7 +522,7 @@ function DynamicBar:HandleSlash(input)
 
   if msg == "resetsetup" then
     self.db.profile._setupComplete = false
-    self:Print("First-time setup flag reset. Popup will show in 8 seconds...")
+    self:Print(L["First-time setup flag reset. Popup will show in 8 seconds..."])
     self:ShowFirstTimeSetup()
     return
   end
@@ -551,7 +554,7 @@ function DynamicBar:HandleSlash(input)
     return
   end
 
-  self:Print("Unknown command. Use /dbar help")
+  self:Print(L["Unknown command. Use /dbar help"])
 end
 
 function DynamicBar:ApplyProfileCompat()

@@ -2,6 +2,7 @@
 local DB = DynamicBar
 DB.UI = DB.UI or {}
 local UI = DB.UI
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
 
 UI.buttons = UI.buttons or {}
 
@@ -352,7 +353,7 @@ function UI:UpdateLockState(silent)
     -- "DRAG ME" text label
     local label = overlay:CreateFontString(nil, "OVERLAY")
     label:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
-    label:SetText("DRAG ME")
+    label:SetText(L["DRAG ME"])
     label:SetPoint("CENTER", overlay, "CENTER", 0, 10)
     label:SetTextColor(1, 1, 1, 1)
 
@@ -370,7 +371,7 @@ function UI:UpdateLockState(silent)
     -- Button text
     local btnText = lockBtn:CreateFontString(nil, "OVERLAY")
     btnText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    btnText:SetText("Save & Lock")
+    btnText:SetText(L["Save & Lock"])
     btnText:SetPoint("CENTER", lockBtn, "CENTER", 0, 0)
     btnText:SetTextColor(1, 1, 1, 1)
 
@@ -382,7 +383,7 @@ function UI:UpdateLockState(silent)
         if UI.UpdateLockState then
           UI:UpdateLockState()
         end
-        DB:Print("Bar position saved and locked!")
+        DB:Print(L["Bar position saved and locked!"])
       end
     end)
 
@@ -409,7 +410,7 @@ function UI:UpdateLockState(silent)
       DB:RequestRebuild("lock_state")
     end
     if not silent then
-      DB:Print("Bar locked")
+      DB:Print(L["Bar locked"])
     end
   else
     self.bar:EnableMouse(true)
@@ -461,7 +462,7 @@ function UI:UpdateLockState(silent)
       end
     end
     if not silent then
-      DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+      DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")
     end
   end
 end

@@ -7,6 +7,17 @@
   <Include file="Libs\Ace3\AceEvent-3.0\AceEvent-3.0.xml"/>
   <Include file="Libs\Ace3\AceConsole-3.0\AceConsole-3.0.xml"/>
   <Include file="Libs\Ace3\AceDB-3.0\AceDB-3.0.xml"/>
+  <Include file="Libs\Ace3\AceLocale-3.0\AceLocale-3.0.xml"/>
+
+  <!-- Locales (must load before Config.lua) -->
+  <Script file="Locales\enUS.lua"/>
+  <Script file="Locales\deDE.lua"/>
+  <Script file="Locales\frFR.lua"/>
+  <Script file="Locales\esES.lua"/>
+  <Script file="Locales\ruRU.lua"/>
+  <Script file="Locales\zhCN.lua"/>
+  <Script file="Locales\zhTW.lua"/>
+  <Script file="Locales\koKR.lua"/>
 
   <!-- Config UI stack (must be loaded before your Config.lua runs) -->
   <Include file="Libs\Ace3\AceGUI-3.0\AceGUI-3.0.xml"/>

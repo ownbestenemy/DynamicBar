@@ -1,5 +1,6 @@
 local ADDON_NAME = ...
 local DynamicBar = LibStub("AceAddon-3.0"):GetAddon("DynamicBar")
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
 
 -- Cache global function (TBC/Vanilla compatibility)
 local IsAddOnLoaded = IsAddOnLoaded or (C_AddOns and C_AddOns.IsAddOnLoaded)
@@ -9,7 +10,7 @@ function DynamicBar:InitConfig()
   local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
 
   if not AceConfig or not AceConfigDialog then
-    self:Print("AceConfig libs not loaded.")
+    self:Print(L["AceConfig libs not loaded."])
     return
   end
 
