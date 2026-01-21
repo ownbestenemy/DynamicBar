@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.2] - 2026-01-21
+
+### Fixed
+- **Stale item counts in combat** - Item counts now update immediately when consuming potions/bandages mid-combat
+- **CurseForge App install** - Fixed zip directory structure for proper installation via CurseForge app
+
 ## [0.6.1] - 2026-01-19
 
 ### Fixed
