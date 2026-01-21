@@ -692,24 +692,50 @@ end
 function DynamicBar:OpenConfig()
   local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
   if not AceConfigDialog then
-    self:Print("AceConfigDialog not loaded.")
+    self:Print(L["AceConfigDialog not loaded."])
     return
   end
   AceConfigDialog:Open("DynamicBar")
 
-  -- Make config window movable
+  -- Make config window movable and save/restore position
   local frame = AceConfigDialog.OpenFrames["DynamicBar"]
   if frame and frame.frame then
     local configFrame = frame.frame
+    local db = self.db.profile
+
+    -- Initialize config window position storage
+    db._configWindowPos = db._configWindowPos or {}
+
     configFrame:SetMovable(true)
     configFrame:EnableMouse(true)
     configFrame:RegisterForDrag("LeftButton")
-    configFrame:SetScript("OnDragStart", function(self)
-      self:StartMoving()
+    configFrame:SetClampedToScreen(true)
+
+    configFrame:SetScript("OnDragStart", function(f)
+      f:StartMoving()
     end)
-    configFrame:SetScript("OnDragStop", function(self)
-      self:StopMovingOrSizing()
+
+    configFrame:SetScript("OnDragStop", function(f)
+      f:StopMovingOrSizing()
+      -- Save position
+      local point, _, relPoint, x, y = f:GetPoint()
+      db._configWindowPos.point = point
+      db._configWindowPos.relPoint = relPoint
+      db._configWindowPos.x = x
+      db._configWindowPos.y = y
     end)
+
+    -- Restore saved position if available
+    if db._configWindowPos.point then
+      configFrame:ClearAllPoints()
+      configFrame:SetPoint(
+        db._configWindowPos.point,
+        UIParent,
+        db._configWindowPos.relPoint,
+        db._configWindowPos.x,
+        db._configWindowPos.y
+      )
+    end
   end
 end
 -- End of Config.lua
