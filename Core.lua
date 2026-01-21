@@ -306,6 +306,8 @@ function DynamicBar:OnEnable()
   self:RegisterEvent("BANKFRAME_CLOSED", "OnBagUpdate")
   self:RegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
   self:RegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
+  self:RegisterEvent("SPELL_UPDATE_COOLDOWN", "OnCooldownUpdate")
+  self:RegisterEvent("BAG_UPDATE_COOLDOWN", "OnCooldownUpdate")
 
   -- Initialize button skinning system
   if self.UI and self.UI.Skins then
@@ -436,6 +438,13 @@ end
 
 function DynamicBar:OnItemInfoReceived()
   ScheduleBagRefresh()
+end
+
+function DynamicBar:OnCooldownUpdate()
+  -- Update cooldown displays on all buttons
+  if self.UI and self.UI.Actions and self.UI.Actions.UpdateAllCooldowns then
+    self.UI.Actions:UpdateAllCooldowns()
+  end
 end
 
 --

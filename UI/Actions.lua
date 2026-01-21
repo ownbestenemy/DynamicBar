@@ -17,6 +17,35 @@ local function EnsureCountText(btn)
   return fs
 end
 
+-- Ensure cooldown frame exists on button
+local function EnsureCooldown(btn)
+  if btn._dynCooldown then return btn._dynCooldown end
+
+  local cd = CreateFrame("Cooldown", nil, btn, "CooldownFrameTemplate")
+  cd:SetAllPoints(btn)
+  cd:SetDrawEdge(true)
+  cd:SetDrawBling(true)
+  cd:SetDrawSwipe(true)
+
+  btn._dynCooldown = cd
+  return cd
+end
+
+-- Update cooldown display for an item
+local function UpdateCooldown(btn, itemID)
+  if not itemID then return end
+
+  local cd = EnsureCooldown(btn)
+  local start, duration, enable = GetItemCooldown(itemID)
+
+  if start and duration and duration > 0 and enable == 1 then
+    cd:SetCooldown(start, duration)
+    cd:Show()
+  else
+    cd:Hide()
+  end
+end
+
 local function UpdateCountText(btn, itemID)
   local fs = EnsureCountText(btn)
   local cache = DynamicBar and DynamicBar.Data and DynamicBar.Data.BagCache
@@ -114,11 +143,24 @@ function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
 
   icon:SetTexture(iconTexture)
   UpdateCountText(btn, tooltipItemID)
+  UpdateCooldown(btn, tooltipItemID)
 
   -- Store itemID for in-combat count checks
   btn._dynItemID = tooltipItemID
 
   if tooltipItemID then self:SetTooltipItem(btn, tooltipItemID) end
+end
+
+-- Update all button cooldowns (called periodically and on events)
+function Actions:UpdateAllCooldowns()
+  local UI = DB.UI
+  if not UI or not UI.buttons then return end
+
+  for _, btn in ipairs(UI.buttons) do
+    if btn and btn._dynItemID and btn:IsShown() then
+      UpdateCooldown(btn, btn._dynItemID)
+    end
+  end
 end
 
 -- Update button visuals during combat when item count changes
