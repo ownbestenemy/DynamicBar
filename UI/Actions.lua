@@ -35,8 +35,11 @@ end
 local function UpdateCooldown(btn, itemID)
   if not itemID then return end
 
+  local cache = DynamicBar and DynamicBar.Data and DynamicBar.Data.BagCache
+  if not cache then return end
+
   local cd = EnsureCooldown(btn)
-  local start, duration, enable = GetItemCooldown(itemID)
+  local start, duration, enable = cache:GetItemCooldown(itemID)
 
   if start and duration and duration > 0 and enable == 1 then
     cd:SetCooldown(start, duration)
