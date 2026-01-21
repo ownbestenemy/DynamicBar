@@ -407,15 +407,22 @@ function DynamicBar:OnPlayerRegenDisabled()
 end
 
 function DynamicBar:OnBagUpdate()
+  -- In-combat: rebuild cache synchronously, then update visuals
+  -- Must rebuild BEFORE visual update so counts are current
+  if InCombatLockdown() then
+    if self.Data and self.Data.BagCache then
+      self.Data.BagCache:Rebuild()
+    end
+    if self.UI and self.UI.UpdateButtonsInCombat then
+      self.UI:UpdateButtonsInCombat()
+    end
+    return  -- Skip scheduled refresh, we just did a sync rebuild
+  end
+
+  -- Out of combat: use throttled refresh + full UI rebuild
   local ok, err = pcall(ScheduleBagRefresh)
   if not ok then
     self:Print("Error scheduling bag refresh: " .. tostring(err))
-  end
-
-  -- In-combat visual updates (item counts, depleted items)
-  -- Can't rebuild in combat, but we can update visuals
-  if InCombatLockdown() and self.UI and self.UI.UpdateButtonsInCombat then
-    self.UI:UpdateButtonsInCombat()
   end
 end
 
