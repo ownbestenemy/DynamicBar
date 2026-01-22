@@ -180,6 +180,13 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
   flyout._count = count
 
   if count == 0 then
+    -- Clear all flyout buttons before hiding (prevents stale items)
+    local Actions = DB.UI and DB.UI.Actions
+    if Actions and flyout._buttons then
+      for i = 1, #flyout._buttons do
+        Actions:Clear(flyout._buttons[i])
+      end
+    end
     flyout:Hide()
     return
   end
@@ -194,9 +201,11 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
     btn:Show()
   end
 
-  -- Hide any extra pre-created buttons
+  -- Hide and clear any extra pre-created buttons (prevents stale items)
+  local Actions = DB.UI and DB.UI.Actions
   if flyout._buttons then
     for i = count + 1, #flyout._buttons do
+      if Actions then Actions:Clear(flyout._buttons[i]) end
       flyout._buttons[i]:Hide()
     end
   end
