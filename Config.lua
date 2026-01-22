@@ -121,6 +121,152 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      slotPriorityHeader = {
+        type = "header",
+        name = "Slot Priority",
+        order = 22.1,
+        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+      },
+      slotPriorityDesc = {
+        type = "description",
+        name = function()
+          local n = self.db.profile.bar.buttons or 12
+          return ("You have %d buttons. Use the buttons below to reorder which slots appear on your bar. Top %d slots will be shown."):format(n, n)
+        end,
+        order = 22.2,
+        fontSize = "medium",
+        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+      },
+      slotPriorityList = {
+        type = "group",
+        name = "Slot Order (drag to reorder)",
+        order = 22.3,
+        inline = true,
+        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+        args = (function()
+          -- Build slot priority controls dynamically
+          local slotArgs = {}
+          local UI = self.UI
+          local SLOT_DEFS = UI and UI.SLOT_DEFS
+          local DEFAULT_ORDER = UI and UI.DEFAULT_SLOT_ORDER
+
+          if not SLOT_DEFS or not DEFAULT_ORDER then
+            return { noUI = { type = "description", name = "UI not loaded yet.", order = 1 } }
+          end
+
+          -- Helper to get current slot order
+          local function GetCurrentOrder()
+            local custom = self.db.profile.bar.slotOrder
+            if custom and type(custom) == "table" and #custom > 0 then
+              return custom
+            end
+            -- Copy default order
+            local order = {}
+            for i, key in ipairs(DEFAULT_ORDER) do
+              order[i] = key
+            end
+            return order
+          end
+
+          -- Helper to save slot order
+          local function SaveOrder(order)
+            self.db.profile.bar.slotOrder = order
+            if not InCombatLockdown() then
+              self:RequestRebuild("slot_order")
+            end
+          end
+
+          -- Helper to move slot up
+          local function MoveUp(key)
+            local order = GetCurrentOrder()
+            for i, k in ipairs(order) do
+              if k == key and i > 1 then
+                order[i], order[i-1] = order[i-1], order[i]
+                break
+              end
+            end
+            SaveOrder(order)
+          end
+
+          -- Helper to move slot down
+          local function MoveDown(key)
+            local order = GetCurrentOrder()
+            for i, k in ipairs(order) do
+              if k == key and i < #order then
+                order[i], order[i+1] = order[i+1], order[i]
+                break
+              end
+            end
+            SaveOrder(order)
+          end
+
+          -- Create controls for each slot
+          for idx, key in ipairs(DEFAULT_ORDER) do
+            local def = SLOT_DEFS[key]
+            if def then
+              -- Slot name with position indicator
+              slotArgs["slot_" .. key .. "_name"] = {
+                type = "description",
+                name = function()
+                  local order = GetCurrentOrder()
+                  local pos = 1
+                  for i, k in ipairs(order) do
+                    if k == key then pos = i break end
+                  end
+                  local n = self.db.profile.bar.buttons or 12
+                  local visible = pos <= n
+                  local color = visible and "|cff00ff00" or "|cff666666"
+                  return ("%s%d. %s|r"):format(color, pos, def.name)
+                end,
+                order = idx * 10,
+                width = 1.0,
+              }
+              -- Move up button
+              slotArgs["slot_" .. key .. "_up"] = {
+                type = "execute",
+                name = "^",
+                desc = "Move up",
+                order = idx * 10 + 1,
+                width = 0.25,
+                func = function() MoveUp(key) end,
+                disabled = function()
+                  local order = GetCurrentOrder()
+                  return order[1] == key
+                end,
+              }
+              -- Move down button
+              slotArgs["slot_" .. key .. "_down"] = {
+                type = "execute",
+                name = "v",
+                desc = "Move down",
+                order = idx * 10 + 2,
+                width = 0.25,
+                func = function() MoveDown(key) end,
+                disabled = function()
+                  local order = GetCurrentOrder()
+                  return order[#order] == key
+                end,
+              }
+            end
+          end
+
+          -- Reset button
+          slotArgs["resetOrder"] = {
+            type = "execute",
+            name = "Reset to Default Order",
+            order = 200,
+            width = "full",
+            func = function()
+              self.db.profile.bar.slotOrder = nil
+              if not InCombatLockdown() then
+                self:RequestRebuild("slot_order_reset")
+              end
+            end,
+          }
+
+          return slotArgs
+        end)(),
+      },
       layoutMode = {
         type = "select",
         name = "Bar Layout",

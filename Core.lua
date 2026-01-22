@@ -38,6 +38,10 @@ local DB_DEFAULTS = {
       buttons = 12,
       scale = 1.0,
 
+      -- Custom slot priority order (used when buttons < 12)
+      -- nil = use default SLOT_ORDER; array of slot keys = user's priority
+      slotOrder = nil,
+
       -- Layout mode selection
       layoutMode = "HORIZONTAL",  -- HORIZONTAL | VERTICAL | GRID
 
