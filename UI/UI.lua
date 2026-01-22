@@ -327,7 +327,15 @@ local function ApplySlotFlyout(slot)
 
   local list = UI[slot.flyoutField] or {}
   if #list <= 1 then
-    if btn._dynFlyout then btn._dynFlyout:Hide() end
+    if btn._dynFlyout then
+      -- Clear all flyout buttons before hiding (prevents stale items)
+      if btn._dynFlyout._buttons then
+        for i = 1, #btn._dynFlyout._buttons do
+          UI.Actions:Clear(btn._dynFlyout._buttons[i])
+        end
+      end
+      btn._dynFlyout:Hide()
+    end
     return
   end
 
