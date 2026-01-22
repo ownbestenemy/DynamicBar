@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.3] - 2026-01-22
+
+### Fixed
+- **Stale flyout items** - Flyout buttons now clear properly when item list shrinks (e.g., selling bandages no longer leaves empty flyout slots)
+
 ## [0.6.2] - 2026-01-21
 
 ### Fixed
