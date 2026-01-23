@@ -121,11 +121,26 @@ function DynamicBar:InitConfig()
           end
         end,
       },
+      enableCustomSlotOrder = {
+        type = "toggle",
+        name = "Enable Custom Slot Order",
+        desc = "Show slot reorder controls even at 12 buttons. Allows you to customize which consumables appear in which position.",
+        order = 22.05,
+        width = "full",
+        get = function() return self.db.profile.bar.enableCustomSlotOrder end,
+        set = function(_, v)
+          self.db.profile.bar.enableCustomSlotOrder = v
+        end,
+      },
       slotPriorityHeader = {
         type = "header",
         name = "Slot Priority",
         order = 22.1,
-        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+        hidden = function()
+          local buttons = self.db.profile.bar.buttons or 12
+          local customEnabled = self.db.profile.bar.enableCustomSlotOrder
+          return buttons >= 12 and not customEnabled
+        end,
       },
       slotPriorityDesc = {
         type = "description",
@@ -135,14 +150,22 @@ function DynamicBar:InitConfig()
         end,
         order = 22.2,
         fontSize = "medium",
-        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+        hidden = function()
+          local buttons = self.db.profile.bar.buttons or 12
+          local customEnabled = self.db.profile.bar.enableCustomSlotOrder
+          return buttons >= 12 and not customEnabled
+        end,
       },
       slotPriorityList = {
         type = "group",
         name = "Slot Order (drag to reorder)",
         order = 22.3,
         inline = true,
-        hidden = function() return (self.db.profile.bar.buttons or 12) >= 12 end,
+        hidden = function()
+          local buttons = self.db.profile.bar.buttons or 12
+          local customEnabled = self.db.profile.bar.enableCustomSlotOrder
+          return buttons >= 12 and not customEnabled
+        end,
         args = (function()
           -- Build slot priority controls dynamically
           local slotArgs = {}
