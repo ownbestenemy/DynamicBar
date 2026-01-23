@@ -217,6 +217,7 @@ local function ApplySlotFlyout(slot)
           UI.Actions:Clear(btn._dynFlyout._buttons[i])
         end
       end
+      btn._dynFlyout._count = 0  -- Reset count so hover won't re-show the flyout
       btn._dynFlyout:Hide()
     end
     return
