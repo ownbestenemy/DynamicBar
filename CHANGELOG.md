@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.5] - 2026-01-23
+
+### Fixed
+- **Lock/unlock bar error** - Fixed SetBackdrop API error when toggling bar lock in config (TBC Classic compatibility)
+
 ## [0.6.4] - 2026-01-22
 
 ### Fixed

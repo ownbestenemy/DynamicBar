@@ -341,16 +341,22 @@ function UI:UpdateLockState(silent)
         -- Show full overlay with "DRAG ME" text
         self.bar._lockOverlay:Show()
       else
-        -- Show subtle green border without "DRAG ME" text
-        self.bar._lockOverlay:SetBackdrop({
-          edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-          edgeSize = 16,
-        })
-        self.bar._lockOverlay:SetBackdropBorderColor(0, 1, 0, 0.5)
+        -- Show subtle green tint without "DRAG ME" text (TBC-compatible, no SetBackdrop)
+        if not self.bar._lockOverlay._subtleBg then
+          local bg = self.bar._lockOverlay:CreateTexture(nil, "BACKGROUND")
+          bg:SetAllPoints(self.bar._lockOverlay)
+          bg:SetTexture("Interface\\Buttons\\WHITE8X8")
+          bg:SetVertexColor(0, 1, 0, 0.15)  -- Very subtle green tint
+          self.bar._lockOverlay._subtleBg = bg
+        end
+        self.bar._lockOverlay._subtleBg:Show()
         self.bar._lockOverlay:Show()
-        -- Hide the "DRAG ME" text
+        -- Hide the "DRAG ME" text and full overlay background
         if self.bar._lockOverlay.text then
           self.bar._lockOverlay.text:Hide()
+        end
+        if self.bar._lockOverlay.bg then
+          self.bar._lockOverlay.bg:Hide()
         end
       end
     end
