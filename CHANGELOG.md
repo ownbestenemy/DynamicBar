@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.4] - 2026-01-22
+
+### Fixed
+- **Empty flyout buttons on hover** - Fixed flyout showing cleared (black) buttons when hovering after item list shrinks
+
 ## [0.6.3] - 2026-01-22
 
 ### Fixed
