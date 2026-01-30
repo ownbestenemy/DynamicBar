@@ -1,50 +1,67 @@
 # Changelog
 
+## [1.0-stable] - 2026-01-30
+
+First stable release! Complete consumable bar for TBC Classic.
+
+### Features
+- **12-Slot Consumable Bar** - Health Potions, Mana Potions, Rejuvenation Potions, Healthstones, Dark Runes, Bandages, Battle Elixirs, Guardian Elixirs, Flasks, Buff Food, Basic Food, Drinks, Hearthstone
+- **Flyout Menus** - Hover any slot to see all available items of that type, sorted by potency
+- **Battle/Prep Mode** - Combat-only items stay visible; prep items (elixirs, food, drink) auto-hide in combat
+- **Tabbed Config Panel** - General, Appearance, Behavior, and Profiles tabs for organized settings
+- **Layout Modes** - Horizontal (default), Vertical, or Grid layouts
+- **Slot Priority Reordering** - Customize which consumables appear when using fewer than 12 buttons
+- **Button Display Modes** - Smart (keybind-safe), Static (show all), or Dynamic (auto-resize)
+- **Visibility Modes** - Fade, Hide, Grey, or Always show unavailable items
+- **Drag-to-Position** - Unlock bar, drag to desired location, click Save & Lock
+- **First-Time Setup** - Guided positioning on first login
+- **ElvUI Integration** - Auto-inherit button spacing and styling
+- **Cooldown Timers** - Visual cooldown spirals on all buttons
+- **Localization Framework** - 8 languages supported (UI strings)
+
+### Fixed
+- Item classification retry system now properly handles new items
+- Flyout buttons clear correctly when item lists shrink
+- Combat item counts update in real-time
+- TBC Classic API compatibility throughout
+
 ## [0.6.5] - 2026-01-23
 
 ### Fixed
-- **Lock/unlock bar error** - Fixed SetBackdrop API error when toggling bar lock in config (TBC Classic compatibility)
+- Lock/unlock bar error in config panel (TBC compatibility)
 
 ## [0.6.4] - 2026-01-22
 
 ### Fixed
-- **Empty flyout buttons on hover** - Fixed flyout showing cleared (black) buttons when hovering after item list shrinks
+- Empty flyout buttons appearing after selling items
 
 ## [0.6.3] - 2026-01-22
 
 ### Fixed
-- **Stale flyout items** - Flyout buttons now clear properly when item list shrinks (e.g., selling bandages no longer leaves empty flyout slots)
+- Stale flyout items after consuming/deleting items
 
 ## [0.6.2] - 2026-01-21
 
 ### Fixed
-- **Stale item counts in combat** - Item counts now update immediately when consuming potions/bandages mid-combat
-- **CurseForge App install** - Fixed zip directory structure for proper installation via CurseForge app
+- Item counts not updating mid-combat
+- CurseForge app installation (directory structure)
 
 ## [0.6.1] - 2026-01-19
 
 ### Fixed
-- **Depleted items now fade during combat** - When you use your last potion/bandage, the button fades to indicate it's empty
-- **Prep-only slots fully disabled in combat** - Elixirs, flasks, food, and drink buttons are now completely cleared during combat (keybinds cannot accidentally fire them)
+- Depleted items now fade during combat
+- Prep-only slots fully cleared in combat (keybinds safe)
 
 ## [0.6] - 2026-01-19
 
 ### Added
-- **Flask Support** - Flasks now appear between Guardian Elixirs and Food in prep mode
-- **Rejuvenation Potions** - Dual health+mana potions appear after Mana Potion (great for hybrids)
-- **Button Display Modes** - Choose how empty slots behave:
-  - Smart (default): Empty buttons hidden, keybinds stable
-  - Static: All slots visible, keybinds stable
-  - Dynamic: Bar auto-sizes (warning: breaks keybinds)
-
-### Changed
-- Default button count: 12 (was 11)
-- Quieter debug messages
+- Flask support
+- Rejuvenation Potion slot
+- Display modes (Smart/Static/Dynamic)
 
 ### Fixed
-- Flyout hover stuttering (95%+ performance improvement)
-- Chat spam from automatic rebuilds
+- Flyout performance (95%+ improvement)
 
 ## [0.5-beta] - 2026-01-18
 
-Initial public release. English only.
+Initial public release.

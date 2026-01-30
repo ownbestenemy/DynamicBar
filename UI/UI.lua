@@ -2,6 +2,7 @@
 local DB = DynamicBar
 DB.UI = DB.UI or {}
 local UI = DB.UI
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
 
 UI.buttons = UI.buttons or {}
 
@@ -67,38 +68,120 @@ local function UpdateBarPosition()
   UI.bar:SetPoint(cfg.point or "CENTER", UIParent, cfg.relPoint or "CENTER", cfg.x or 0, cfg.y or 0)
 end
 
-local function LayoutBar()
-  local cfg = UI:GetBarConfig()
+-- Horizontal layout (default, backward compatible)
+local function LayoutBarHorizontal(cfg)
   local buttons = cfg.buttons or 10
-  local spacing = cfg.spacing or 6
-  local padding = cfg.padding or 6
+  local spacing = cfg.spacingH or cfg.spacing or 2
+  local padLeft = cfg.padLeft or cfg.padding or 2
+  local padRight = cfg.padRight or cfg.padding or 2
 
-  -- Inherit ElvUI spacing/padding if enabled
+  -- Inherit ElvUI spacing if enabled
   if cfg.inheritElvUI and DB.UI.Skins then
     local elvSettings = DB.UI.Skins:GetElvUIBarSettings()
     if elvSettings then
       spacing = elvSettings.buttonspacing
-      padding = elvSettings.backdropSpacing
-      DB:DPrint("Using ElvUI spacing: " .. spacing .. ", padding: " .. padding)
+      padLeft = elvSettings.backdropSpacing
+      padRight = elvSettings.backdropSpacing
+      DB:DPrint("Using ElvUI spacing: " .. spacing .. ", padding: " .. padLeft)
     end
   end
 
-  UI.bar:SetSize(
-    (padding * 2) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1)),
-    BUTTON_SIZE
-  )
+  -- Calculate bar dimensions
+  local width = (padLeft + padRight) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1))
+  UI.bar:SetSize(width, BUTTON_SIZE)
 
-
+  -- Position buttons left-to-right
   for i = 1, buttons do
     local btn = UI.buttons[i]
     if not btn then break end
 
     btn:ClearAllPoints()
     if i == 1 then
-      btn:SetPoint("LEFT", UI.bar, "LEFT", padding, 0)
+      btn:SetPoint("LEFT", UI.bar, "LEFT", padLeft, 0)
     else
       btn:SetPoint("LEFT", UI.buttons[i - 1], "RIGHT", spacing, 0)
     end
+  end
+end
+
+-- Vertical layout (new)
+local function LayoutBarVertical(cfg)
+  local buttons = cfg.buttons or 10
+  local spacing = cfg.spacingV or 2
+  local padTop = cfg.padTop or 2
+  local padBottom = cfg.padBottom or 2
+
+  -- Calculate bar dimensions
+  local height = (padTop + padBottom) + (BUTTON_SIZE * buttons) + (spacing * (buttons - 1))
+  UI.bar:SetSize(BUTTON_SIZE, height)
+
+  -- Position buttons bottom-to-top
+  for i = 1, buttons do
+    local btn = UI.buttons[i]
+    if not btn then break end
+
+    btn:ClearAllPoints()
+    if i == 1 then
+      btn:SetPoint("BOTTOM", UI.bar, "BOTTOM", 0, padBottom)
+    else
+      btn:SetPoint("BOTTOM", UI.buttons[i - 1], "TOP", 0, spacing)
+    end
+  end
+end
+
+-- Grid layout (new)
+local function LayoutBarGrid(cfg)
+  local rows = cfg.gridRows or 2
+  local cols = cfg.gridCols or 5
+  local buttons = cfg.buttons or 10
+  local spacingH = cfg.spacingH or cfg.spacing or 2
+  local spacingV = cfg.spacingV or 2
+  local padLeft = cfg.padLeft or cfg.padding or 2
+  local padRight = cfg.padRight or cfg.padding or 2
+  local padTop = cfg.padTop or 2
+  local padBottom = cfg.padBottom or 2
+
+  -- Calculate bar dimensions
+  local width = (padLeft + padRight) + (BUTTON_SIZE * cols) + (spacingH * (cols - 1))
+  local height = (padTop + padBottom) + (BUTTON_SIZE * rows) + (spacingV * (rows - 1))
+  UI.bar:SetSize(width, height)
+
+  -- Position buttons in grid (fill row-by-row, left-to-right, bottom-to-top)
+  local btnIndex = 0
+  for row = rows, 1, -1 do  -- Bottom row = row 1, top row = row N
+    for col = 1, cols do
+      btnIndex = btnIndex + 1
+      if btnIndex > buttons then break end
+
+      local btn = UI.buttons[btnIndex]
+      if not btn then break end
+
+      -- Calculate position
+      local xOffset = padLeft + ((col - 1) * (BUTTON_SIZE + spacingH))
+      local yOffset = padBottom + ((row - 1) * (BUTTON_SIZE + spacingV))
+
+      btn:ClearAllPoints()
+      btn:SetPoint("BOTTOMLEFT", UI.bar, "BOTTOMLEFT", xOffset, yOffset)
+    end
+    if btnIndex >= buttons then break end
+  end
+end
+
+-- Main layout dispatcher
+local function LayoutBar()
+  local cfg = UI:GetBarConfig()
+  local mode = cfg.layoutMode or "HORIZONTAL"
+
+  if mode == "HORIZONTAL" then
+    LayoutBarHorizontal(cfg)
+  elseif mode == "VERTICAL" then
+    LayoutBarVertical(cfg)
+  elseif mode == "GRID" then
+    LayoutBarGrid(cfg)
+  else
+    -- Fallback to horizontal for unknown modes
+    DB:DPrint("Unknown layout mode: " .. tostring(mode) .. ", using HORIZONTAL")
+    LayoutBarHorizontal(cfg)
   end
 end
 
@@ -161,25 +244,59 @@ end
   - Prep mode (out of combat): Shows slots with "prep" mode flag
   - Battle slots maintain same positions when switching modes
 ]]--
-local SLOT_ORDER = {
-  -- Battle mode items (always visible)
-  { resolver = "ResolveHealthstone",        flyoutField = "_healthstoneFlyout",        modes = {"battle", "prep"} },
-  { resolver = "ResolveHealthPotion",       flyoutField = "_healthPotionFlyout",       modes = {"battle", "prep"} },
-  { resolver = "ResolveManaPotion",         flyoutField = "_manaPotionFlyout",         modes = {"battle", "prep"} },
-  { resolver = "ResolveRejuvenationPotion", flyoutField = "_rejuvenationPotionFlyout", modes = {"battle", "prep"} },
-  { resolver = "ResolveBandage",            flyoutField = "_bandageFlyout",            modes = {"battle", "prep"} },
-
-  -- Prep-only items (hidden in combat)
-  { resolver = "ResolveBattleElixir",    flyoutField = "_battleElixirFlyout",   modes = {"prep"} },
-  { resolver = "ResolveGuardianElixir",  flyoutField = "_guardianElixirFlyout", modes = {"prep"} },
-  { resolver = "ResolveFlask",           flyoutField = "_flaskFlyout",          modes = {"prep"} },
-  { resolver = "ResolveFoodBuff",        flyoutField = "_foodBuffFlyout",       modes = {"prep"} },
-  { resolver = "ResolveFoodNonBuff",     flyoutField = "_foodNonBuffFlyout",    modes = {"prep"} },
-  { resolver = "ResolveDrink",           flyoutField = "_drinkFlyout",          modes = {"prep"} },
-
-  -- Always last (both modes)
-  { resolver = "ResolveHearth",          flyoutField = "_hearthFlyout",         modes = {"battle", "prep"} },
+-- Slot definitions keyed by name for reordering support
+local SLOT_DEFS = {
+  HEALTHSTONE = { key = "HEALTHSTONE", resolver = "ResolveHealthstone", flyoutField = "_healthstoneFlyout", modes = {"battle", "prep"}, name = "Healthstone" },
+  HEALTH_POT  = { key = "HEALTH_POT",  resolver = "ResolveHealthPotion", flyoutField = "_healthPotionFlyout", modes = {"battle", "prep"}, name = "Health Potion" },
+  MANA_POT    = { key = "MANA_POT",    resolver = "ResolveManaPotion", flyoutField = "_manaPotionFlyout", modes = {"battle", "prep"}, name = "Mana Potion" },
+  REJUV_POT   = { key = "REJUV_POT",   resolver = "ResolveRejuvenationPotion", flyoutField = "_rejuvenationPotionFlyout", modes = {"battle", "prep"}, name = "Rejuv Potion" },
+  BANDAGE     = { key = "BANDAGE",     resolver = "ResolveBandage", flyoutField = "_bandageFlyout", modes = {"battle", "prep"}, name = "Bandage" },
+  BATTLE_ELIX = { key = "BATTLE_ELIX", resolver = "ResolveBattleElixir", flyoutField = "_battleElixirFlyout", modes = {"prep"}, name = "Battle Elixir" },
+  GUARD_ELIX  = { key = "GUARD_ELIX",  resolver = "ResolveGuardianElixir", flyoutField = "_guardianElixirFlyout", modes = {"prep"}, name = "Guardian Elixir" },
+  FLASK       = { key = "FLASK",       resolver = "ResolveFlask", flyoutField = "_flaskFlyout", modes = {"prep"}, name = "Flask" },
+  FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff", flyoutField = "_foodBuffFlyout", modes = {"prep"}, name = "Food (Buff)" },
+  FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff", flyoutField = "_foodNonBuffFlyout", modes = {"prep"}, name = "Food (Other)" },
+  DRINK       = { key = "DRINK",       resolver = "ResolveDrink", flyoutField = "_drinkFlyout", modes = {"prep"}, name = "Drink" },
+  HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth", flyoutField = "_hearthFlyout", modes = {"battle", "prep"}, name = "Hearthstone" },
 }
+
+-- Default slot order (keys)
+local DEFAULT_SLOT_ORDER = {
+  "HEALTHSTONE", "HEALTH_POT", "MANA_POT", "REJUV_POT", "BANDAGE",
+  "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
+  "HEARTH",
+}
+
+-- Export for Config.lua
+UI.SLOT_DEFS = SLOT_DEFS
+UI.DEFAULT_SLOT_ORDER = DEFAULT_SLOT_ORDER
+
+-- Build ordered slot array from profile or default
+local function GetSlotOrder()
+  local cfg = DB.db and DB.db.profile and DB.db.profile.bar
+  local customOrder = cfg and cfg.slotOrder
+
+  -- Use custom order if defined and valid
+  if customOrder and type(customOrder) == "table" and #customOrder > 0 then
+    local result = {}
+    for _, key in ipairs(customOrder) do
+      if SLOT_DEFS[key] then
+        result[#result + 1] = SLOT_DEFS[key]
+      end
+    end
+    -- If we got valid slots, use them
+    if #result > 0 then return result end
+  end
+
+  -- Default order
+  local result = {}
+  for _, key in ipairs(DEFAULT_SLOT_ORDER) do
+    result[#result + 1] = SLOT_DEFS[key]
+  end
+  return result
+end
+
+-- SLOT_ORDER is computed dynamically per Rebuild() call via GetSlotOrder()
 
 local function AssignResolverSlot(slot)
   local btn = UI.buttons[slot.idx]
@@ -279,7 +396,7 @@ function UI:UpdateLockState(silent)
     -- "DRAG ME" text label
     local label = overlay:CreateFontString(nil, "OVERLAY")
     label:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
-    label:SetText("DRAG ME")
+    label:SetText(L["DRAG ME"])
     label:SetPoint("CENTER", overlay, "CENTER", 0, 10)
     label:SetTextColor(1, 1, 1, 1)
 
@@ -297,7 +414,7 @@ function UI:UpdateLockState(silent)
     -- Button text
     local btnText = lockBtn:CreateFontString(nil, "OVERLAY")
     btnText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    btnText:SetText("Save & Lock")
+    btnText:SetText(L["Save & Lock"])
     btnText:SetPoint("CENTER", lockBtn, "CENTER", 0, 0)
     btnText:SetTextColor(1, 1, 1, 1)
 
@@ -309,7 +426,7 @@ function UI:UpdateLockState(silent)
         if UI.UpdateLockState then
           UI:UpdateLockState()
         end
-        DB:Print("Bar position saved and locked!")
+        DB:Print(L["Bar position saved and locked!"])
       end
     end)
 
@@ -330,38 +447,65 @@ function UI:UpdateLockState(silent)
     if self.bar._lockOverlay then
       self.bar._lockOverlay:Hide()
     end
+    -- Request rebuild to restore normal button visibility (only if not already in a rebuild)
+    -- Use RequestRebuild instead of direct Rebuild to avoid recursion
+    if not silent and not InCombatLockdown() then
+      DB:RequestRebuild("lock_state")
+    end
     if not silent then
-      DB:Print("Bar locked")
+      DB:Print(L["Bar locked"])
     end
   else
     self.bar:EnableMouse(true)
+
+    -- Show ALL buttons while unlocked (for precise positioning)
+    -- Users can see full bar dimensions regardless of what items they have
+    if not InCombatLockdown() then
+      local n = cfg.buttons or 12
+      for i = 1, n do
+        if self.buttons[i] then
+          self.buttons[i]:Show()
+          self.buttons[i]:SetAlpha(0.5)  -- Dimmed to indicate positioning mode
+        end
+      end
+    end
+
     if self.bar._lockOverlay then
-      -- Only show "DRAG ME" text if first-time setup
-      if not DB.db.profile._setupComplete then
-        -- Show full overlay with "DRAG ME" text
-        self.bar._lockOverlay:Show()
+      -- Always show overlay for dragging functionality
+      self.bar._lockOverlay:Show()
+
+      -- Get child elements (bg texture is first child, label is fontstring)
+      local children = { self.bar._lockOverlay:GetChildren() }
+      local regions = { self.bar._lockOverlay:GetRegions() }
+
+      if DB.db.profile._setupComplete then
+        -- Subsequent unlocks: dim the background, hide text/button
+        for _, region in ipairs(regions) do
+          if region:GetObjectType() == "Texture" then
+            region:SetVertexColor(0, 1, 0, 0.15)  -- Very subtle green
+          elseif region:GetObjectType() == "FontString" then
+            region:Hide()  -- Hide "DRAG ME" text
+          end
+        end
+        for _, child in ipairs(children) do
+          child:Hide()  -- Hide "Save & Lock" button
+        end
       else
-        -- Show subtle green tint without "DRAG ME" text (TBC-compatible, no SetBackdrop)
-        if not self.bar._lockOverlay._subtleBg then
-          local bg = self.bar._lockOverlay:CreateTexture(nil, "BACKGROUND")
-          bg:SetAllPoints(self.bar._lockOverlay)
-          bg:SetTexture("Interface\\Buttons\\WHITE8X8")
-          bg:SetVertexColor(0, 1, 0, 0.15)  -- Very subtle green tint
-          self.bar._lockOverlay._subtleBg = bg
+        -- First-time setup: show full overlay
+        for _, region in ipairs(regions) do
+          if region:GetObjectType() == "Texture" then
+            region:SetVertexColor(0, 1, 0, 0.4)  -- Bright green
+          elseif region:GetObjectType() == "FontString" then
+            region:Show()  -- Show "DRAG ME" text
+          end
         end
-        self.bar._lockOverlay._subtleBg:Show()
-        self.bar._lockOverlay:Show()
-        -- Hide the "DRAG ME" text and full overlay background
-        if self.bar._lockOverlay.text then
-          self.bar._lockOverlay.text:Hide()
-        end
-        if self.bar._lockOverlay.bg then
-          self.bar._lockOverlay.bg:Hide()
+        for _, child in ipairs(children) do
+          child:Show()  -- Show "Save & Lock" button
         end
       end
     end
     if not silent then
-      DB:Print("|cff00ff00Bar UNLOCKED - You can now drag the bar!|r")
+      DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")
     end
   end
 end
@@ -407,6 +551,9 @@ function UI:Rebuild()
   local n = cfg.buttons or 10
   local displayMode = cfg.buttonDisplayMode or "SMART"
   local visMode = cfg.visibilityMode or "FADE"
+
+  -- Get current slot order (may be customized by user)
+  local SLOT_ORDER = GetSlotOrder()
 
   -- Clear all currently assigned buttons
   for i = 1, n do

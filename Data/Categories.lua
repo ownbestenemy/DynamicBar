@@ -48,6 +48,12 @@ Cats.Healthstones = {
   5512,  -- Minor Healthstone
 }
 
+-- Emergency Conversion items (mana -> health at a cost)
+Cats.DarkRunes = {
+  20520, -- Dark Rune (TBC: ~1200 mana, 1000 HP damage to self)
+  12662, -- Demonic Rune (Classic: 900-1500 mana, 600-1000 HP damage to self)
+}
+
 Cats.ManaPotions = {
   22832, -- Super Mana Potion
   13444, -- Major Mana Potion

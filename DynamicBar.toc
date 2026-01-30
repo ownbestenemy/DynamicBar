@@ -2,7 +2,7 @@
 ## Title: DynamicBar
 ## Notes: Role-first, context-aware consumable action bar for TBC Classic (English clients only)
 ## Author: Mark Sheldahl
-## Version: 0.6.5
+## Version: 1.0-stable
 ## SavedVariables: DynamicBarDB
 ## X-Category: Action Bars
 ## X-License: MIT

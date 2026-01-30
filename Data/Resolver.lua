@@ -132,10 +132,32 @@ function Resolver:ResolveFoodBuff()
   return Resolve(function(info) return info.isFoodBuff end, "health")
 end
 
+-- Emergency Conversion: Healthstones + Dark Runes
+-- Healthstones are prioritized over Dark Runes (runes cost HP)
+-- Flyout shows all available emergency items
 function Resolver:ResolveHealthstone()
   local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.Healthstones then return nil, {} end
-  return ResolveByPriorityList(cats.Healthstones)
+  local cache = DB.Data and DB.Data.BagCache
+  if not cats or not cache then return nil, {} end
+
+  -- Build combined priority list: Healthstones first, then Dark Runes
+  local combined = {}
+
+  -- Add Healthstones (prioritized - free healing)
+  if cats.Healthstones then
+    for i = 1, #cats.Healthstones do
+      combined[#combined + 1] = cats.Healthstones[i]
+    end
+  end
+
+  -- Add Dark Runes (secondary - costs HP for mana)
+  if cats.DarkRunes then
+    for i = 1, #cats.DarkRunes do
+      combined[#combined + 1] = cats.DarkRunes[i]
+    end
+  end
+
+  return ResolveByPriorityList(combined)
 end
 
 function Resolver:ResolveBandage()
