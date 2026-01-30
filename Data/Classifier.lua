@@ -24,6 +24,7 @@ tip:SetOwner(UIParent, "ANCHOR_NONE")
 
 local function EmptyInfo()
   return {
+    itemID = 0,
     pending = false,
 
     _final = false,
@@ -67,7 +68,20 @@ local function Has(j, needle)
 end
 
 local function ParseRestores(j, kind) -- kind = "health" or "mana"
+  -- Match "restores X to Y kind" (range format)
+  local _, hi = j:match("restores%s+(%d+)%s+to%s+(%d+)%s+" .. kind)
+  if hi then return tonumber(hi) end
+
+  -- Match "and X to Y kind" (second resource in rejuv potions)
+  _, hi = j:match("and%s+(%d+)%s+to%s+(%d+)%s+" .. kind)
+  if hi then return tonumber(hi) end
+
+  -- Match "restores X kind" (simple format)
   local n = j:match("restores%s+(%d+)%s+" .. kind)
+  if n then return tonumber(n) end
+
+  -- Match "and X kind" (simple format for second resource)
+  n = j:match("and%s+(%d+)%s+" .. kind)
   return n and tonumber(n) or 0
 end
 
@@ -101,6 +115,7 @@ function Classifier:InspectItem(itemID)
   -- Hard exclude: Recipes (prevents false positives)
   if classID == 9 then
     local info = EmptyInfo()
+    info.itemID = itemID
     info._final = true  -- Recipes are always final (nothing to classify)
     self.cache[itemID] = info
     return info
@@ -113,6 +128,7 @@ function Classifier:InspectItem(itemID)
   if #lines == 0 then
     GetItemInfo(itemID)
     self.cache[itemID] = cached or {}
+    self.cache[itemID].itemID = itemID
     self.cache[itemID].pending = true
     self.cache[itemID].pendingReason = "TooltipLines=0 (tooltip not ready)"
     return self.cache[itemID]
@@ -121,6 +137,7 @@ function Classifier:InspectItem(itemID)
 
   local j               = JoinedLower(lines)
   local info            = EmptyInfo()
+  info.itemID           = itemID
 
   -- Common flags
   info.hasUse           = Has(j, "use:")

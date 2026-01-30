@@ -120,8 +120,37 @@ end
 
 function Resolver:ResolveRejuvenationPotion()
   local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.RejuvenationPotions then return nil, {} end
-  return ResolveByPriorityList(cats.RejuvenationPotions)
+
+  -- Build exclusion sets for health/mana pots (they have their own slots)
+  local excludeHP = {}
+  local excludeMP = {}
+  if cats then
+    for _, id in ipairs(cats.HealthPotions or {}) do excludeHP[id] = true end
+    for _, id in ipairs(cats.ManaPotions or {}) do excludeMP[id] = true end
+  end
+
+  -- Find any item that restores health and/or mana, excluding:
+  -- - Food/Drink (they have their own slots)
+  -- - Standard health pots (in HealthPotions list)
+  -- - Standard mana pots (in ManaPotions list)
+  local cache, cls = GetDeps()
+  if not cache or not cls then return nil, {} end
+
+  local list = Collect(cache, cls, function(info)
+    -- Must restore something (0 is truthy in Lua, check explicitly)
+    local hasHealth = info.health and info.health > 0
+    local hasMana = info.mana and info.mana > 0
+    if not hasHealth and not hasMana then return false end
+    -- Exclude food/drink
+    if info.isFood or info.isDrink or info.isFoodBuff then return false end
+    -- Exclude standard health/mana pots
+    if excludeHP[info.itemID] or excludeMP[info.itemID] then return false end
+    return true
+  end)
+
+  if #list == 0 then return nil, {} end
+  SortByFieldDesc(list, cls, "health")
+  return list[1], list
 end
 
 function Resolver:ResolveFoodNonBuff()
