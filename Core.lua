@@ -196,11 +196,16 @@ end
 
 local function ScheduleBagRefresh()
   if not (DynamicBar.db and DynamicBar.db.profile and DynamicBar.db.profile.enabled) then
+    DynamicBar:DPrint("ScheduleBagRefresh: skipped (addon disabled)")
     return
   end
 
-  if DynamicBar._bagTimer then return end
+  if DynamicBar._bagTimer then
+    DynamicBar:DPrint("ScheduleBagRefresh: skipped (_bagTimer already set)")
+    return
+  end
   DynamicBar._bagTimer = true
+  DynamicBar:DPrint("ScheduleBagRefresh: timer started")
 
   C_Timer.After(0.15, function()
     DynamicBar._bagTimer = nil
@@ -417,6 +422,8 @@ function DynamicBar:OnPlayerRegenDisabled()
 end
 
 function DynamicBar:OnBagUpdate()
+  self:DPrint("BAG_UPDATE fired, _bagTimer=" .. tostring(self._bagTimer))
+
   -- In-combat: rebuild cache synchronously, then update visuals
   -- Must rebuild BEFORE visual update so counts are current
   if InCombatLockdown() then
@@ -430,6 +437,9 @@ function DynamicBar:OnBagUpdate()
   end
 
   -- Out of combat: use throttled refresh + full UI rebuild
+  -- Reset retry counter on fresh BAG_UPDATE (not retries) so new items get classified
+  self._pendingRetryCount = 0
+
   local ok, err = pcall(ScheduleBagRefresh)
   if not ok then
     self:Print("Error scheduling bag refresh: " .. tostring(err))
