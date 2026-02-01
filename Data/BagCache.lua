@@ -58,6 +58,20 @@ function BagCache:Rebuild()
   end
 end
 
+-- Lightweight count refresh for specific itemIDs (combat-safe, no full bag scan)
+-- Uses GetItemCount API instead of iterating all bag slots
+function BagCache:RefreshCounts(itemIDs)
+  if not itemIDs then return end
+  for i = 1, #itemIDs do
+    local itemID = itemIDs[i]
+    if itemID then
+      -- GetItemCount(itemID, includeBankItems, includeReagentBank)
+      -- false, false = bags only, no bank
+      self.counts[itemID] = GetItemCount(itemID, false, false) or 0
+    end
+  end
+end
+
 function BagCache:FindFirst(candidates)
   for i = 1, #candidates do
     local id = candidates[i]

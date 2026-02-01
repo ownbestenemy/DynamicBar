@@ -510,6 +510,17 @@ function UI:UpdateLockState(silent)
   end
 end
 
+-- Collect itemIDs from all visible buttons (for targeted cache refresh)
+function UI:GetButtonItemIDs()
+  local itemIDs = {}
+  for i, btn in ipairs(self.buttons) do
+    if btn and btn:IsShown() and btn._dynItemID then
+      itemIDs[#itemIDs + 1] = btn._dynItemID
+    end
+  end
+  return itemIDs
+end
+
 -- Update button visuals during combat (item counts, depleted items)
 -- Called from BAG_UPDATE when in combat - can't modify secure attributes
 function UI:UpdateButtonsInCombat()

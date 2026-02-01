@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0-stable] - 2026-01-30
+## [1.0] - 2026-02-01
 
 First stable release! Complete consumable bar for TBC Classic.
 
@@ -20,6 +20,8 @@ First stable release! Complete consumable bar for TBC Classic.
 - **Localization Framework** - 8 languages supported (UI strings)
 
 ### Fixed
+- Rejuvenation potion detection now correctly identifies all variants
+- Missing elixir items added to classification
 - Item classification retry system now properly handles new items
 - Flyout buttons clear correctly when item lists shrink
 - Combat item counts update in real-time

@@ -17,6 +17,7 @@ DynamicBar.CONST = {
   BAG_DEBOUNCE_SEC = 0.15,
   RETRY_DELAY_SEC = 0.35,
   MAX_PENDING_RETRIES = 6,
+  COMBAT_CACHE_THROTTLE_SEC = 0.25,
 
   BUTTON_SIZE = 36,
   FLYOUT_BASE_LEVEL = 20,
@@ -163,6 +164,7 @@ end
 -- Combat state tracking
 --
 DynamicBar._inCombat = false
+DynamicBar._lastCombatCacheRebuild = 0
 
 --
 -- Rebuild orchestration
@@ -424,16 +426,23 @@ end
 function DynamicBar:OnBagUpdate()
   self:DPrint("BAG_UPDATE fired, _bagTimer=" .. tostring(self._bagTimer))
 
-  -- In-combat: rebuild cache synchronously, then update visuals
-  -- Must rebuild BEFORE visual update so counts are current
+  -- In-combat: lightweight targeted refresh (no full bag scan)
+  -- Only update counts for items currently on buttons via GetItemCount API
   if InCombatLockdown() then
-    if self.Data and self.Data.BagCache then
-      self.Data.BagCache:Rebuild()
+    local now = GetTime()
+    if (now - self._lastCombatCacheRebuild) >= self.CONST.COMBAT_CACHE_THROTTLE_SEC then
+      self._lastCombatCacheRebuild = now
+      -- Targeted refresh: ~12 GetItemCount calls vs ~80 bag slot iterations
+      if self.UI and self.Data and self.Data.BagCache then
+        local itemIDs = self.UI:GetButtonItemIDs()
+        self.Data.BagCache:RefreshCounts(itemIDs)
+      end
+      -- Update visuals with fresh counts
+      if self.UI and self.UI.UpdateButtonsInCombat then
+        self.UI:UpdateButtonsInCombat()
+      end
     end
-    if self.UI and self.UI.UpdateButtonsInCombat then
-      self.UI:UpdateButtonsInCombat()
-    end
-    return  -- Skip scheduled refresh, we just did a sync rebuild
+    return  -- Skip scheduled refresh
   end
 
   -- Out of combat: use throttled refresh + full UI rebuild

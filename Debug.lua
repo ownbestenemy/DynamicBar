@@ -6,6 +6,11 @@ DynamicBar.Debug = DynamicBar.Debug or {}
 local Debug = DynamicBar.Debug
 
 local function IsDebugOn()
+  -- Primary: check Ace3 database instance (authoritative source)
+  if DynamicBar and DynamicBar.db and DynamicBar.db.profile then
+    return DynamicBar.db.profile.debug
+  end
+  -- Fallback: compat shim (for very early calls before Ace3 init)
   return DynamicBarDB and DynamicBarDB.profile and DynamicBarDB.profile.debug
 end
 
