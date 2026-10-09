@@ -11,6 +11,7 @@
 - Events the client doesn't know are skipped instead of erroring on load
 - Cooldown spirals handle secret cooldown values in combat
 - Item icon lookup read the wrong return from `GetItemInfoInstant`
+- Config panel error on WoW Forever (bundled Ace3 updated to r1403)
 
 ## [1.0] - 2026-02-01
 
