@@ -5,6 +5,9 @@ DynamicBar = DynamicBar or {}
 DynamicBar.Debug = DynamicBar.Debug or {}
 local Debug = DynamicBar.Debug
 
+-- Cache global function (WoW Forever uses the Mainline API, which only has C_Item.GetItemInfo)
+local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+
 local function IsDebugOn()
   -- Primary: check Ace3 database instance (authoritative source)
   if DynamicBar and DynamicBar.db and DynamicBar.db.profile then

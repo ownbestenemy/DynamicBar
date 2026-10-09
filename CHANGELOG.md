@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- WoW Forever support (Interface 16001, Mainline-based client)
+
+### Fixed
+- Item info/count calls fall back to `C_Item` where the old globals are gone
+- Item classification reads tooltip text via `C_TooltipInfo` when available
+- Events the client doesn't know are skipped instead of erroring on load
+- Cooldown spirals handle secret cooldown values in combat
+- Item icon lookup read the wrong return from `GetItemInfoInstant`
+
 ## [1.0] - 2026-02-01
 
 First stable release! Complete consumable bar for TBC Classic.

@@ -11,6 +11,9 @@ BagCache.items  = BagCache.items  or {}
 
 local Container = C_Container
 
+-- Cache global function (WoW Forever uses the Mainline API, which only has C_Item.GetItemCount)
+local GetItemCount = GetItemCount or (C_Item and C_Item.GetItemCount)
+
 local function ClearMap(t)
   for k in pairs(t) do t[k] = nil end
 end

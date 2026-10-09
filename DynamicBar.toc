@@ -1,6 +1,6 @@
-## Interface-BCC: 20505
+## Interface: 20505, 20506, 16001
 ## Title: DynamicBar
-## Notes: Role-first, context-aware consumable action bar for TBC Classic
+## Notes: Role-first, context-aware consumable action bar for TBC Classic and WoW Forever
 ## Author: Mark Sheldahl
 ## Version: 1.0
 ## SavedVariables: DynamicBarDB

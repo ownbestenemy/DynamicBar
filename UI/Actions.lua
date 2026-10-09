@@ -41,6 +41,14 @@ local function UpdateCooldown(btn, itemID)
   local cd = EnsureCooldown(btn)
   local start, duration, enable = cache:GetItemCooldown(itemID)
 
+  -- WoW Forever runs Midnight's addon restrictions: cooldown values may be secret
+  -- in combat. Secrets can't be compared, but the Cooldown widget accepts them.
+  if issecretvalue and (issecretvalue(start) or issecretvalue(duration)) then
+    cd:SetCooldown(start, duration)
+    cd:Show()
+    return
+  end
+
   if start and duration and duration > 0 and enable == 1 then
     cd:SetCooldown(start, duration)
     cd:Show()

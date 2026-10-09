@@ -1,4 +1,4 @@
--- Core.lua (TBC Classic)
+-- Core.lua (TBC Classic / WoW Forever)
 -- Ace3 bootstrap for DynamicBar.
 
 local ADDON_NAME = ...
@@ -307,19 +307,30 @@ function DynamicBar:OnInitialize()
 end
 
 
+-- Register an event only if this client knows it. Registering an unknown event
+-- is a Lua error, and the event list differs between TBC Classic and the
+-- Mainline-based WoW Forever client (e.g. the bank events).
+function DynamicBar:SafeRegisterEvent(event, handler)
+  if C_EventUtils and C_EventUtils.IsEventValid and not C_EventUtils.IsEventValid(event) then
+    self:DPrint("Skipping unknown event: " .. event)
+    return
+  end
+  self:RegisterEvent(event, handler)
+end
+
 function DynamicBar:OnEnable()
   -- Events
-  self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
-  self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
-  self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
-  self:RegisterEvent("BAG_UPDATE", "OnBagUpdate")
-  self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", "OnBagUpdate")
-  self:RegisterEvent("BANKFRAME_OPENED", "OnBagUpdate")
-  self:RegisterEvent("BANKFRAME_CLOSED", "OnBagUpdate")
-  self:RegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
-  self:RegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
-  self:RegisterEvent("SPELL_UPDATE_COOLDOWN", "OnCooldownUpdate")
-  self:RegisterEvent("BAG_UPDATE_COOLDOWN", "OnCooldownUpdate")
+  self:SafeRegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
+  self:SafeRegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
+  self:SafeRegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
+  self:SafeRegisterEvent("BAG_UPDATE", "OnBagUpdate")
+  self:SafeRegisterEvent("PLAYERBANKSLOTS_CHANGED", "OnBagUpdate")
+  self:SafeRegisterEvent("BANKFRAME_OPENED", "OnBagUpdate")
+  self:SafeRegisterEvent("BANKFRAME_CLOSED", "OnBagUpdate")
+  self:SafeRegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
+  self:SafeRegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
+  self:SafeRegisterEvent("SPELL_UPDATE_COOLDOWN", "OnCooldownUpdate")
+  self:SafeRegisterEvent("BAG_UPDATE_COOLDOWN", "OnCooldownUpdate")
 
   -- Initialize button skinning system
   if self.UI and self.UI.Skins then
