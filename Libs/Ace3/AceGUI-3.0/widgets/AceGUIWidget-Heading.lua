@@ -9,7 +9,9 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 local pairs = pairs
 
 -- WoW APIs
-local CreateFrame, UIParent, issecretvalue = CreateFrame, UIParent, issecretvalue
+local CreateFrame, UIParent = CreateFrame, UIParent
+-- DynamicBar patch: issecretvalue doesn't exist on older clients (e.g. TBC 2.5.5)
+local issecretvalue = issecretvalue or function() return false end
 
 --[[-----------------------------------------------------------------------------
 Methods
