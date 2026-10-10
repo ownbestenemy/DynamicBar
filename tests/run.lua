@@ -92,16 +92,16 @@ cfg.buttonDisplayMode = 'STATIC'; cfg.layoutMode = 'GRID'
 for _, cols in ipairs({1,5,12}) do
   cfg.gridRows = 1; cfg.gridCols = cols
   rebuild()
-  equal(cfg.gridRows * cfg.gridCols >= cfg.buttons, true, 'grid has enough capacity')
+  equal(cfg.gridRows * cfg.gridCols >= UI:GetButtonCount(), true, 'grid has enough capacity')
   for _, btn in ipairs(UI.buttons) do equal(btn.point[1], 'BOTTOMLEFT', 'button positioned inside grid') end
 end
 
 -- Shrinking Dynamic mode clears main and flyout actions on every discarded slot.
-cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'DYNAMIC'; cfg.buttons = 12
+cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'DYNAMIC'; cfg.slots = nil
 rebuild({[22829]=1,[118]=2,[22832]=1,[2455]=2,[6948]=1})
 local discarded = UI.buttons[2]
 click(discarded, 'RightButton')
-cfg.buttons = 1
+cfg.slots = {'HEALTHSTONE'}
 rebuild()
 equal(discarded:IsShown(), false, 'discarded button hidden')
 equal(discarded.attrs.type1, nil, 'discarded binding cleared')
@@ -110,7 +110,7 @@ equal(discarded._dynCooldown:IsShown(), false, 'discarded cooldown cleared')
 equal(discarded._dynFlyout:IsShown(), false, 'discarded flyout hidden')
 equal(discarded._dynFlyout._count, 0, 'discarded flyout cleared')
 
-cfg.buttons = 12; cfg.buttonDisplayMode = 'SMART'
+cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
 rebuild({[22829]=1,[118]=2})
 click(UI.buttons[2], 'RightButton')
 rebuild({})
@@ -168,6 +168,26 @@ equal(best, 22850, 'rejuvenation slot selects true rejuvenation potion')
 equal(#list, 1, 'unrelated restorative excluded')
 DB.Data.Classifier.cache[22850].pending = true
 equal(DB.Data.Resolver:ResolveRejuvenationPotion(), nil, 'pending classification excluded')
+
+-- Slot list: one button per slot, migrated once from 1.x settings.
+local Cats = DB.Data.Categories
+local function keys(list) return table.concat(list, ',') end
+equal(#Cats:GetSlots({}), 12, 'new profile gets every category')
+equal(keys(Cats:GetSlots({buttons = 3})), 'HEALTHSTONE,HEALTH_POT,MANA_POT', '1.x button count keeps top slots')
+equal(keys(Cats:GetSlots({buttons = 2, slotOrder = {'HEARTH','FLASK','DRINK'}})), 'HEARTH,FLASK', '1.x custom order migrated')
+equal(keys(Cats:GetSlots({slotOrder = {'GONE'}, buttons = 1})), 'HEALTHSTONE', 'invalid 1.x order falls back to default')
+local migrated = {buttons = 4, slots = {'DRINK','BOGUS','DRINK','FLASK'}}
+equal(keys(Cats:GetSlots(migrated)), 'DRINK,FLASK', 'unknown and duplicate keys dropped')
+equal(keys(migrated.slots), 'DRINK,FLASK', 'cleaned list saved')
+equal(#Cats:GetSlots({slots = {}}), 12, 'empty bar resets to default')
+cfg.buttonDisplayMode = 'STATIC'; cfg.slots = {'FLASK','HEARTH','DRINK'}
+rebuild({[22851]=1,[6948]=1})
+equal(UI:GetButtonCount(), 3, 'button count follows slot list')
+equal(UI.buttons[1]._dynItemID, 22851, 'first slot is the flask')
+equal(UI.buttons[2]._dynItemID, 6948, 'second slot is the hearthstone')
+equal(UI.buttons[4]:IsShown(), false, 'buttons past the slot list hidden')
+cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
+rebuild()
 
 local bindingFile = assert(io.open('Bindings.xml'))
 local bindings = bindingFile:read('*a'); bindingFile:close()

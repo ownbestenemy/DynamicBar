@@ -60,7 +60,7 @@ Choose how empty slots behave:
 
 ### Customization
 
-- Adjust button count (1-12)
+- Choose which categories are on the bar and their order
 - Change button size
 - Choose button skin (Blizzard default or Minimal)
 - Lock/unlock bar position
@@ -105,7 +105,7 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 ### Q: Can I reorder the slots?
 
-**A: Not in v0.6.5.** Slot order is fixed by design to keep keybinds predictable. Custom ordering is planned for a future version.
+**A: Yes.** In the Behavior tab under Bar Slots, tick the categories you want and use the arrows to order them. The bar has one button per ticked category.
 
 ### Q: Why English only?
 
