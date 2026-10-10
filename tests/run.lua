@@ -172,14 +172,15 @@ equal(DB.Data.Resolver:ResolveRejuvenationPotion(), nil, 'pending classification
 -- Slot list: one button per slot, migrated once from 1.x settings.
 local Cats = DB.Data.Categories
 local function keys(list) return table.concat(list, ',') end
-equal(#Cats:GetSlots({}), 12, 'new profile gets every category')
+equal(#Cats:GetSlots({}), #Cats.DEFAULT_ORDER, 'new profile gets every category')
 equal(keys(Cats:GetSlots({buttons = 3})), 'HEALTHSTONE,HEALTH_POT,MANA_POT', '1.x button count keeps top slots')
 equal(keys(Cats:GetSlots({buttons = 2, slotOrder = {'HEARTH','FLASK','DRINK'}})), 'HEARTH,FLASK', '1.x custom order migrated')
+equal(Cats:GetSlots({slotOrder = {'HEARTH'}})[13], 'OTHER_BUFF', '1.x order gains slots it predates')
 equal(keys(Cats:GetSlots({slotOrder = {'GONE'}, buttons = 1})), 'HEALTHSTONE', 'invalid 1.x order falls back to default')
 local migrated = {buttons = 4, slots = {'DRINK','BOGUS','DRINK','FLASK'}}
 equal(keys(Cats:GetSlots(migrated)), 'DRINK,FLASK', 'unknown and duplicate keys dropped')
 equal(keys(migrated.slots), 'DRINK,FLASK', 'cleaned list saved')
-equal(#Cats:GetSlots({slots = {}}), 12, 'empty bar resets to default')
+equal(#Cats:GetSlots({slots = {}}), #Cats.DEFAULT_ORDER, 'empty bar resets to default')
 cfg.buttonDisplayMode = 'STATIC'; cfg.slots = {'FLASK','HEARTH','DRINK'}
 rebuild({[22851]=1,[6948]=1})
 equal(UI:GetButtonCount(), 3, 'button count follows slot list')

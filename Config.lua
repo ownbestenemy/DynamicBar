@@ -14,9 +14,6 @@ function DynamicBar:InitConfig()
     return
   end
 
-  -- One button per consumable slot at most
-  local MAX_BUTTONS = #self.UI.DEFAULT_SLOT_ORDER
-
   -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
   local function Changed(reason)
     self:RequestRebuild(reason)

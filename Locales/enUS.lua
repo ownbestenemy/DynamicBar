@@ -173,6 +173,7 @@ L["Food (Buff)"] = true
 L["Food (Other)"] = true
 L["Drink"] = true
 L["Hearthstone"] = true
+L["Other Buffs"] = true
 
 -- Bar Slots
 L["Bar Slots"] = true
