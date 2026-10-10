@@ -49,7 +49,8 @@ local function UpdateCooldown(btn, itemID)
     return
   end
 
-  if start and duration and duration > 0 and enable == 1 then
+  -- enable is 1/0 on older clients and a boolean on newer ones
+  if start and duration and duration > 0 and enable ~= 0 and enable ~= false then
     cd:SetCooldown(start, duration)
     cd:Show()
   else
@@ -75,17 +76,7 @@ function Actions:Clear(btn)
   if InCombatLockdown() then return end
 
   btn:SetAttribute("type", nil)
-  btn:SetAttribute("item", nil)
-  btn:SetAttribute("spell", nil)
   btn:SetAttribute("macrotext", nil)
-
-  btn:SetAttribute("type1", nil)
-  btn:SetAttribute("item1", nil)
-  btn:SetAttribute("spell1", nil)
-  btn:SetAttribute("macrotext1", nil)
-
-  btn:SetAttribute("type2", nil)
-  btn:SetAttribute("macrotext2", nil)
 
   -- Clear tooltip item so hidden buttons don't show tooltips on hover
   btn._dynTooltipItemID = nil
@@ -132,15 +123,9 @@ end
 function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   if InCombatLockdown() then return end
 
-  -- robust mapping
+  -- Unsuffixed attributes apply to every mouse button
   btn:SetAttribute("type", "macro")
   btn:SetAttribute("macrotext", macroText)
-
-  btn:SetAttribute("type1", "macro")
-  btn:SetAttribute("macrotext1", macroText)
-
-  btn:SetAttribute("type2", "macro")
-  btn:SetAttribute("macrotext2", macroText)
 
     -- Ensure the button has an icon texture we can set.
   local icon = btn._dynIcon or btn.icon

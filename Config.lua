@@ -33,9 +33,7 @@ function DynamicBar:InitConfig()
     self.db.profile.bar.x = p.x
     self.db.profile.bar.y = p.y
 
-    if not InCombatLockdown() then
-      self:RequestRebuild("preset_changed")
-    end
+    Changed("preset_changed")
   end
 
   -- Helper: Detect if current position matches a preset
@@ -52,6 +50,46 @@ function DynamicBar:InitConfig()
     return "CUSTOM"
   end
 
+  -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
+  local function Changed(reason)
+    if not InCombatLockdown() then
+      self:RequestRebuild(reason)
+    end
+  end
+
+  -- Default get/set for options whose key matches a db.profile.bar field.
+  -- AceDB fills in DB_DEFAULTS, so no fallbacks are needed here.
+  -- Options with special handling define their own get/set.
+  local function BarGet(info) return self.db.profile.bar[info[#info]] end
+  local function BarSet(info, v)
+    self.db.profile.bar[info[#info]] = v
+    Changed(info[#info])
+  end
+
+  local ANCHOR_POINTS = {
+    TOPLEFT = "Top Left", TOP = "Top", TOPRIGHT = "Top Right",
+    LEFT = "Left", CENTER = "Center", RIGHT = "Right",
+    BOTTOMLEFT = "Bottom Left", BOTTOM = "Bottom", BOTTOMRIGHT = "Bottom Right",
+  }
+  local ANCHOR_SORTING = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+
+  local function HideManualPosition()
+    return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
+  end
+
+  local function HideAdvancedPadding()
+    return not self.db.profile._showAdvancedPadding
+  end
+
+  local function IsNotGrid()
+    return self.db.profile.bar.layoutMode ~= "GRID"
+  end
+
+  -- Slot order controls only matter when not every slot fits, or when opted in
+  local function HideSlotOrder()
+    return (self.db.profile.bar.buttons or 12) >= 12 and not self.db.profile.bar.enableCustomSlotOrder
+  end
+
   -- =========================================================
   -- BUILD OPTIONS TABLE WITH TABS
   -- =========================================================
@@ -59,6 +97,8 @@ function DynamicBar:InitConfig()
     type = "group",
     name = "DynamicBar",
     childGroups = "tab",
+    get = BarGet,
+    set = BarSet,
     args = {
       -- =====================================================
       -- TAB 1: GENERAL
@@ -155,46 +195,20 @@ function DynamicBar:InitConfig()
             name = "Anchor Point",
             desc = "Which corner/edge of the bar to anchor",
             order = 14,
-            values = {
-              TOPLEFT = "Top Left", TOP = "Top", TOPRIGHT = "Top Right",
-              LEFT = "Left", CENTER = "Center", RIGHT = "Right",
-              BOTTOMLEFT = "Bottom Left", BOTTOM = "Bottom", BOTTOMRIGHT = "Bottom Right",
-            },
-            sorting = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" },
+            values = ANCHOR_POINTS,
+            sorting = ANCHOR_SORTING,
             width = "normal",
-            hidden = function()
-              return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
-            end,
-            get = function() return self.db.profile.bar.point end,
-            set = function(_, v)
-              self.db.profile.bar.point = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("position")
-              end
-            end,
+            hidden = HideManualPosition,
           },
           relPoint = {
             type = "select",
             name = "Relative To",
             desc = "Which corner/edge of the screen to anchor to",
             order = 15,
-            values = {
-              TOPLEFT = "Top Left", TOP = "Top", TOPRIGHT = "Top Right",
-              LEFT = "Left", CENTER = "Center", RIGHT = "Right",
-              BOTTOMLEFT = "Bottom Left", BOTTOM = "Bottom", BOTTOMRIGHT = "Bottom Right",
-            },
-            sorting = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" },
+            values = ANCHOR_POINTS,
+            sorting = ANCHOR_SORTING,
             width = "normal",
-            hidden = function()
-              return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
-            end,
-            get = function() return self.db.profile.bar.relPoint end,
-            set = function(_, v)
-              self.db.profile.bar.relPoint = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("position")
-              end
-            end,
+            hidden = HideManualPosition,
           },
           xOffset = {
             type = "input",
@@ -204,17 +218,13 @@ function DynamicBar:InitConfig()
             pattern = "^-?%d+$",
             usage = "Enter a number (e.g., -100, 0, 200)",
             width = "normal",
-            hidden = function()
-              return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
-            end,
+            hidden = HideManualPosition,
             get = function() return tostring(self.db.profile.bar.x) end,
             set = function(_, v)
               local num = tonumber(v)
               if num then
                 self.db.profile.bar.x = num
-                if not InCombatLockdown() then
-                  self:RequestRebuild("position")
-                end
+                Changed("position")
               end
             end,
           },
@@ -226,17 +236,13 @@ function DynamicBar:InitConfig()
             pattern = "^-?%d+$",
             usage = "Enter a number (e.g., -180, 0, 100)",
             width = "normal",
-            hidden = function()
-              return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
-            end,
+            hidden = HideManualPosition,
             get = function() return tostring(self.db.profile.bar.y) end,
             set = function(_, v)
               local num = tonumber(v)
               if num then
                 self.db.profile.bar.y = num
-                if not InCombatLockdown() then
-                  self:RequestRebuild("position")
-                end
+                Changed("position")
               end
             end,
           },
@@ -279,21 +285,6 @@ function DynamicBar:InitConfig()
             },
             sorting = { "HORIZONTAL", "VERTICAL", "GRID" },
             width = "full",
-            get = function() return self.db.profile.bar.layoutMode or "HORIZONTAL" end,
-            set = function(_, v)
-              self.db.profile.bar.layoutMode = v
-
-              -- Auto-calculate grid dimensions when switching to GRID mode
-              if v == "GRID" and not self.db.profile.bar.gridRows then
-                local buttons = self.db.profile.bar.buttons or 12
-                self.db.profile.bar.gridRows = 2
-                self.db.profile.bar.gridCols = math.ceil(buttons / 2)
-              end
-
-              if not InCombatLockdown() then
-                self:RequestRebuild("layout_mode")
-              end
-            end,
           },
           gridRows = {
             type = "range",
@@ -304,16 +295,7 @@ function DynamicBar:InitConfig()
             max = 12,
             step = 1,
             width = "normal",
-            hidden = function()
-              return (self.db.profile.bar.layoutMode or "HORIZONTAL") ~= "GRID"
-            end,
-            get = function() return self.db.profile.bar.gridRows or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.gridRows = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("grid_rows")
-              end
-            end,
+            hidden = IsNotGrid,
           },
           gridCols = {
             type = "range",
@@ -324,16 +306,7 @@ function DynamicBar:InitConfig()
             max = 12,
             step = 1,
             width = "normal",
-            hidden = function()
-              return (self.db.profile.bar.layoutMode or "HORIZONTAL") ~= "GRID"
-            end,
-            get = function() return self.db.profile.bar.gridCols or 6 end,
-            set = function(_, v)
-              self.db.profile.bar.gridCols = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("grid_cols")
-              end
-            end,
+            hidden = IsNotGrid,
           },
           scale = {
             type = "range",
@@ -345,13 +318,6 @@ function DynamicBar:InitConfig()
             step = 0.05,
             isPercent = true,
             width = "full",
-            get = function() return self.db.profile.bar.scale end,
-            set = function(_, v)
-              self.db.profile.bar.scale = math.max(0.5, math.min(2.0, v))
-              if not InCombatLockdown() then
-                self:RequestRebuild("scale")
-              end
-            end,
           },
 
           spacingHeader = {
@@ -372,13 +338,6 @@ function DynamicBar:InitConfig()
             max = 20,
             step = 1,
             width = "normal",
-            get = function() return self.db.profile.bar.spacingH or self.db.profile.bar.spacing or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.spacingH = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("spacing_h")
-              end
-            end,
           },
           spacingV = {
             type = "range",
@@ -391,13 +350,6 @@ function DynamicBar:InitConfig()
             width = "normal",
             hidden = function()
               return (self.db.profile.bar.layoutMode or "HORIZONTAL") == "HORIZONTAL"
-            end,
-            get = function() return self.db.profile.bar.spacingV or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.spacingV = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("spacing_v")
-              end
             end,
           },
 
@@ -423,9 +375,7 @@ function DynamicBar:InitConfig()
               self.db.profile.bar.padRight = v
               self.db.profile.bar.padTop = v
               self.db.profile.bar.padBottom = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("padding")
-              end
+              Changed("padding")
             end,
           },
           showAdvancedPadding = {
@@ -446,14 +396,7 @@ function DynamicBar:InitConfig()
             max = 20,
             step = 1,
             width = "half",
-            hidden = function() return not self.db.profile._showAdvancedPadding end,
-            get = function() return self.db.profile.bar.padLeft or self.db.profile.bar.padding or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.padLeft = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("pad_left")
-              end
-            end,
+            hidden = HideAdvancedPadding,
           },
           padRight = {
             type = "range",
@@ -464,14 +407,7 @@ function DynamicBar:InitConfig()
             max = 20,
             step = 1,
             width = "half",
-            hidden = function() return not self.db.profile._showAdvancedPadding end,
-            get = function() return self.db.profile.bar.padRight or self.db.profile.bar.padding or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.padRight = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("pad_right")
-              end
-            end,
+            hidden = HideAdvancedPadding,
           },
           padTop = {
             type = "range",
@@ -482,14 +418,7 @@ function DynamicBar:InitConfig()
             max = 20,
             step = 1,
             width = "half",
-            hidden = function() return not self.db.profile._showAdvancedPadding end,
-            get = function() return self.db.profile.bar.padTop or self.db.profile.bar.padding or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.padTop = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("pad_top")
-              end
-            end,
+            hidden = HideAdvancedPadding,
           },
           padBottom = {
             type = "range",
@@ -500,14 +429,7 @@ function DynamicBar:InitConfig()
             max = 20,
             step = 1,
             width = "half",
-            hidden = function() return not self.db.profile._showAdvancedPadding end,
-            get = function() return self.db.profile.bar.padBottom or self.db.profile.bar.padding or 2 end,
-            set = function(_, v)
-              self.db.profile.bar.padBottom = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("pad_bottom")
-              end
-            end,
+            hidden = HideAdvancedPadding,
           },
 
           skinsHeader = {
@@ -524,13 +446,6 @@ function DynamicBar:InitConfig()
             disabled = function()
               local mode = self.db.profile.bar.layoutMode or "HORIZONTAL"
               return (mode ~= "HORIZONTAL") or not (IsAddOnLoaded("ElvUI") and ElvUI and ElvUI[1])
-            end,
-            get = function() return self.db.profile.bar.inheritElvUI end,
-            set = function(_, v)
-              self.db.profile.bar.inheritElvUI = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("inherit_elvui")
-              end
             end,
           },
           buttonSkinInfo = {
@@ -558,40 +473,14 @@ function DynamicBar:InitConfig()
             confirm = true,
             confirmText = "Reset scale, layout mode, spacing, and padding to defaults?",
             func = function()
-              local DB_DEFAULTS = self.DB_DEFAULTS or {
-                profile = {
-                  bar = {
-                    scale = 1.0,
-                    layoutMode = "HORIZONTAL",
-                    gridRows = 2,
-                    gridCols = 6,
-                    spacingH = 2,
-                    spacingV = 2,
-                    padLeft = 2,
-                    padRight = 2,
-                    padTop = 2,
-                    padBottom = 2,
-                    spacing = 2,
-                    padding = 2,
-                  }
-                }
-              }
-              local defaults = DB_DEFAULTS.profile.bar
-              self.db.profile.bar.scale = defaults.scale
-              self.db.profile.bar.layoutMode = defaults.layoutMode
-              self.db.profile.bar.gridRows = defaults.gridRows
-              self.db.profile.bar.gridCols = defaults.gridCols
-              self.db.profile.bar.spacingH = defaults.spacingH
-              self.db.profile.bar.spacingV = defaults.spacingV
-              self.db.profile.bar.padLeft = defaults.padLeft
-              self.db.profile.bar.padRight = defaults.padRight
-              self.db.profile.bar.padTop = defaults.padTop
-              self.db.profile.bar.padBottom = defaults.padBottom
-              self.db.profile.bar.spacing = defaults.spacing
-              self.db.profile.bar.padding = defaults.padding
-              if not InCombatLockdown() then
-                self:RequestRebuild("reset_appearance")
+              local defaults = self.DB_DEFAULTS.profile.bar
+              for _, key in ipairs({
+                "scale", "layoutMode", "gridRows", "gridCols", "spacingH", "spacingV",
+                "padLeft", "padRight", "padTop", "padBottom", "spacing", "padding",
+              }) do
+                self.db.profile.bar[key] = defaults[key]
               end
+              Changed("reset_appearance")
             end,
           },
         },
@@ -619,13 +508,6 @@ function DynamicBar:InitConfig()
             max = 12,
             step = 1,
             width = "full",
-            get = function() return self.db.profile.bar.buttons end,
-            set = function(_, v)
-              self.db.profile.bar.buttons = math.max(1, math.min(12, v))
-              if not InCombatLockdown() then
-                self:RequestRebuild("button_count")
-              end
-            end,
           },
 
           displayHeader = {
@@ -648,13 +530,6 @@ function DynamicBar:InitConfig()
             },
             sorting = { "FADE", "HIDE", "GREY", "ALWAYS" },
             width = "full",
-            get = function() return self.db.profile.bar.visibilityMode or "FADE" end,
-            set = function(_, v)
-              self.db.profile.bar.visibilityMode = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("visibility_mode")
-              end
-            end,
           },
           buttonDisplayMode = {
             type = "select",
@@ -688,24 +563,13 @@ function DynamicBar:InitConfig()
               return false
             end,
             confirmText = "Enable Dynamic Mode (Breaks Keybinds)?",
-            get = function() return self.db.profile.bar.buttonDisplayMode or "SMART" end,
-            set = function(_, v)
-              self.db.profile.bar.buttonDisplayMode = v
-              if not InCombatLockdown() then
-                self:RequestRebuild("button_display_mode")
-              end
-            end,
           },
 
           slotOrderHeader = {
             type = "header",
             name = "Slot Priority",
             order = 20,
-            hidden = function()
-              local buttons = self.db.profile.bar.buttons or 12
-              local customEnabled = self.db.profile.bar.enableCustomSlotOrder
-              return buttons >= 12 and not customEnabled
-            end,
+            hidden = HideSlotOrder,
           },
           enableCustomSlotOrder = {
             type = "toggle",
@@ -713,10 +577,6 @@ function DynamicBar:InitConfig()
             desc = "Show slot reorder controls even at 12 buttons. Allows you to customize which consumables appear in which position.",
             order = 21,
             width = "full",
-            get = function() return self.db.profile.bar.enableCustomSlotOrder end,
-            set = function(_, v)
-              self.db.profile.bar.enableCustomSlotOrder = v
-            end,
           },
           slotPriorityDesc = {
             type = "description",
@@ -726,22 +586,14 @@ function DynamicBar:InitConfig()
             end,
             order = 22,
             fontSize = "medium",
-            hidden = function()
-              local buttons = self.db.profile.bar.buttons or 12
-              local customEnabled = self.db.profile.bar.enableCustomSlotOrder
-              return buttons >= 12 and not customEnabled
-            end,
+            hidden = HideSlotOrder,
           },
           slotPriorityList = {
             type = "group",
             name = "Slot Order",
             order = 23,
             inline = true,
-            hidden = function()
-              local buttons = self.db.profile.bar.buttons or 12
-              local customEnabled = self.db.profile.bar.enableCustomSlotOrder
-              return buttons >= 12 and not customEnabled
-            end,
+            hidden = HideSlotOrder,
             args = (function()
               -- Build slot priority controls dynamically
               local slotArgs = {}
@@ -769,9 +621,7 @@ function DynamicBar:InitConfig()
               -- Helper to save slot order
               local function SaveOrder(order)
                 self.db.profile.bar.slotOrder = order
-                if not InCombatLockdown() then
-                  self:RequestRebuild("slot_order")
-                end
+                Changed("slot_order")
               end
 
               -- Helper to move slot up
@@ -856,9 +706,7 @@ function DynamicBar:InitConfig()
                 width = "full",
                 func = function()
                   self.db.profile.bar.slotOrder = nil
-                  if not InCombatLockdown() then
-                    self:RequestRebuild("slot_order_reset")
-                  end
+                  Changed("slot_order_reset")
                 end,
               }
 

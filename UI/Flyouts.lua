@@ -79,17 +79,37 @@ function Flyouts:GetOptimalDirection(anchorBtn, buttonCount, buttonSize)
   end
 end
 
--- Apply the appropriate layout based on direction
+-- Per-direction anchoring: the flyout grows away from the anchor button.
+-- point/relPoint pin each button to the previous one; dx/dy is the spacing direction.
+local LAYOUTS = {
+  UP    = { point = "BOTTOM", relPoint = "TOP",    dx = 0,  dy = 1,  vertical = true },
+  DOWN  = { point = "TOP",    relPoint = "BOTTOM", dx = 0,  dy = -1, vertical = true },
+  RIGHT = { point = "LEFT",   relPoint = "RIGHT",  dx = 1,  dy = 0 },
+  LEFT  = { point = "RIGHT",  relPoint = "LEFT",   dx = -1, dy = 0 },
+}
+
+-- Position the flyout container and its buttons for the given direction (default UP)
 function Flyouts:_ApplyLayout(flyoutFrame, buttonCount, buttonSize, direction)
-  if direction == self.DIR_DOWN then
-    self:_LayoutDown(flyoutFrame, buttonCount, buttonSize)
-  elseif direction == self.DIR_RIGHT then
-    self:_LayoutRight(flyoutFrame, buttonCount, buttonSize)
-  elseif direction == self.DIR_LEFT then
-    self:_LayoutLeft(flyoutFrame, buttonCount, buttonSize)
+  local L = LAYOUTS[direction] or LAYOUTS.UP
+  local gap = Flyouts.SPACING
+  local length = (buttonSize * buttonCount) + (gap * (buttonCount - 1))
+
+  flyoutFrame:ClearAllPoints()
+  flyoutFrame:SetPoint(L.point, flyoutFrame._anchor, L.relPoint, L.dx * gap, L.dy * gap)
+  if L.vertical then
+    flyoutFrame:SetSize(buttonSize, length)
   else
-    -- Default: UP
-    self:_LayoutUp(flyoutFrame, buttonCount, buttonSize)
+    flyoutFrame:SetSize(length, buttonSize)
+  end
+
+  for i = 1, buttonCount do
+    local btn = flyoutFrame._buttons[i]
+    btn:ClearAllPoints()
+    if i == 1 then
+      btn:SetPoint(L.point, flyoutFrame, L.point, 0, 0)
+    else
+      btn:SetPoint(L.point, flyoutFrame._buttons[i - 1], L.relPoint, L.dx * gap, L.dy * gap)
+    end
   end
 end
 
@@ -128,94 +148,6 @@ function Flyouts:_EnsureButtons(flyoutFrame, count, buttonFactory, buttonSize)
       btn:SetFrameLevel(flyoutFrame:GetFrameLevel() + i)
 
       flyoutFrame._buttons[i] = btn
-    end
-  end
-end
-
--- Internal: position flyout buttons upward (default for horizontal bars at bottom)
-function Flyouts:_LayoutUp(flyoutFrame, buttonCount, buttonSize)
-  local anchor = flyoutFrame._anchor
-
-  flyoutFrame:ClearAllPoints()
-  flyoutFrame:SetPoint("BOTTOM", anchor, "TOP", 0, Flyouts.SPACING)
-  flyoutFrame:SetSize(
-    buttonSize,
-    (buttonSize * buttonCount) + (Flyouts.SPACING * (buttonCount - 1))
-  )
-
-  for i = 1, buttonCount do
-    local btn = flyoutFrame._buttons[i]
-    btn:ClearAllPoints()
-    if i == 1 then
-      btn:SetPoint("BOTTOM", flyoutFrame, "BOTTOM", 0, 0)
-    else
-      btn:SetPoint("BOTTOM", flyoutFrame._buttons[i - 1], "TOP", 0, Flyouts.SPACING)
-    end
-  end
-end
-
--- Internal: position flyout buttons downward (for horizontal bars at top)
-function Flyouts:_LayoutDown(flyoutFrame, buttonCount, buttonSize)
-  local anchor = flyoutFrame._anchor
-
-  flyoutFrame:ClearAllPoints()
-  flyoutFrame:SetPoint("TOP", anchor, "BOTTOM", 0, -Flyouts.SPACING)
-  flyoutFrame:SetSize(
-    buttonSize,
-    (buttonSize * buttonCount) + (Flyouts.SPACING * (buttonCount - 1))
-  )
-
-  for i = 1, buttonCount do
-    local btn = flyoutFrame._buttons[i]
-    btn:ClearAllPoints()
-    if i == 1 then
-      btn:SetPoint("TOP", flyoutFrame, "TOP", 0, 0)
-    else
-      btn:SetPoint("TOP", flyoutFrame._buttons[i - 1], "BOTTOM", 0, -Flyouts.SPACING)
-    end
-  end
-end
-
--- Internal: position flyout buttons rightward (for vertical bars on left side)
-function Flyouts:_LayoutRight(flyoutFrame, buttonCount, buttonSize)
-  local anchor = flyoutFrame._anchor
-
-  flyoutFrame:ClearAllPoints()
-  flyoutFrame:SetPoint("LEFT", anchor, "RIGHT", Flyouts.SPACING, 0)
-  flyoutFrame:SetSize(
-    (buttonSize * buttonCount) + (Flyouts.SPACING * (buttonCount - 1)),
-    buttonSize
-  )
-
-  for i = 1, buttonCount do
-    local btn = flyoutFrame._buttons[i]
-    btn:ClearAllPoints()
-    if i == 1 then
-      btn:SetPoint("LEFT", flyoutFrame, "LEFT", 0, 0)
-    else
-      btn:SetPoint("LEFT", flyoutFrame._buttons[i - 1], "RIGHT", Flyouts.SPACING, 0)
-    end
-  end
-end
-
--- Internal: position flyout buttons leftward (for vertical bars on right side)
-function Flyouts:_LayoutLeft(flyoutFrame, buttonCount, buttonSize)
-  local anchor = flyoutFrame._anchor
-
-  flyoutFrame:ClearAllPoints()
-  flyoutFrame:SetPoint("RIGHT", anchor, "LEFT", -Flyouts.SPACING, 0)
-  flyoutFrame:SetSize(
-    (buttonSize * buttonCount) + (Flyouts.SPACING * (buttonCount - 1)),
-    buttonSize
-  )
-
-  for i = 1, buttonCount do
-    local btn = flyoutFrame._buttons[i]
-    btn:ClearAllPoints()
-    if i == 1 then
-      btn:SetPoint("RIGHT", flyoutFrame, "RIGHT", 0, 0)
-    else
-      btn:SetPoint("RIGHT", flyoutFrame._buttons[i - 1], "LEFT", -Flyouts.SPACING, 0)
     end
   end
 end

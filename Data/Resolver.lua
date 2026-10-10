@@ -31,6 +31,19 @@ local function ResolveByPriorityList(list)
   return have[1], have
 end
 
+-- Resolver for a fixed priority list in Categories (best first)
+local function FromCategory(listName)
+  return function()
+    local cats = DB.Data and DB.Data.Categories
+    return ResolveByPriorityList((cats and cats[listName]) or {})
+  end
+end
+
+Resolver.ResolveHealthPotion = FromCategory("HealthPotions")
+Resolver.ResolveManaPotion   = FromCategory("ManaPotions")
+Resolver.ResolveFlask        = FromCategory("Flasks")
+Resolver.ResolveHearth       = FromCategory("Hearth")
+
 local function Collect(cache, cls, predicate)
   local out = {}
   for i = 1, #cache.items do
@@ -95,28 +108,10 @@ function Resolver:ResolveGuardianElixir()
   return self:_ResolveElixirByTag(function(info) return info.isGuardianElixir end)
 end
 
-function Resolver:ResolveFlask()
-  local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.Flasks then return nil, {} end
-  return ResolveByPriorityList(cats.Flasks)
-end
-
 function Resolver:ResolveDrink()
   return Resolve(function(info) return info.isDrink end, "mana")
 end
 
-
-function Resolver:ResolveHealthPotion()
-  local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.HealthPotions then return nil, {} end
-  return ResolveByPriorityList(cats.HealthPotions)
-end
-
-function Resolver:ResolveManaPotion()
-  local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.ManaPotions then return nil, {} end
-  return ResolveByPriorityList(cats.ManaPotions)
-end
 
 function Resolver:ResolveRejuvenationPotion()
   local cats = DB.Data and DB.Data.Categories
@@ -191,11 +186,5 @@ end
 
 function Resolver:ResolveBandage()
   return Resolve(function(info) return info.isBandage end, "bandageHeal")
-end
-
-function Resolver:ResolveHearth()
-  local cats = DB.Data and DB.Data.Categories
-  if not cats or not cats.Hearth then return nil, {} end
-  return ResolveByPriorityList(cats.Hearth)
 end
 

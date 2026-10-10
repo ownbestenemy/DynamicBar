@@ -13,6 +13,16 @@
 - Item icon lookup read the wrong return from `GetItemInfoInstant`
 - Config panel error on WoW Forever (bundled Ace3 updated to r1403)
 
+### Changed
+- Code cleanup: shared bar rebuild logic across display modes, shared config get/set, table-driven resolvers and flyout layouts
+- Cooldowns are looked up by item instead of scanning every bag slot
+- Removed unused Ace3 modules
+
+### Fixed
+- Static mode no longer re-shows a stale flyout when hovering an empty slot
+- Lowering the button count in Dynamic mode now hides the extra buttons
+- Grid column default is consistently 5
+
 ## [1.0] - 2026-02-01
 
 First stable release! Complete consumable bar for TBC Classic.
