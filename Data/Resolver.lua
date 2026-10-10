@@ -39,9 +39,6 @@ local function FromCategory(listName)
   end
 end
 
-Resolver.ResolveHealthPotion = FromCategory("HealthPotions")
-Resolver.ResolveManaPotion   = FromCategory("ManaPotions")
-Resolver.ResolveFlask        = FromCategory("Flasks")
 Resolver.ResolveHearth       = FromCategory("Hearth")
 Resolver.ResolveOtherBuff    = FromCategory("OtherBuffs")
 
@@ -59,13 +56,54 @@ local function Collect(cache, cls, predicate)
   return out
 end
 
+-- Strongest first by `field`; item level breaks ties and ranks items whose
+-- amounts couldn't be read (non-English tooltips)
 local function SortByFieldDesc(list, cls, field)
   table.sort(list, function(a, b)
-    local ia = cls.cache[a]
-    local ib = cls.cache[b]
-    return ((ia and ia[field]) or 0) > ((ib and ib[field]) or 0)
+    local ia, ib = cls.cache[a] or {}, cls.cache[b] or {}
+    local fa, fb = ia[field] or 0, ib[field] or 0
+    if fa ~= fb then return fa > fb end
+    local la, lb = ia.level or 0, ib.level or 0
+    if la ~= lb then return la > lb end
+    return a < b
   end)
 end
+
+-- Listed items first, in list order; then bag items the list doesn't know
+-- that the classifier tags for this slot (WoW Forever's modern items, new
+-- TBC items), strongest first
+local function ListThenTagged(listName, predicate, sortField)
+  return function()
+    local cache, cls = GetDeps()
+    if not cache then return nil, {} end
+    local cats = DB.Data.Categories or {}
+    local list = cats[listName] or {}
+    local _, have = ResolveByPriorityList(list)
+
+    -- Items with a slot of their own never fill this one
+    local skip = {}
+    for _, name in ipairs({ listName, "AllElixirs", "OtherBuffs", "RejuvenationPotions" }) do
+      for _, id in ipairs(cats[name] or {}) do skip[id] = true end
+    end
+    local extra = Collect(cache, cls, function(info)
+      return not skip[info.itemID] and predicate(info)
+    end)
+    SortByFieldDesc(extra, cls, sortField)
+    for _, id in ipairs(extra) do have[#have + 1] = id end
+
+    return have[1], have
+  end
+end
+
+Resolver.ResolveHealthPotion = ListThenTagged("HealthPotions", function(info)
+  return info.isPotion and not info.isRejuvenationPotion and (info.health or 0) > 0 and (info.mana or 0) == 0
+end, "health")
+Resolver.ResolveManaPotion = ListThenTagged("ManaPotions", function(info)
+  return info.isPotion and not info.isRejuvenationPotion and (info.mana or 0) > 0 and (info.health or 0) == 0
+end, "mana")
+Resolver.ResolveFlask = ListThenTagged("Flasks", function(info)
+  return info.isFlask
+end, "level")
 
 local function Resolve(predicate, sortField)
   local cache, cls = GetDeps()

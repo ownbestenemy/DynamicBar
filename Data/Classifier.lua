@@ -1,7 +1,13 @@
 -- Data/Classifier.lua
--- Cached tooltip classifier (English client).
--- Tags: Food (non-buff), Food (buff/Well Fed), Drink, Bandage, Quest-use.
--- Extracts: health/mana/bandageHeal where possible.
+-- Cached item classifier.
+-- Tags: Food (non-buff), Food (buff/Well Fed), Drink, Bandage, Quest-use, elixirs, flasks.
+-- Extracts: health/mana/bandageHeal where possible, and item level for ranking.
+--
+-- Signals that don't depend on the client's language come first: item
+-- class/subclass IDs, the item's use spell compared with the client's own
+-- Food/Drink spell names, Blizzard's localized tooltip strings, and ID lists.
+-- The remaining tooltip phrases come from the locale table (Locales/*.lua),
+-- so translators can supply them; they default to English.
 
 local DB = DynamicBar
 DB.Data = DB.Data or {}
@@ -13,6 +19,49 @@ Classifier.cache = Classifier.cache or {} -- itemID -> info
 -- Cache global functions (WoW Forever uses the Mainline API, which only has the C_Item versions)
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+local GetItemSpell = GetItemSpell or (C_Item and C_Item.GetItemSpell)
+local GetSpellName = (C_Spell and C_Spell.GetSpellName) or function(spellID)
+  return GetSpellInfo and (GetSpellInfo(spellID)) or nil
+end
+
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
+
+-- Consumable subclasses (item class 0), the same numbers on TBC and Mainline
+local CONSUMABLE = 0
+local SUB_POTION, SUB_ELIXIR, SUB_FLASK, SUB_FOOD_DRINK, SUB_BANDAGE = 1, 2, 3, 5, 7
+local CLASS_RECIPE = 9
+
+local ENGLISH = (GetLocale and GetLocale() or "enUS"):match("^en") ~= nil
+
+-- Spells whose localized names identify eating, drinking and the Well Fed buff
+local FOOD_SPELLS = { 433, 1127, 1129 }             -- "Food"
+local DRINK_SPELLS = { 430, 431, 432, 1133, 1135 }   -- "Drink"
+local WELL_FED_SPELLS = { 19705, 33257 }             -- "Well Fed"
+
+local function SpellNameSet(ids)
+  local names = {}
+  for _, id in ipairs(ids) do
+    local name = GetSpellName(id)
+    if type(name) == "string" and name ~= "" then names[name] = true end
+  end
+  return names
+end
+
+-- Built on first use: spell names may not be available while the addon loads
+local needles
+local function Needles()
+  if needles then return needles end
+  local wellFed = {}
+  for name in pairs(SpellNameSet(WELL_FED_SPELLS)) do wellFed[#wellFed + 1] = name:lower() end
+  needles = {
+    use = (ITEM_SPELL_TRIGGER_ONUSE or "Use:"):lower(),
+    quest = (ITEM_BIND_QUEST or "Quest Item"):lower(),
+    wellFed = wellFed,
+    foodSpells = SpellNameSet(FOOD_SPELLS),
+    drinkSpells = SpellNameSet(DRINK_SPELLS),
+  }
+  return needles
+end
 
 local TIP_NAME = "DynamicBarScanTooltip"
 local tip = CreateFrame("GameTooltip", TIP_NAME, UIParent, "GameTooltipTemplate")
@@ -74,28 +123,46 @@ local function TooltipLines(itemID)
 end
 
 local function JoinedLower(lines)
-  return (table.concat(lines, "\n")):lower()
+  local j = (table.concat(lines, "\n")):lower()
+  -- Drop thousands separators ("3,500,000" -> "3500000") so amounts parse
+  local prev
+  repeat
+    prev = j
+    j = j:gsub("(%d),(%d%d%d)", "%1%2")
+  until j == prev
+  return j
 end
 
 local function Has(j, needle)
   return j:find(needle, 1, true) ~= nil
 end
 
+-- A translatable tooltip phrase, lowercased (English when untranslated)
+local function Phrase(key)
+  return (L[key] or key):lower()
+end
+
+-- Escape a phrase for use inside a Lua pattern
+local function Literal(text)
+  return (text:gsub("%p", "%%%0"))
+end
+
 local function ParseRestores(j, kind) -- kind = "health" or "mana"
+  local restores, word = Literal(Phrase("restores")), Literal(Phrase(kind))
   -- Match "restores X to Y kind" (range format)
-  local _, hi = j:match("restores%s+(%d+)%s+to%s+(%d+)%s+" .. kind)
+  local _, hi = j:match(restores .. "%s+(%d+)%s+to%s+(%d+)%s+" .. word)
   if hi then return tonumber(hi) end
 
   -- Match "and X to Y kind" (second resource in rejuv potions)
-  _, hi = j:match("and%s+(%d+)%s+to%s+(%d+)%s+" .. kind)
+  _, hi = j:match("and%s+(%d+)%s+to%s+(%d+)%s+" .. word)
   if hi then return tonumber(hi) end
 
   -- Match "restores X kind" (simple format)
-  local n = j:match("restores%s+(%d+)%s+" .. kind)
+  local n = j:match(restores .. "%s+(%d+)%s+" .. word)
   if n then return tonumber(n) end
 
   -- Match "and X kind" (simple format for second resource)
-  n = j:match("and%s+(%d+)%s+" .. kind)
+  n = j:match("and%s+(%d+)%s+" .. word)
   return n and tonumber(n) or 0
 end
 
@@ -104,18 +171,18 @@ local function ParseBandageHeal(j)
   return n and tonumber(n) or 0
 end
 
-local function GetTypeInfo(itemID, classID, subClassID)
-  -- Prefer GetItemInfo() strings on English client; use instant as fallback.
-  local itemType, itemSubType = select(6, GetItemInfo(itemID))
+-- Is the item's use spell one of these localized spell names?
+local function UseSpellIn(itemID, names)
+  if not GetItemSpell then return false end
+  local spellName = GetItemSpell(itemID)
+  return spellName ~= nil and names[spellName] == true
+end
 
-  if not itemType or not itemSubType then
-    -- Classic-family fallback: classID 0 = Consumable, subClassID 5 = Food & Drink
-    if classID == 0 and subClassID == 5 then
-      itemType, itemSubType = "Consumable", "Food & Drink"
-    end
+local function InList(list, itemID)
+  for _, id in ipairs(list or {}) do
+    if id == itemID then return true end
   end
-
-  return itemType, itemSubType
+  return false
 end
 
 function Classifier:InspectItem(itemID)
@@ -125,9 +192,10 @@ function Classifier:InspectItem(itemID)
   end
 
   local classID, subClassID = select(6, GetItemInfoInstant(itemID))
+  local consumable = classID == CONSUMABLE
 
   -- Hard exclude: Recipes (prevents false positives)
-  if classID == 9 then
+  if classID == CLASS_RECIPE then
     local info = EmptyInfo()
     info.itemID = itemID
     info._final = true  -- Recipes are always final (nothing to classify)
@@ -138,7 +206,7 @@ function Classifier:InspectItem(itemID)
   -- Tooltip scan. A consumable whose tooltip shows only its name has not loaded
   -- yet (its Use:/elixir lines are missing), so retry it like an empty tooltip.
   local lines = TooltipLines(itemID)
-  if #lines == 0 or (classID == 0 and #lines == 1) then
+  if #lines == 0 or (consumable and #lines == 1) then
     GetItemInfo(itemID)
     self.cache[itemID] = cached or {}
     self.cache[itemID].itemID = itemID
@@ -147,41 +215,48 @@ function Classifier:InspectItem(itemID)
     return self.cache[itemID]
   end
 
-
+  local n               = Needles()
+  local cats            = DB.Data.Categories or {}
   local j               = JoinedLower(lines)
   local info            = EmptyInfo()
   info.itemID           = itemID
+  info.level            = select(4, GetItemInfo(itemID)) or 0
+
+  local isPotion        = consumable and subClassID == SUB_POTION
+  local isFoodDrinkType = consumable and subClassID == SUB_FOOD_DRINK
 
   -- Common flags
-  info.hasUse           = Has(j, "use:")
-  info.isWellFed        = Has(j, "well fed")
-  local isEating        = Has(j, "must remain seated while eating")
-  local isDrinking      = Has(j, "must remain seated while drinking")
-  info.isBattleElixir   = j:find("battle elixir", 1, true) ~= nil
-  info.isGuardianElixir = j:find("guardian elixir", 1, true) ~= nil
-  info.isFlask          = j:find("flask", 1, true) ~= nil
+  info.hasUse           = Has(j, n.use)
+  for _, name in ipairs(n.wellFed) do
+    if Has(j, name) then info.isWellFed = true end
+  end
+  info.isWellFed        = info.isWellFed or Has(j, Phrase("well fed"))
+  local isEating        = UseSpellIn(itemID, n.foodSpells) or Has(j, Phrase("must remain seated while eating"))
+  local isDrinking      = UseSpellIn(itemID, n.drinkSpells) or Has(j, Phrase("must remain seated while drinking"))
+  info.isBattleElixir   = Has(j, Phrase("battle elixir"))
+  info.isGuardianElixir = Has(j, Phrase("guardian elixir"))
+  info.isFlask          = (consumable and subClassID == SUB_FLASK) or InList(cats.Flasks, itemID) or Has(j, Phrase("flask"))
 
   -- Restores parsing
-  local restoresHealth  = Has(j, "restores") and Has(j, "health")
-  local restoresMana    = Has(j, "restores") and Has(j, "mana")
+  local restores        = Has(j, Phrase("restores"))
+  local restoresHealth  = restores and Has(j, Phrase("health"))
+  local restoresMana    = restores and Has(j, Phrase("mana"))
 
   if restoresHealth then info.health = ParseRestores(j, "health") end
   if restoresMana then info.mana = ParseRestores(j, "mana") end
 
-  -- Bandage parsing
+  -- Bandages: the item subclass says so in any language; the heal amount
+  -- (English tooltips) only ranks them
   if Has(j, "heals") and Has(j, "over") and Has(j, "sec") then
     info.bandageHeal = ParseBandageHeal(j)
-    if info.bandageHeal > 0 and Has(j, "damage") then
-      info.isBandage = true
-    end
   end
-
-  -- Type gating (prevents potions showing as food, etc.)
-  local itemType, itemSubType = GetTypeInfo(itemID, classID, subClassID)
+  -- English tooltips also rule out first-aid items that heal nothing (Anti-Venom)
+  local bandageText = info.bandageHeal > 0 and Has(j, "damage")
+  info.isBandage = bandageText or (consumable and subClassID == SUB_BANDAGE and not ENGLISH)
 
   -- Robust pending: on some clients the first tooltip render contains only the item name.
   -- For Food & Drink, if we don't see Use:/restores/seated text yet, treat as pending so we rescan.
-  if (classID == 0 and subClassID == 5) then
+  if isFoodDrinkType then
     if (not info.hasUse) and (not isEating) and (not isDrinking) and (not restoresHealth) and (not restoresMana) and (not info.isWellFed) and (not info.isBandage) then
       info.pending = true
       info.pendingReason = info.pendingReason or "FoodDrink tooltip incomplete (no Use/restores yet)"
@@ -190,43 +265,41 @@ function Classifier:InspectItem(itemID)
     end
   end
 
-  -- Detect Rejuvenation Potions (restore both health AND mana) BEFORE general potion exclusion
-  if itemType == "Consumable" and itemSubType == "Potion" then
-    if restoresHealth and restoresMana then
+  -- Potions: rejuvenation (health AND mana) is a slot of its own; other potions
+  -- are never food or drink (they can match "restores health")
+  if isPotion then
+    info.isPotion = true
+    if InList(cats.RejuvenationPotions, itemID) or (restoresHealth and restoresMana) then
       info.isRejuvenationPotion = true
-      info._final = true
-      self.cache[itemID] = info
-      return info
     end
-    -- Never classify other potions as food/drink (they can match "restores health")
+    -- Keep rescanning potions until their Use: line has loaded
+    info._final = info.isRejuvenationPotion or info.hasUse
     self.cache[itemID] = info
     return info
   end
 
-  local isFoodDrink = (itemType == "Consumable" and itemSubType == "Food & Drink") or isEating or isDrinking
-
-  if isFoodDrink then
+  if isFoodDrinkType or isEating or isDrinking then
     if info.isWellFed then
       info.isFoodBuff = true
-    else
-      if restoresHealth and not restoresMana then
-        info.isFood = true
-      end
+    elseif (isEating or restoresHealth) and not restoresMana and not isDrinking then
+      info.isFood = true
     end
 
-    if restoresMana and not info.isWellFed then
+    if (isDrinking or restoresMana) and not info.isWellFed then
       info.isDrink = true
     end
   end
 
   -- Quest-use: quest item + usable
-  if info.hasUse and Has(j, "quest item") then
+  if info.hasUse and Has(j, n.quest) then
     info.isQuestUse = true
   end
 
-  -- Mark as final once we have meaningful information (prevents caching an empty scan forever)
-  info._final = (not info.pending) and
-    (info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or
+  -- Mark as final once we have meaningful information (prevents caching an empty scan forever).
+  -- Only consumables fill tagged slots, so anything else is done once its tooltip
+  -- has loaded; that keeps gear from being rescanned on every resolve.
+  info._final = (not info.pending) and ((classID ~= nil and not consumable) or
+    info.isFood or info.isFoodBuff or info.isDrink or info.isBandage or info.isQuestUse or
      info.isFlask or info.hasUse or info.isWellFed or restoresHealth or restoresMana or
      isEating or isDrinking)
 

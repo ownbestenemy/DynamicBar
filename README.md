@@ -120,7 +120,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Known Limitations (Beta)
 
-- **English clients only** - Localization planned for future release
+- **Non-English clients** - Most slots work in any language; elixir type and restore amounts need translated tooltip phrases, and menus are English until translations land
 - No quest/contextual items yet
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)

@@ -107,11 +107,9 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 **A: Yes.** Type `/dbar builder` (or use Open Bar Builder in the Behavior tab). Drag categories onto your bar, drag slots to reorder them, and drag a slot off the bar to remove it. The bar has one button per slot.
 
-### Q: Why English only?
+### Q: Does it work on non-English clients?
 
-**A: Item classification relies on tooltip parsing.** The addon reads tooltip text to categorize items (e.g., detecting "Battle Elixir" vs "Guardian Elixir"). This only works with English-language game clients currently.
-
-Localization is planned for a future version.
+**A: Mostly.** Food, drink, buff food, bandages, flasks and all listed potions are recognized in any language, using item types and the game's own spell names. Battle vs Guardian elixirs, and ranking food or potions by how much they restore, still read English tooltip text until those phrases are translated for your language. Menu translations are coming.
 
 ### Q: The bar is stuck and I can't move it!
 

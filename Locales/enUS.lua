@@ -194,3 +194,16 @@ L["Drag onto the bar, or click to add it at the end."] = true
 L["Done"] = true
 L["Reset to Default Slots"] = true
 L["The Bar Builder can't be opened in combat."] = true
+
+-- Tooltip phrases used to classify items (lowercase, as they appear in tooltips).
+-- Translate these for each client language; the rest of classification is
+-- language-independent.
+L["restores"] = true
+L["health"] = true
+L["mana"] = true
+L["well fed"] = true
+L["must remain seated while eating"] = true
+L["must remain seated while drinking"] = true
+L["battle elixir"] = true
+L["guardian elixir"] = true
+L["flask"] = true
