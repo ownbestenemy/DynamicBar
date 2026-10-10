@@ -9,21 +9,17 @@ L["Loaded. (/dbar)"] = true
 L["Loaded (disabled). (/dbar enable)"] = true
 
 -- General Settings
-L["General Settings"] = true
 L["Enabled"] = true
-L["Enable or disable the DynamicBar addon"] = true
 L["Debug Mode"] = true
 L["Enable debug logging to chat frame"] = true
 
 -- Bar Layout
 L["Bar Layout"] = true
-L["Configure the size and appearance of the action bar. Changes apply out of combat."] = true
 L["Choose how buttons are arranged"] = true
 L["Horizontal (Default)"] = true
 L["Vertical"] = true
 L["Grid"] = true
 L["Grid Rows"] = true
-L["Number of rows in grid layout"] = true
 L["Grid Columns"] = true
 L["Number of columns in grid layout"] = true
 L["Bar Scale"] = true
@@ -65,10 +61,6 @@ L["Empty Button Slots"] = true
 L["How to handle buttons with no items assigned"] = true
 L["Smart - Binding Safe (Recommended)"] = true
 L["Static - Show All Slots"] = true
-L["EXPERT: Dynamic (Breaks Keybinds)"] = true
-L["Smart hides empty slots but keeps keybinds stable."] = true
-L["Static shows all slots with placeholders."] = true
-L["Dynamic collapses the bar (WARNING: keybinds shift when items change)."] = true
 
 -- ElvUI
 L["Use ElvUI Spacing"] = true
@@ -84,19 +76,13 @@ L["DRAG ME"] = true
 L["Save & Lock"] = true
 
 -- Reset
-L["Reset Layout"] = true
-L["Reset all layout settings to default values"] = true
 
 -- Position
 L["Bar Position"] = true
 L["Choose a preset position or customize manually. Changes apply out of combat."] = true
 L["Position Preset"] = true
 L["Choose a common position or select Custom for manual control"] = true
-L["Bottom Center"] = true
 L["Top Center"] = true
-L["Left Side"] = true
-L["Right Side"] = true
-L["Custom"] = true
 L["Show Advanced Controls"] = true
 L["Display manual position adjustment controls"] = true
 L["Anchor Point"] = true
@@ -131,7 +117,6 @@ L["Unknown command. Use /dbar help"] = true
 
 -- Status messages
 L["Enabled."] = true
-L["Disabled (UI hiding comes later)."] = true
 L["Debug ON"] = true
 L["Debug OFF"] = true
 L["Config UI not loaded."] = true
@@ -194,6 +179,64 @@ L["Drag onto the bar, or click to add it at the end."] = true
 L["Done"] = true
 L["Reset to Default Slots"] = true
 L["The Bar Builder can't be opened in combat."] = true
+
+-- Settings menu and popups
+L["Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)"] = true
+L["Position Now"] = true
+L["Use Default"] = true
+L["Disabled (applies after combat)."] = true
+L["Disabled."] = true
+L["Top Left"] = true
+L["Top"] = true
+L["Top Right"] = true
+L["Left"] = true
+L["Center"] = true
+L["Right"] = true
+L["Bottom Left"] = true
+L["Bottom"] = true
+L["Bottom Right"] = true
+L["General"] = true
+L["Enable or disable the DynamicBar addon. Changes apply after combat."] = true
+L["Bottom Center (Default)"] = true
+L["Screen Center"] = true
+L["Custom Position"] = true
+L["Enter a number (e.g., -100, 0, 200)"] = true
+L["Enter a number (e.g., -180, 0, 100)"] = true
+L["Reset bar position to Bottom Center?"] = true
+L["Appearance"] = true
+L["Layout"] = true
+L["Number of rows in grid layout. Rows expand automatically if needed to fit every button."] = true
+L["Padding"] = true
+L["Skinning"] = true
+L["Unknown"] = true
+L["ElvUI spacing active"] = true
+L["Button Style:"] = true
+L["(auto-detected)"] = true
+L["Reset Appearance"] = true
+L["Reset all appearance settings to default values"] = true
+L["Reset scale, layout mode, spacing, and padding to defaults?"] = true
+L["Behavior"] = true
+L["Display Behavior"] = true
+L["Smart (Recommended)"] = true
+L["Empty buttons are invisible but space is reserved"] = true
+L["Keybinds remain stable (button 1 is always button 1)"] = true
+L["Clean appearance without clutter"] = true
+L["Static"] = true
+L["All buttons always visible, including empty slots"] = true
+L["Shows empty placeholders for unused slots"] = true
+L["Keybinds remain stable"] = true
+L["Dynamic (Advanced)"] = true
+L["Bar shrinks/grows with items"] = true
+L["WARNING: Button positions shift as items appear/disappear"] = true
+L["Keybinds will break (button 1 may become button 3 on next rebuild)"] = true
+L["Not recommended unless you never use keybinds"] = true
+L["⚠️ EXPERT: Dynamic (Breaks Keybinds)"] = true
+L["WARNING: Dynamic mode shifts button positions on every rebuild."] = true
+L["This WILL break your keybinds - the item assigned to a keybind will change as your inventory changes."] = true
+L["Recommended: Use Smart mode instead (binding-safe, same visual cleanup)."] = true
+L["Continue with Dynamic mode?"] = true
+L["Enable Dynamic Mode (Breaks Keybinds)?"] = true
+L["Profiles"] = true
 
 -- Tooltip phrases used to classify items (lowercase, as they appear in tooltips).
 -- Translate these for each client language; the rest of classification is

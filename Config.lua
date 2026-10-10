@@ -65,9 +65,9 @@ function DynamicBar:InitConfig()
   end
 
   local ANCHOR_POINTS = {
-    TOPLEFT = "Top Left", TOP = "Top", TOPRIGHT = "Top Right",
-    LEFT = "Left", CENTER = "Center", RIGHT = "Right",
-    BOTTOMLEFT = "Bottom Left", BOTTOM = "Bottom", BOTTOMRIGHT = "Bottom Right",
+    TOPLEFT = L["Top Left"], TOP = L["Top"], TOPRIGHT = L["Top Right"],
+    LEFT = L["Left"], CENTER = L["Center"], RIGHT = L["Right"],
+    BOTTOMLEFT = L["Bottom Left"], BOTTOM = L["Bottom"], BOTTOMRIGHT = L["Bottom Right"],
   }
   local ANCHOR_SORTING = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
@@ -88,7 +88,7 @@ function DynamicBar:InitConfig()
   -- =========================================================
   local options = {
     type = "group",
-    name = "DynamicBar",
+    name = L["DynamicBar"],
     childGroups = "tab",
     get = BarGet,
     set = BarSet,
@@ -98,13 +98,13 @@ function DynamicBar:InitConfig()
       -- =====================================================
       general = {
         type = "group",
-        name = "General",
+        name = L["General"],
         order = 1,
         args = {
           enabled = {
             type = "toggle",
-            name = "Enabled",
-            desc = "Enable or disable the DynamicBar addon. Changes apply after combat.",
+            name = L["Enabled"],
+            desc = L["Enable or disable the DynamicBar addon. Changes apply after combat."],
             order = 1,
             width = "full",
             get = function() return self.db.profile.enabled end,
@@ -114,8 +114,8 @@ function DynamicBar:InitConfig()
           },
           debug = {
             type = "toggle",
-            name = "Debug Mode",
-            desc = "Enable debug logging to chat frame",
+            name = L["Debug Mode"],
+            desc = L["Enable debug logging to chat frame"],
             order = 2,
             width = "full",
             get = function() return self.db.profile.debug end,
@@ -123,8 +123,8 @@ function DynamicBar:InitConfig()
           },
           locked = {
             type = "toggle",
-            name = "Lock Bar Position",
-            desc = "Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position.",
+            name = L["Lock Bar Position"],
+            desc = L["Lock the bar to prevent accidental dragging. Uncheck to drag the bar to a new position."],
             order = 3,
             width = "full",
             get = function() return self.db.profile.bar.locked ~= false end,
@@ -139,25 +139,25 @@ function DynamicBar:InitConfig()
           -- Position Section
           positionHeader = {
             type = "header",
-            name = "Bar Position",
+            name = L["Bar Position"],
             order = 10,
           },
           positionDesc = {
             type = "description",
-            name = "Choose a preset position or customize manually. Changes apply out of combat.",
+            name = L["Choose a preset position or customize manually. Changes apply out of combat."],
             order = 11,
             fontSize = "medium",
           },
           positionPreset = {
             type = "select",
-            name = "Position Preset",
-            desc = "Choose a common position or select Custom for manual control",
+            name = L["Position Preset"],
+            desc = L["Choose a common position or select Custom for manual control"],
             order = 12,
             values = {
-              BOTTOM_CENTER = "Bottom Center (Default)",
-              TOP_CENTER = "Top Center",
-              CENTER = "Screen Center",
-              CUSTOM = "Custom Position",
+              BOTTOM_CENTER = L["Bottom Center (Default)"],
+              TOP_CENTER = L["Top Center"],
+              CENTER = L["Screen Center"],
+              CUSTOM = L["Custom Position"],
             },
             sorting = { "BOTTOM_CENTER", "TOP_CENTER", "CENTER", "CUSTOM" },
             width = "full",
@@ -170,8 +170,8 @@ function DynamicBar:InitConfig()
           },
           showAdvanced = {
             type = "toggle",
-            name = "Show Advanced Controls",
-            desc = "Display manual position adjustment controls",
+            name = L["Show Advanced Controls"],
+            desc = L["Display manual position adjustment controls"],
             order = 13,
             width = "full",
             hidden = function() return GetCurrentPreset() == "CUSTOM" end,
@@ -180,8 +180,8 @@ function DynamicBar:InitConfig()
           },
           point = {
             type = "select",
-            name = "Anchor Point",
-            desc = "Which corner/edge of the bar to anchor",
+            name = L["Anchor Point"],
+            desc = L["Which corner/edge of the bar to anchor"],
             order = 14,
             values = ANCHOR_POINTS,
             sorting = ANCHOR_SORTING,
@@ -190,8 +190,8 @@ function DynamicBar:InitConfig()
           },
           relPoint = {
             type = "select",
-            name = "Relative To",
-            desc = "Which corner/edge of the screen to anchor to",
+            name = L["Relative To"],
+            desc = L["Which corner/edge of the screen to anchor to"],
             order = 15,
             values = ANCHOR_POINTS,
             sorting = ANCHOR_SORTING,
@@ -200,11 +200,11 @@ function DynamicBar:InitConfig()
           },
           xOffset = {
             type = "input",
-            name = "X Offset",
-            desc = "Horizontal offset in pixels (negative = left, positive = right)",
+            name = L["X Offset"],
+            desc = L["Horizontal offset in pixels (negative = left, positive = right)"],
             order = 16,
             pattern = "^-?%d+$",
-            usage = "Enter a number (e.g., -100, 0, 200)",
+            usage = L["Enter a number (e.g., -100, 0, 200)"],
             width = "normal",
             hidden = HideManualPosition,
             get = function() return tostring(self.db.profile.bar.x) end,
@@ -218,11 +218,11 @@ function DynamicBar:InitConfig()
           },
           yOffset = {
             type = "input",
-            name = "Y Offset",
-            desc = "Vertical offset in pixels (negative = down, positive = up)",
+            name = L["Y Offset"],
+            desc = L["Vertical offset in pixels (negative = down, positive = up)"],
             order = 17,
             pattern = "^-?%d+$",
-            usage = "Enter a number (e.g., -180, 0, 100)",
+            usage = L["Enter a number (e.g., -180, 0, 100)"],
             width = "normal",
             hidden = HideManualPosition,
             get = function() return tostring(self.db.profile.bar.y) end,
@@ -236,11 +236,11 @@ function DynamicBar:InitConfig()
           },
           resetPosition = {
             type = "execute",
-            name = "Reset Position",
-            desc = "Reset position to Bottom Center default",
+            name = L["Reset Position"],
+            desc = L["Reset position to Bottom Center default"],
             order = 20,
             confirm = true,
-            confirmText = "Reset bar position to Bottom Center?",
+            confirmText = L["Reset bar position to Bottom Center?"],
             func = function()
               ApplyPositionPreset("BOTTOM_CENTER")
             end,
@@ -253,31 +253,31 @@ function DynamicBar:InitConfig()
       -- =====================================================
       appearance = {
         type = "group",
-        name = "Appearance",
+        name = L["Appearance"],
         order = 2,
         args = {
           layoutHeader = {
             type = "header",
-            name = "Layout",
+            name = L["Layout"],
             order = 1,
           },
           layoutMode = {
             type = "select",
-            name = "Bar Layout",
-            desc = "Choose how buttons are arranged",
+            name = L["Bar Layout"],
+            desc = L["Choose how buttons are arranged"],
             order = 2,
             values = {
-              HORIZONTAL = "Horizontal (Default)",
-              VERTICAL = "Vertical",
-              GRID = "Grid",
+              HORIZONTAL = L["Horizontal (Default)"],
+              VERTICAL = L["Vertical"],
+              GRID = L["Grid"],
             },
             sorting = { "HORIZONTAL", "VERTICAL", "GRID" },
             width = "full",
           },
           gridRows = {
             type = "range",
-            name = "Grid Rows",
-            desc = "Number of rows in grid layout. Rows expand automatically if needed to fit every button.",
+            name = L["Grid Rows"],
+            desc = L["Number of rows in grid layout. Rows expand automatically if needed to fit every button."],
             order = 3,
             min = 1,
             max = 12,
@@ -287,8 +287,8 @@ function DynamicBar:InitConfig()
           },
           gridCols = {
             type = "range",
-            name = "Grid Columns",
-            desc = "Number of columns in grid layout",
+            name = L["Grid Columns"],
+            desc = L["Number of columns in grid layout"],
             order = 4,
             min = 1,
             max = 12,
@@ -298,8 +298,8 @@ function DynamicBar:InitConfig()
           },
           scale = {
             type = "range",
-            name = "Bar Scale",
-            desc = "Overall scale of the bar and all buttons",
+            name = L["Bar Scale"],
+            desc = L["Overall scale of the bar and all buttons"],
             order = 5,
             min = 0.5,
             max = 2.0,
@@ -310,17 +310,17 @@ function DynamicBar:InitConfig()
 
           spacingHeader = {
             type = "header",
-            name = "Spacing",
+            name = L["Spacing"],
             order = 10,
           },
           spacingH = {
             type = "range",
             name = function()
               local mode = self.db.profile.bar.layoutMode or "HORIZONTAL"
-              if mode == "VERTICAL" then return "Spacing"
-              else return "Horizontal Spacing" end
+              if mode == "VERTICAL" then return L["Spacing"]
+              else return L["Horizontal Spacing"] end
             end,
-            desc = "Horizontal space between buttons (pixels)",
+            desc = L["Horizontal space between buttons (pixels)"],
             order = 11,
             min = 0,
             max = 20,
@@ -329,8 +329,8 @@ function DynamicBar:InitConfig()
           },
           spacingV = {
             type = "range",
-            name = "Vertical Spacing",
-            desc = "Vertical space between buttons (pixels)",
+            name = L["Vertical Spacing"],
+            desc = L["Vertical space between buttons (pixels)"],
             order = 12,
             min = 0,
             max = 20,
@@ -343,13 +343,13 @@ function DynamicBar:InitConfig()
 
           paddingHeader = {
             type = "header",
-            name = "Padding",
+            name = L["Padding"],
             order = 20,
           },
           padding = {
             type = "range",
-            name = "Edge Padding",
-            desc = "Space on edges of the bar (pixels) - use Advanced Padding for per-edge control",
+            name = L["Edge Padding"],
+            desc = L["Space on edges of the bar (pixels) - use Advanced Padding for per-edge control"],
             order = 21,
             min = 0,
             max = 20,
@@ -368,8 +368,8 @@ function DynamicBar:InitConfig()
           },
           showAdvancedPadding = {
             type = "toggle",
-            name = "Show Advanced Padding",
-            desc = "Adjust padding for each edge separately",
+            name = L["Show Advanced Padding"],
+            desc = L["Adjust padding for each edge separately"],
             order = 22,
             width = "full",
             get = function() return self.db.profile._showAdvancedPadding end,
@@ -377,8 +377,8 @@ function DynamicBar:InitConfig()
           },
           padLeft = {
             type = "range",
-            name = "Left Padding",
-            desc = "Space on left edge (pixels)",
+            name = L["Left Padding"],
+            desc = L["Space on left edge (pixels)"],
             order = 23,
             min = 0,
             max = 20,
@@ -388,8 +388,8 @@ function DynamicBar:InitConfig()
           },
           padRight = {
             type = "range",
-            name = "Right Padding",
-            desc = "Space on right edge (pixels)",
+            name = L["Right Padding"],
+            desc = L["Space on right edge (pixels)"],
             order = 24,
             min = 0,
             max = 20,
@@ -399,8 +399,8 @@ function DynamicBar:InitConfig()
           },
           padTop = {
             type = "range",
-            name = "Top Padding",
-            desc = "Space on top edge (pixels)",
+            name = L["Top Padding"],
+            desc = L["Space on top edge (pixels)"],
             order = 25,
             min = 0,
             max = 20,
@@ -410,8 +410,8 @@ function DynamicBar:InitConfig()
           },
           padBottom = {
             type = "range",
-            name = "Bottom Padding",
-            desc = "Space on bottom edge (pixels)",
+            name = L["Bottom Padding"],
+            desc = L["Space on bottom edge (pixels)"],
             order = 26,
             min = 0,
             max = 20,
@@ -422,13 +422,13 @@ function DynamicBar:InitConfig()
 
           skinsHeader = {
             type = "header",
-            name = "Skinning",
+            name = L["Skinning"],
             order = 30,
           },
           inheritElvUI = {
             type = "toggle",
-            name = "Use ElvUI Spacing",
-            desc = "Automatically inherit button spacing and padding from ElvUI (horizontal mode only)",
+            name = L["Use ElvUI Spacing"],
+            desc = L["Automatically inherit button spacing and padding from ElvUI (horizontal mode only)"],
             order = 31,
             width = "full",
             disabled = function()
@@ -439,15 +439,15 @@ function DynamicBar:InitConfig()
           buttonSkinInfo = {
             type = "description",
             name = function()
-              local skinName = "Unknown"
+              local skinName = L["Unknown"]
               if self.UI and self.UI.Skins then
-                skinName = self.UI.Skins:GetActiveSkinName() or "Unknown"
+                skinName = self.UI.Skins:GetActiveSkinName() or L["Unknown"]
               end
               local elvInfo = ""
               if self.db.profile.bar.inheritElvUI and IsAddOnLoaded("ElvUI") then
-                elvInfo = " | ElvUI spacing active"
+                elvInfo = " | " .. L["ElvUI spacing active"]
               end
-              return "|cff00ff00Button Style:|r " .. skinName .. " (auto-detected)" .. elvInfo
+              return "|cff00ff00" .. L["Button Style:"] .. "|r " .. skinName .. " " .. L["(auto-detected)"] .. elvInfo
             end,
             order = 32,
             fontSize = "medium",
@@ -455,11 +455,11 @@ function DynamicBar:InitConfig()
 
           resetAppearance = {
             type = "execute",
-            name = "Reset Appearance",
-            desc = "Reset all appearance settings to default values",
+            name = L["Reset Appearance"],
+            desc = L["Reset all appearance settings to default values"],
             order = 100,
             confirm = true,
-            confirmText = "Reset scale, layout mode, spacing, and padding to defaults?",
+            confirmText = L["Reset scale, layout mode, spacing, and padding to defaults?"],
             func = function()
               local defaults = self.DB_DEFAULTS.profile.bar
               for _, key in ipairs({
@@ -479,62 +479,62 @@ function DynamicBar:InitConfig()
       -- =====================================================
       behavior = {
         type = "group",
-        name = "Behavior",
+        name = L["Behavior"],
         order = 3,
         args = {
           displayHeader = {
             type = "header",
-            name = "Display Behavior",
+            name = L["Display Behavior"],
             order = 10,
           },
           visibilityMode = {
             type = "select",
-            name = "Prep-Only Slots During Combat",
-            desc = "How to display prep-mode items when you enter combat\n\n" ..
-                   "Prep-only items: Elixirs, Flasks, Food, Drink (not usable in combat)\n" ..
-                   "Battle items always visible: Health/Mana Potions, Healthstone, Bandages",
+            name = L["Prep-Only Slots During Combat"],
+            desc = L["How to display prep-mode items when you enter combat"] .. "\n\n" ..
+                   L["Prep-only items: Elixirs, Flasks, Food, Drink (not usable in combat)"] .. "\n" ..
+                   L["Battle items always visible: Health/Mana Potions, Healthstone, Bandages"],
             order = 11,
             values = {
-              FADE = "Fade Out (Recommended)",
-              HIDE = "Hide Completely",
-              GREY = "Grey Out (Disabled)",
-              ALWAYS = "Keep Visible (Always)",
+              FADE = L["Fade Out (Recommended)"],
+              HIDE = L["Hide Completely"],
+              GREY = L["Grey Out (Disabled)"],
+              ALWAYS = L["Keep Visible (Always)"],
             },
             sorting = { "FADE", "HIDE", "GREY", "ALWAYS" },
             width = "full",
           },
           buttonDisplayMode = {
             type = "select",
-            name = "Empty Button Slots",
-            desc = "How to handle buttons with no items assigned\n\n" ..
-                   "|cff00ff00Smart (Recommended)|r - Empty buttons are invisible but space is reserved\n" ..
-                   "  • Keybinds remain stable (button 1 is always button 1)\n" ..
-                   "  • Clean appearance without clutter\n\n" ..
-                   "Static - All buttons always visible, including empty slots\n" ..
-                   "  • Shows empty placeholders for unused slots\n" ..
-                   "  • Keybinds remain stable\n\n" ..
-                   "|cffff0000Dynamic (Advanced)|r - Bar shrinks/grows with items\n" ..
-                   "  • ⚠️ WARNING: Button positions shift as items appear/disappear\n" ..
-                   "  • ⚠️ Keybinds will break (button 1 may become button 3 on next rebuild)\n" ..
-                   "  • Not recommended unless you never use keybinds",
+            name = L["Empty Button Slots"],
+            desc = L["How to handle buttons with no items assigned"] .. "\n\n" ..
+                   "|cff00ff00" .. L["Smart (Recommended)"] .. "|r - " .. L["Empty buttons are invisible but space is reserved"] .. "\n" ..
+                   "  • " .. L["Keybinds remain stable (button 1 is always button 1)"] .. "\n" ..
+                   "  • " .. L["Clean appearance without clutter"] .. "\n\n" ..
+                   L["Static"] .. " - " .. L["All buttons always visible, including empty slots"] .. "\n" ..
+                   "  • " .. L["Shows empty placeholders for unused slots"] .. "\n" ..
+                   "  • " .. L["Keybinds remain stable"] .. "\n\n" ..
+                   "|cffff0000" .. L["Dynamic (Advanced)"] .. "|r - " .. L["Bar shrinks/grows with items"] .. "\n" ..
+                   "  • ⚠️ " .. L["WARNING: Button positions shift as items appear/disappear"] .. "\n" ..
+                   "  • ⚠️ " .. L["Keybinds will break (button 1 may become button 3 on next rebuild)"] .. "\n" ..
+                   "  • " .. L["Not recommended unless you never use keybinds"],
             order = 12,
             values = {
-              SMART = "Smart - Binding Safe (Recommended)",
-              STATIC = "Static - Show All Slots",
-              DYNAMIC = "⚠️ EXPERT: Dynamic (Breaks Keybinds)",
+              SMART = L["Smart - Binding Safe (Recommended)"],
+              STATIC = L["Static - Show All Slots"],
+              DYNAMIC = L["⚠️ EXPERT: Dynamic (Breaks Keybinds)"],
             },
             sorting = { "SMART", "STATIC", "DYNAMIC" },
             width = "full",
             confirm = function(_, v)
               if v == "DYNAMIC" and self.db.profile.bar.buttonDisplayMode ~= "DYNAMIC" then
-                return "⚠️ WARNING: Dynamic mode shifts button positions on every rebuild.\n\n" ..
-                       "This WILL break your keybinds - the item assigned to a keybind will change as your inventory changes.\n\n" ..
-                       "Recommended: Use Smart mode instead (binding-safe, same visual cleanup).\n\n" ..
-                       "Continue with Dynamic mode?"
+                return "⚠️ " .. L["WARNING: Dynamic mode shifts button positions on every rebuild."] .. "\n\n" ..
+                       L["This WILL break your keybinds - the item assigned to a keybind will change as your inventory changes."] .. "\n\n" ..
+                       L["Recommended: Use Smart mode instead (binding-safe, same visual cleanup)."] .. "\n\n" ..
+                       L["Continue with Dynamic mode?"]
               end
               return false
             end,
-            confirmText = "Enable Dynamic Mode (Breaks Keybinds)?",
+            confirmText = L["Enable Dynamic Mode (Breaks Keybinds)?"],
           },
 
           slotsHeader = {
@@ -571,7 +571,7 @@ function DynamicBar:InitConfig()
       -- =====================================================
       profiles = {
         type = "group",
-        name = "Profiles",
+        name = L["Profiles"],
         order = 4,
         args = {},
       },
@@ -585,7 +585,7 @@ function DynamicBar:InitConfig()
     profileOptions.order = 4  -- Keep it as 4th tab
     options.args.profiles = profileOptions
   else
-    self:Print("AceDBOptions not loaded (Profiles UI unavailable).")
+    self:Print(L["AceDBOptions not loaded (Profiles UI unavailable)."])
   end
 
   -- Register main options table

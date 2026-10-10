@@ -366,4 +366,14 @@ DB.Data.Classifier = stubClassifier
 GetItemInfoInstant, GetItemInfo = saved.GetItemInfoInstant, saved.GetItemInfo
 C_TooltipInfo, C_Spell, GetItemSpell, GetLocale = nil, nil, nil, nil
 
+-- Every L["..."] key the addon uses has an English entry, so translators see it on CurseForge
+local function readAll(path) local f = assert(io.open(path)); local t = f:read('*a'); f:close(); return t end
+local english = {}
+for key in readAll('Locales/enUS.lua'):gmatch('\nL%["(.-)"%] = true') do english[key] = true end
+for _, file in ipairs({'Core.lua','Config.lua','UI/UI.lua','UI/Builder.lua','Data/Categories.lua','Data/Classifier.lua'}) do
+  for key in readAll(file):gmatch('L%["(.-)"%]') do
+    equal(english[key], true, file .. ' locale key "' .. key .. '"')
+  end
+end
+
 print('PASS: ' .. checks .. ' regression assertions (mock WoW APIs; in-game validation still required)')

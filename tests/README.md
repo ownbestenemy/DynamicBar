@@ -4,7 +4,7 @@ Run from the repository root with Lua 5.1:
 lua5.1 tests/run.lua
 ```
 
-The suite exercises the production modules against mocked WoW APIs. It executes the actual secure state snippets and rejects ordinary Lua mutations of protected frames during combat. It covers combat visibility and actions across all display modes, frozen assignments, flyout interactions and cleanup, inventory refresh, grid capacity, enabling/disabling, positioning, rejuvenation classification, and binding declarations. GitHub Actions also checks Lua syntax.
+The suite exercises the production modules against mocked WoW APIs. It executes the actual secure state snippets and rejects ordinary Lua mutations of protected frames during combat. It covers combat visibility and actions across all display modes, frozen assignments, flyout interactions and cleanup, inventory refresh, grid capacity, enabling/disabling, positioning, rejuvenation classification, binding declarations, and that every translatable string has an English entry. GitHub Actions also checks Lua syntax.
 
 The mock cannot reproduce Blizzard's taint system, hardware-event dispatch, client XML loading, or WoW Forever restrictions. Before merging, validate in both supported clients:
 
