@@ -43,6 +43,7 @@ Resolver.ResolveHealthPotion = FromCategory("HealthPotions")
 Resolver.ResolveManaPotion   = FromCategory("ManaPotions")
 Resolver.ResolveFlask        = FromCategory("Flasks")
 Resolver.ResolveHearth       = FromCategory("Hearth")
+Resolver.ResolveOtherBuff    = FromCategory("OtherBuffs")
 
 local function Collect(cache, cls, predicate)
   local out = {}
@@ -79,25 +80,26 @@ local function Resolve(predicate, sortField)
   return list[1], list
 end
 
+-- Any bag item whose tooltip carries the tag counts, so elixirs missing from
+-- AllElixirs still show up; listed elixirs keep their list order and come first.
 function Resolver:_ResolveElixirByTag(isTagFn)
-  local cache = DB.Data and DB.Data.BagCache
-  local cls   = DB.Data and DB.Data.Classifier
-  local cats  = DB.Data and DB.Data.Categories
-  if not cache or not cls or not cats or not cats.AllElixirs then return nil, {} end
+  local cache, cls = GetDeps()
+  if not cache then return nil, {} end
+  local known = (DB.Data.Categories and DB.Data.Categories.AllElixirs) or {}
 
-  local have = {}
-  for i = 1, #cats.AllElixirs do
-    local id = cats.AllElixirs[i]
-    if (cache.counts[id] or 0) > 0 then
-      local info = cls:InspectItem(id)
-      if info and not info.pending and isTagFn(info) then
-        have[#have + 1] = id
-      end
-    end
-  end
+  local rank = {}
+  for i = 1, #known do rank[known[i]] = i end
 
+  local have = Collect(cache, cls, function(info) return isTagFn(info) and not info.isFlask end)
   if #have == 0 then return nil, {} end
-  return have[1], have  -- order is Wowhead order unless you later add a priority list
+
+  local unknown = #known + 1
+  table.sort(have, function(a, b)
+    local ra, rb = rank[a] or unknown, rank[b] or unknown
+    if ra ~= rb then return ra < rb end
+    return a < b
+  end)
+  return have[1], have
 end
 
 function Resolver:ResolveBattleElixir()

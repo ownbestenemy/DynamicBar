@@ -49,7 +49,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
   - **Horizontal** (default) - Single row of buttons
   - **Vertical** - Single column of buttons
   - **Grid** - Customizable rows × columns (e.g., 2×5, 3×4, 5×2)
-- Button count (1-12)
+- Button count (1-13)
 - Scale adjustments
 - Horizontal and vertical spacing (grid mode supports both independently)
 - Edge padding (basic unified padding or advanced per-edge control)
@@ -95,6 +95,7 @@ To set keybinds: Press `ESC` → `Key Bindings` → scroll to `DynamicBar` secti
 - Battle Elixirs
 - Guardian Elixirs
 - Flasks
+- Other Buffs (Oil of Olaf, scrolls)
 - Food (buff and non-buff)
 - Drink
 - Hearthstone
@@ -109,6 +110,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 **Healthstone:** All warlock variants
 **Battle Elixirs:** First elixir found in bags (use flyout menu to select specific elixir if you have multiple types)
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
+**Other Buffs:** Oil of Olaf and stat/armor scrolls (not elixirs or flasks)
 **Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
 **Bandages:** Linen → Netherweave (TBC highest tier)
 **Food:** All Well Fed buff food + basic conjured food

@@ -14,5 +14,5 @@ The mock cannot reproduce Blizzard's taint system, hardware-event dispatch, clie
 - Test FADE, HIDE, GREY, and ALWAYS in Smart, Static, and Dynamic modes. Prep slots must not execute in combat; battle items must remain usable. No button may move or switch items until combat ends.
 - Consume items, acquire a different potion, and exhaust an alternative during combat. Confirm the bar updates immediately after combat ends.
 - Disable through both slash commands and options, including during combat. Confirm deferred disabling clears the bar, bindings, and flyouts after combat.
-- Use 12 buttons in a saved 2×5 grid and reduce the Dynamic-mode button count. Confirm all retained buttons have valid positions and removed slots have no actions or flyouts.
+- Use 13 buttons in a saved 2×5 grid and reduce the Dynamic-mode button count. Confirm all retained buttons have valid positions and removed slots have no actions or flyouts.
 - Choose Position Now, trigger a bag update, and click Save & Lock. Repeat positioning after setup is complete.

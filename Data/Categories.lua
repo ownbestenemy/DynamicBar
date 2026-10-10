@@ -21,6 +21,45 @@ Cats.AllElixirs = {
   5997, 2458, 3383, 3389, 3825, 8951, 9179, 8827, 13445, 13447, 32062, 32063, 32067,
   32068, 22834, 22840, 22848,
   3382,  -- Weak Troll's Blood Potion (Guardian)
+  3388,  -- Strong Troll's Blood Potion (Guardian)
+  3826,  -- Mighty Troll's Blood Potion (Guardian)
+  20004, -- Major Troll's Blood Potion (Guardian)
+  9088,  -- Gift of Arthas (Guardian)
+}
+
+-- Buff items that are neither elixirs nor flasks, best first
+Cats.OtherBuffs = {
+  1177,  -- Oil of Olaf (+armor)
+  27500, -- Scroll of Protection V
+  27498, -- Scroll of Agility V
+  27503, -- Scroll of Strength V
+  27502, -- Scroll of Stamina V
+  27499, -- Scroll of Intellect V
+  27501, -- Scroll of Spirit V
+  10305, -- Scroll of Protection IV
+  10309, -- Scroll of Agility IV
+  10310, -- Scroll of Strength IV
+  10307, -- Scroll of Stamina IV
+  10308, -- Scroll of Intellect IV
+  10306, -- Scroll of Spirit IV
+  4421,  -- Scroll of Protection III
+  4425,  -- Scroll of Agility III
+  4426,  -- Scroll of Strength III
+  4422,  -- Scroll of Stamina III
+  4419,  -- Scroll of Intellect III
+  4424,  -- Scroll of Spirit III
+  1478,  -- Scroll of Protection II
+  1477,  -- Scroll of Agility II
+  2289,  -- Scroll of Strength II
+  1711,  -- Scroll of Stamina II
+  2290,  -- Scroll of Intellect II
+  1712,  -- Scroll of Spirit II
+  3013,  -- Scroll of Protection
+  3012,  -- Scroll of Agility
+  954,   -- Scroll of Strength
+  1180,  -- Scroll of Stamina
+  955,   -- Scroll of Intellect
+  1181,  -- Scroll of Spirit
 }
 
 Cats.Flasks = {

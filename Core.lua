@@ -34,15 +34,15 @@ local DB_DEFAULTS = {
     _showAdvancedPosition = false,
     _setupComplete = false,  -- Track if first-time setup has been shown
 
-    -- one bar, 12 buttons by default (matches current SLOT_ORDER count with Flask + Rejuvenation Potion)
+    -- one bar, one button per slot by default (UI.DEFAULT_SLOT_ORDER)
     bar = {
-      buttons = 12,
+      buttons = 13,
       scale = 1.0,
 
-      -- Custom slot priority order (used when buttons < 12, or when enableCustomSlotOrder = true)
+      -- Custom slot priority order (used when buttons < 13, or when enableCustomSlotOrder = true)
       -- nil = use default SLOT_ORDER; array of slot keys = user's priority
       slotOrder = nil,
-      enableCustomSlotOrder = false,  -- Show reorder UI even at 12 buttons
+      enableCustomSlotOrder = false,  -- Show reorder UI even at 13 buttons
 
       -- Layout mode selection
       layoutMode = "HORIZONTAL",  -- HORIZONTAL | VERTICAL | GRID

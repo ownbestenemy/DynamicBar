@@ -250,13 +250,14 @@ local SLOT_DEFS = {
   FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff",                          name = "Food (Buff)" },
   FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff",                       name = "Food (Other)" },
   DRINK       = { key = "DRINK",       resolver = "ResolveDrink",                             name = "Drink" },
+  OTHER_BUFF  = { key = "OTHER_BUFF",  resolver = "ResolveOtherBuff",                         name = "Other Buffs" },
   HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth",             battle = true, name = "Hearthstone" },
 }
 
 -- Default slot order (keys)
 local DEFAULT_SLOT_ORDER = {
   "HEALTHSTONE", "HEALTH_POT", "MANA_POT", "REJUV_POT", "BANDAGE",
-  "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
+  "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "OTHER_BUFF", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
   "HEARTH",
 }
 
@@ -434,7 +435,7 @@ function UI:UpdateLockState(silent)
     -- Show ALL buttons while unlocked (for precise positioning)
     -- Users can see full bar dimensions regardless of what items they have
     if not InCombatLockdown() then
-      local n = cfg.buttons or 12
+      local n = cfg.buttons or #DEFAULT_SLOT_ORDER
       for i = 1, n do
         if self.buttons[i] then
           self.buttons[i]:Show()
