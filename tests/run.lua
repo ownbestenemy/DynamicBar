@@ -194,6 +194,37 @@ best, list = DB.Data.Resolver:ResolveOtherBuff()
 equal(best, 1177, 'Oil of Olaf fills the other buffs slot')
 equal(#list, 2, 'scrolls offered as alternatives')
 
+-- Flyouts page six items at a time, so every alternative stays reachable.
+cfg.buttons = 13; cfg.buttonDisplayMode = 'STATIC'; cfg.layoutMode = 'HORIZONTAL'; cfg.slotOrder = nil
+local buffs = DB.Data.Categories.OtherBuffs
+local inv = {}
+for i = 1, 8 do inv[buffs[i]] = 1 end
+rebuild(inv)
+local buffBtn = UI.buttons[13]
+local fly = buffBtn._dynFlyout
+equal(buffBtn._dynItemID, buffs[1], 'best buff on the main button')
+equal(fly._count, 6, 'first page holds six items')
+equal(fly._pager:IsShown(), true, 'page controls shown when items overflow')
+equal(fly._pages, 2, 'eight items make two pages')
+enterCombat()
+fly._pager._next.scripts.OnClick(fly._pager._next)
+equal(fly._page, 1, 'paging waits for combat to end')
+leaveCombat()
+fly._pager._next.scripts.OnClick(fly._pager._next)
+equal(fly._page, 2, 'Next moves to page two')
+equal(fly._count, 2, 'second page holds the remaining items')
+equal(fly._buttons[1]._dynItemID, buffs[7], 'seventh item reachable')
+equal(fly._buttons[2]._dynItemID, buffs[8], 'eighth item reachable')
+equal(fly._buttons[3].attrs.type1, nil, 'unused page slot cleared')
+equal(click(fly._buttons[1], 'LeftButton'), true, 'seventh item usable')
+fly._pager._prev.scripts.OnClick(fly._pager._prev)
+equal(fly._buttons[1]._dynItemID, buffs[1], 'Previous returns to page one')
+inv[buffs[8]] = nil; inv[buffs[7]] = nil
+fly._page = 2
+rebuild(inv)
+equal(fly._page, 1, 'page clamps when the list shrinks')
+equal(fly._pager:IsShown(), false, 'page controls hidden when everything fits')
+
 -- New slots append after existing ones, so saved bindings keep their categories,
 -- and saved custom orders that predate a slot still get it.
 equal(UI.DEFAULT_SLOT_ORDER[12], 'HEARTH', 'hearthstone keeps button 12')

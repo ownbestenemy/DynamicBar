@@ -10,6 +10,7 @@ The mock cannot reproduce Blizzard's taint system, hardware-event dispatch, clie
 
 - Bind buttons through the DynamicBar section of Key Bindings. Confirm left-click and keypress consume one item, while right-click opens alternatives without consuming anything.
 - Select an alternative from a flyout; confirm the correct item is consumed and the flyout closes.
+- Carry more than six items for one slot (for example scrolls). Confirm the flyout shows Previous/Next arrows, the seventh item is reachable and usable, and the arrows do nothing in combat.
 - Enter combat with a flyout open and with the positioning overlay unlocked. Confirm both close without blocked-action errors.
 - Test FADE, HIDE, GREY, and ALWAYS in Smart, Static, and Dynamic modes. Prep slots must not execute in combat; battle items must remain usable. No button may move or switch items until combat ends.
 - Consume items, acquire a different potion, and exhaust an alternative during combat. Confirm the bar updates immediately after combat ends.

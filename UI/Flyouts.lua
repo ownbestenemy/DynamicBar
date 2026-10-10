@@ -1,5 +1,5 @@
 -- UI/Flyouts.lua
--- Flyouts: direction UP, max default 6.
+-- Flyouts: direction UP, max default 6 per page; longer lists page with Previous/Next.
 -- Buttons are secure; combat hiding is handled by a secure state driver.
 -- Keeps flyout open while hovering child flyout buttons.
 
@@ -88,10 +88,12 @@ local LAYOUTS = {
   LEFT  = { point = "RIGHT",  relPoint = "LEFT",   dx = -1, dy = 0 },
 }
 
--- Position the flyout container and its buttons for the given direction (default UP)
-function Flyouts:_ApplyLayout(flyoutFrame, buttonCount, buttonSize, direction)
+-- Position the flyout container and the given frames (item buttons, then the
+-- page controls if any) for the given direction (default UP)
+function Flyouts:_ApplyLayout(flyoutFrame, frames, buttonSize, direction)
   local L = LAYOUTS[direction] or LAYOUTS.UP
   local gap = Flyouts.SPACING
+  local buttonCount = #frames
   local length = (buttonSize * buttonCount) + (gap * (buttonCount - 1))
 
   flyoutFrame:ClearAllPoints()
@@ -103,14 +105,72 @@ function Flyouts:_ApplyLayout(flyoutFrame, buttonCount, buttonSize, direction)
   end
 
   for i = 1, buttonCount do
-    local btn = flyoutFrame._buttons[i]
+    local btn = frames[i]
     btn:ClearAllPoints()
     if i == 1 then
       btn:SetPoint(L.point, flyoutFrame, L.point, 0, 0)
     else
-      btn:SetPoint(L.point, flyoutFrame._buttons[i - 1], L.relPoint, L.dx * gap, L.dy * gap)
+      btn:SetPoint(L.point, frames[i - 1], L.relPoint, L.dx * gap, L.dy * gap)
     end
   end
+end
+
+-- Internal: keep the flyout open while the pointer is over one of its frames
+function Flyouts:_KeepOpenOnHover(flyoutFrame, frame)
+  frame:HookScript("OnEnter", function()
+    flyoutFrame._wantHide = false
+    self:_Show(flyoutFrame)
+  end)
+  frame:HookScript("OnLeave", function()
+    self:_HideLater(flyoutFrame)
+  end)
+end
+
+-- Internal: one button-sized cell holding Previous (left half) and Next (right half).
+-- Plain buttons: paging reassigns secure item buttons, so it only runs out of combat.
+function Flyouts:_EnsurePager(flyoutFrame, buttonSize)
+  local pager = flyoutFrame._pager
+  if not pager then
+    pager = CreateFrame("Frame", nil, flyoutFrame)
+    pager:SetFrameLevel(flyoutFrame:GetFrameLevel() + 1)
+
+    local function MakeArrow(label, delta, tip)
+      local b = CreateFrame("Button", nil, pager)
+      b:SetNormalFontObject("GameFontNormal")
+      b:SetHighlightFontObject("GameFontHighlight")
+      b:SetDisabledFontObject("GameFontDisable")
+      b:SetText(label)
+      b:SetScript("OnClick", function()
+        self:_SetPage(flyoutFrame, flyoutFrame._page + delta)
+      end)
+      b:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText(("%s (page %d of %d)"):format(tip, flyoutFrame._page, flyoutFrame._pages))
+        GameTooltip:Show()
+      end)
+      b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      self:_KeepOpenOnHover(flyoutFrame, b)
+      return b
+    end
+
+    pager._prev = MakeArrow("<", -1, "Previous")
+    pager._next = MakeArrow(">", 1, "Next")
+    flyoutFrame._pager = pager
+  end
+
+  pager:SetSize(buttonSize, buttonSize)
+  pager._prev:SetSize(buttonSize / 2, buttonSize)
+  pager._prev:SetPoint("LEFT", pager, "LEFT", 0, 0)
+  pager._next:SetSize(buttonSize / 2, buttonSize)
+  pager._next:SetPoint("RIGHT", pager, "RIGHT", 0, 0)
+  return pager
+end
+
+-- Internal: show another page of the flyout's items (out of combat only)
+function Flyouts:_SetPage(flyoutFrame, page)
+  if InCombatLockdown() then return end
+  flyoutFrame._page = page
+  self:_Render(flyoutFrame)
 end
 
 -- Internal: ensure a flyout container exists for a given anchor button
@@ -258,10 +318,25 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
   local flyout = self:_EnsureContainer(anchorBtn)
   self:_BindHover(anchorBtn, flyout)
 
-  itemIDs = itemIDs or {}
-  maxButtons = maxButtons or self.MAX_DEFAULT
+  flyout._items = itemIDs or {}
+  flyout._perPage = maxButtons or self.MAX_DEFAULT
+  flyout._factory, flyout._size, flyout._assign = buttonFactory, buttonSize, assignFn
+  -- Keep the current page across bag updates (clamped in _Render)
+  flyout._page = flyout._page or 1
+  self:_Render(flyout)
+end
 
-  local count = math.min(#itemIDs, maxButtons)
+-- Internal: lay out and assign the current page of the flyout's items
+function Flyouts:_Render(flyout)
+  local itemIDs, perPage = flyout._items, flyout._perPage
+  local buttonSize = flyout._size
+
+  local pages = math.max(1, math.ceil(#itemIDs / perPage))
+  local page = math.max(1, math.min(flyout._page or 1, pages))
+  flyout._page, flyout._pages = page, pages
+  local first = (page - 1) * perPage
+
+  local count = math.max(0, math.min(perPage, #itemIDs - first))
   flyout._count = count
 
   if count == 0 then
@@ -272,20 +347,34 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
         Actions:Clear(flyout._buttons[i])
       end
     end
+    if flyout._pager then flyout._pager:Hide() end
     flyout:Hide()
     return
   end
 
-  self:_EnsureButtons(flyout, count, buttonFactory, buttonSize)
+  self:_EnsureButtons(flyout, count, flyout._factory, buttonSize)
+
+  local frames = {}
+  for i = 1, count do frames[i] = flyout._buttons[i] end
+
+  if pages > 1 then
+    local pager = self:_EnsurePager(flyout, buttonSize)
+    pager._prev:SetEnabled(page > 1)
+    pager._next:SetEnabled(page < pages)
+    pager:Show()
+    frames[#frames + 1] = pager
+  elseif flyout._pager then
+    flyout._pager:Hide()
+  end
 
   -- Determine optimal flyout direction based on button position and layout mode
-  local direction = self:GetOptimalDirection(anchorBtn, count, buttonSize)
-  self:_ApplyLayout(flyout, count, buttonSize, direction)
+  local direction = self:GetOptimalDirection(flyout._anchor, #frames, buttonSize)
+  self:_ApplyLayout(flyout, frames, buttonSize, direction)
 
   -- IMPORTANT: assign each flyout button (this is what makes icons/actions appear)
   for i = 1, count do
     local btn = flyout._buttons[i]
-    assignFn(btn, itemIDs[i])
+    flyout._assign(btn, itemIDs[first + i])
     btn:Show()
   end
 
@@ -312,14 +401,7 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
         end
       end)
 
-      btn:HookScript("OnEnter", function()
-        flyout._wantHide = false
-        self:_Show(flyout)
-      end)
-
-      btn:HookScript("OnLeave", function()
-        self:_HideLater(flyout)
-      end)
+      self:_KeepOpenOnHover(flyout, btn)
     end
   end
 end
