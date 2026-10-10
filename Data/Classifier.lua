@@ -10,6 +10,10 @@ local Classifier = DB.Data.Classifier
 
 Classifier.cache = Classifier.cache or {} -- itemID -> info
 
+-- Cache global functions (WoW Forever uses the Mainline API, which only has the C_Item versions)
+local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+
 local function DBG(msg)
   if DynamicBar and DynamicBar.DPrint then
     DynamicBar.DPrint(msg)
@@ -46,8 +50,26 @@ local function EmptyInfo()
   }
 end
 
-local function TooltipLines()
+local function TooltipLines(itemID)
   local lines = {}
+
+  -- Mainline clients (WoW Forever) expose tooltip data directly; no hidden tooltip needed.
+  if C_TooltipInfo and C_TooltipInfo.GetItemByID then
+    local data = C_TooltipInfo.GetItemByID(itemID)
+    if data and data.lines then
+      for _, line in ipairs(data.lines) do
+        local t = line.leftText
+        if type(t) == "string" and t ~= "" then
+          lines[#lines + 1] = t
+        end
+      end
+      if #lines > 0 then return lines end
+    end
+  end
+
+  -- Classic clients: scan the hidden tooltip
+  tip:ClearLines()
+  tip:SetItemByID(itemID)
   for i = 1, 30 do
     local fs = _G[TIP_NAME .. "TextLeft" .. i]
     if not fs then break end
@@ -122,9 +144,7 @@ function Classifier:InspectItem(itemID)
   end
 
   -- Tooltip scan
-  tip:ClearLines()
-  tip:SetItemByID(itemID)
-  local lines = TooltipLines()
+  local lines = TooltipLines(itemID)
   if #lines == 0 then
     GetItemInfo(itemID)
     self.cache[itemID] = cached or {}

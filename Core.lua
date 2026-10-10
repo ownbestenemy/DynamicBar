@@ -1,4 +1,4 @@
--- Core.lua (TBC Classic)
+-- Core.lua (TBC Classic / WoW Forever)
 -- Ace3 bootstrap for DynamicBar.
 
 local ADDON_NAME = ...
@@ -275,7 +275,8 @@ function DynamicBar:OnInitialize()
   self.db = LibStub("AceDB-3.0"):New("DynamicBarDB", DB_DEFAULTS, true)
 
   -- Force character-specific profile (fixes "Default" profile issue)
-  local charKey = UnitName("player") .. " - " .. GetRealmName()
+  -- Use AceDB's own character key (includes the surname on WoW Forever)
+  local charKey = self.db.keys.char
   if self.db:GetCurrentProfile() == "Default" then
     -- If using Default profile, switch to character-specific profile
     -- This ensures each character gets their own _setupComplete flag
@@ -307,19 +308,30 @@ function DynamicBar:OnInitialize()
 end
 
 
+-- Register an event only if this client knows it. Registering an unknown event
+-- is a Lua error, and the event list differs between TBC Classic and the
+-- Mainline-based WoW Forever client (e.g. the bank events).
+function DynamicBar:SafeRegisterEvent(event, handler)
+  if C_EventUtils and C_EventUtils.IsEventValid and not C_EventUtils.IsEventValid(event) then
+    self:DPrint("Skipping unknown event: " .. event)
+    return
+  end
+  self:RegisterEvent(event, handler)
+end
+
 function DynamicBar:OnEnable()
   -- Events
-  self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
-  self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
-  self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
-  self:RegisterEvent("BAG_UPDATE", "OnBagUpdate")
-  self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", "OnBagUpdate")
-  self:RegisterEvent("BANKFRAME_OPENED", "OnBagUpdate")
-  self:RegisterEvent("BANKFRAME_CLOSED", "OnBagUpdate")
-  self:RegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
-  self:RegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
-  self:RegisterEvent("SPELL_UPDATE_COOLDOWN", "OnCooldownUpdate")
-  self:RegisterEvent("BAG_UPDATE_COOLDOWN", "OnCooldownUpdate")
+  self:SafeRegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
+  self:SafeRegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
+  self:SafeRegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
+  self:SafeRegisterEvent("BAG_UPDATE", "OnBagUpdate")
+  self:SafeRegisterEvent("PLAYERBANKSLOTS_CHANGED", "OnBagUpdate")
+  self:SafeRegisterEvent("BANKFRAME_OPENED", "OnBagUpdate")
+  self:SafeRegisterEvent("BANKFRAME_CLOSED", "OnBagUpdate")
+  self:SafeRegisterEvent("SPELLS_CHANGED", "OnSpellsChanged")
+  self:SafeRegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
+  self:SafeRegisterEvent("SPELL_UPDATE_COOLDOWN", "OnCooldownUpdate")
+  self:SafeRegisterEvent("BAG_UPDATE_COOLDOWN", "OnCooldownUpdate")
 
   -- Initialize button skinning system
   if self.UI and self.UI.Skins then
@@ -563,9 +575,7 @@ function DynamicBar:HandleSlash(input)
   if msg == "profileinfo" or msg == "pinfo" then
     local profileName = self.db:GetCurrentProfile()
     local setupComplete = self.db.profile._setupComplete
-    local playerName = UnitName("player")
-    local realmName = GetRealmName()
-    local expectedProfile = playerName .. " - " .. realmName
+    local expectedProfile = self.db.keys.char
 
     self:Print("Current profile: " .. tostring(profileName))
     self:Print("Expected profile: " .. expectedProfile)

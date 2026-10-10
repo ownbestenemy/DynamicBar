@@ -9,6 +9,10 @@ UI.buttons = UI.buttons or {}
 local BAR_NAME = "DynamicBarMain"
 local BUTTON_SIZE = 36
 
+-- Cache global functions (WoW Forever uses the Mainline API, which only has the C_Item versions)
+local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+
 -- Get bar configuration from AceDB (not global DynamicBarDB)
 function UI:GetBarConfig()
   return DB.db and DB.db.profile and DB.db.profile.bar
@@ -204,7 +208,7 @@ local function EnsureButtons()
 end
 
 local function GetItemTex(itemID)
-  local tex = select(10, GetItemInfoInstant(itemID))
+  local tex = select(5, GetItemInfoInstant(itemID))
   if not tex then
     tex = select(10, GetItemInfo(itemID))
   end
