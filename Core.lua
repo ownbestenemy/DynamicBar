@@ -275,7 +275,8 @@ function DynamicBar:OnInitialize()
   self.db = LibStub("AceDB-3.0"):New("DynamicBarDB", DB_DEFAULTS, true)
 
   -- Force character-specific profile (fixes "Default" profile issue)
-  local charKey = UnitName("player") .. " - " .. GetRealmName()
+  -- Use AceDB's own character key (includes the surname on WoW Forever)
+  local charKey = self.db.keys.char
   if self.db:GetCurrentProfile() == "Default" then
     -- If using Default profile, switch to character-specific profile
     -- This ensures each character gets their own _setupComplete flag
@@ -574,9 +575,7 @@ function DynamicBar:HandleSlash(input)
   if msg == "profileinfo" or msg == "pinfo" then
     local profileName = self.db:GetCurrentProfile()
     local setupComplete = self.db.profile._setupComplete
-    local playerName = UnitName("player")
-    local realmName = GetRealmName()
-    local expectedProfile = playerName .. " - " .. realmName
+    local expectedProfile = self.db.keys.char
 
     self:Print("Current profile: " .. tostring(profileName))
     self:Print("Expected profile: " .. expectedProfile)
