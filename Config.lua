@@ -83,52 +83,6 @@ function DynamicBar:InitConfig()
     return self.db.profile.bar.layoutMode ~= "GRID"
   end
 
-  -- Bar slots: an ordered list of category keys (see Data/Categories.lua)
-  local Cats = DynamicBar.Data.Categories
-  local function GetSlots() return Cats:GetSlots(self.db.profile.bar) end
-  local function SlotPosition(key)
-    for i, k in ipairs(GetSlots()) do
-      if k == key then return i end
-    end
-  end
-  local function SaveSlots(slots, reason)
-    self.db.profile.bar.slots = slots
-    Changed(reason)
-  end
-  local function CopySlots()
-    local copy = {}
-    for i, k in ipairs(GetSlots()) do copy[i] = k end
-    return copy
-  end
-  local function SetOnBar(key, onBar)
-    local slots = CopySlots()
-    local pos = SlotPosition(key)
-    if onBar and not pos then
-      slots[#slots + 1] = key
-    elseif not onBar and pos and #slots > 1 then
-      table.remove(slots, pos)
-    end
-    SaveSlots(slots, "slot_toggle")
-  end
-  local function MoveSlot(key, delta)
-    local slots = CopySlots()
-    local i = SlotPosition(key)
-    local j = i and i + delta
-    if j and slots[j] then
-      slots[i], slots[j] = slots[j], slots[i]
-      SaveSlots(slots, "slot_order")
-    end
-  end
-  -- List slots on the bar first, in bar order, then the rest in default order
-  local function SlotRowOrder(key)
-    local pos = SlotPosition(key)
-    if pos then return pos * 10 end
-    for i, k in ipairs(Cats.DEFAULT_ORDER) do
-      if k == key then return 1000 + i * 10 end
-    end
-    return 2000
-  end
-
   -- =========================================================
   -- BUILD OPTIONS TABLE WITH TABS
   -- =========================================================
@@ -590,67 +544,24 @@ function DynamicBar:InitConfig()
           },
           slotsDesc = {
             type = "description",
-            name = L["Tick the categories you want on the bar and use the arrows to order them. The bar has one button per ticked category."],
+            name = function()
+              local n = #self.Data.Categories:GetSlots(self.db.profile.bar)
+              return (L["Your bar has %d buttons, one per category. Use the Bar Builder to choose categories and their order (also /dbar builder)."]):format(n)
+            end,
             order = 21,
             fontSize = "medium",
           },
-          slotList = {
-            type = "group",
-            name = L["Slots"],
+          openBuilder = {
+            type = "execute",
+            name = L["Open Bar Builder"],
             order = 22,
-            inline = true,
-            args = (function()
-              local slotArgs = {}
-              for _, key in ipairs(Cats.DEFAULT_ORDER) do
-                local def = Cats.Registry[key]
-                slotArgs["slot_" .. key] = {
-                  type = "toggle",
-                  name = function()
-                    local pos = SlotPosition(key)
-                    if pos then return ("|cff00ff00%d.|r %s"):format(pos, def.name) end
-                    return "|cff888888" .. def.name .. "|r"
-                  end,
-                  desc = L["Show this category on the bar"],
-                  order = function() return SlotRowOrder(key) end,
-                  width = 1.5,
-                  get = function() return SlotPosition(key) ~= nil end,
-                  set = function(_, v) SetOnBar(key, v) end,
-                  -- The bar needs at least one slot
-                  disabled = function() return SlotPosition(key) ~= nil and #GetSlots() <= 1 end,
-                }
-                slotArgs["slot_" .. key .. "_up"] = {
-                  type = "execute",
-                  name = "^",
-                  desc = L["Move up"],
-                  order = function() return SlotRowOrder(key) + 1 end,
-                  width = 0.25,
-                  func = function() MoveSlot(key, -1) end,
-                  disabled = function() local pos = SlotPosition(key) return not pos or pos == 1 end,
-                }
-                slotArgs["slot_" .. key .. "_down"] = {
-                  type = "execute",
-                  name = "v",
-                  desc = L["Move down"],
-                  order = function() return SlotRowOrder(key) + 2 end,
-                  width = 0.25,
-                  func = function() MoveSlot(key, 1) end,
-                  disabled = function() local pos = SlotPosition(key) return not pos or pos == #GetSlots() end,
-                }
-              end
-
-              slotArgs.resetSlots = {
-                type = "execute",
-                name = L["Reset to Default Slots"],
-                order = 5000,
-                width = "full",
-                func = function()
-                  local slots = {}
-                  for i, k in ipairs(Cats.DEFAULT_ORDER) do slots[i] = k end
-                  SaveSlots(slots, "slot_reset")
-                end,
-              }
-              return slotArgs
-            end)(),
+            width = "double",
+            func = function()
+              -- Close settings so the builder isn't hidden behind them
+              local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
+              if AceConfigDialog then AceConfigDialog:Close("DynamicBar") end
+              self.UI.Builder:Open()
+            end,
           },
         },
       },

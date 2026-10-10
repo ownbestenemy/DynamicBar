@@ -262,6 +262,10 @@ function DynamicBar:Rebuild(reason)
   if self.UI and self.UI.Rebuild then
     self.UI:Rebuild()
   end
+  -- Keep an open Bar Builder's icons and "None in bags" notes current
+  if self.UI and self.UI.Builder then
+    self.UI.Builder:Refresh()
+  end
 end
 
 function DynamicBar:SetEnabled(enabled)
@@ -487,6 +491,7 @@ function DynamicBar:HandleSlash(input)
     self:Print(L["  /dbar disable - disable the addon"])
     self:Print(L["  /dbar debug   - toggle debug logging"])
     self:Print(L["  /dbar config  - open general settings"])
+    self:Print(L["  /dbar builder - choose which categories are on the bar"])
     self:Print(L["  /dbar profiles - open profile management"])
     self:Print(L["  /dbar profileinfo - show current profile name and setup status"])
     self:Print(L["  /dbar dump    - dump bag/classifier/resolver state (debug on)"])
@@ -502,6 +507,10 @@ function DynamicBar:HandleSlash(input)
     else
       self:Print(L["Config UI not loaded."])
     end
+    return
+  end
+  if msg == "builder" or msg == "slots" then
+    self.UI.Builder:Toggle()
     return
   end
   if msg == "profiles" or msg == "profile" then
@@ -608,6 +617,8 @@ function DynamicBar:OnProfileEvent()
   self:ApplyProfileCompat()
   ScheduleBagRefresh()
   self:RequestRebuild("profile")
+  -- An open Bar Builder must show the new profile's slots
+  if self.UI and self.UI.Builder then self.UI.Builder:Refresh() end
 end
 
 

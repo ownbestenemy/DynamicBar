@@ -60,7 +60,7 @@ Choose how empty slots behave:
 
 ### Customization
 
-- Choose which categories are on the bar and their order
+- Bar Builder: drag categories onto the bar and into the order you want
 - Change button size
 - Choose button skin (Blizzard default or Minimal)
 - Lock/unlock bar position
@@ -105,7 +105,7 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 ### Q: Can I reorder the slots?
 
-**A: Yes.** In the Behavior tab under Bar Slots, tick the categories you want and use the arrows to order them. The bar has one button per ticked category.
+**A: Yes.** Type `/dbar builder` (or use Open Bar Builder in the Behavior tab). Drag categories onto your bar, drag slots to reorder them, and drag a slot off the bar to remove it. The bar has one button per slot.
 
 ### Q: Why English only?
 

@@ -177,9 +177,20 @@ L["Other Buffs"] = true
 
 -- Bar Slots
 L["Bar Slots"] = true
-L["Slots"] = true
-L["Tick the categories you want on the bar and use the arrows to order them. The bar has one button per ticked category."] = true
-L["Show this category on the bar"] = true
-L["Move up"] = true
-L["Move down"] = true
+L["Your bar has %d buttons, one per category. Use the Bar Builder to choose categories and their order (also /dbar builder)."] = true
+L["Open Bar Builder"] = true
+L["  /dbar builder - choose which categories are on the bar"] = true
+
+-- Bar Builder
+L["DynamicBar - Bar Builder"] = true
+L["Categories"] = true
+L["Your bar (%d buttons)"] = true
+L["Every category is on your bar."] = true
+L["None in bags"] = true
+L["Drag categories onto your bar, or click one to add it. Drag a slot to reorder it, or drag it off the bar (or right-click it) to remove it. Each slot is one button; its number is its keybinding."] = true
+L["Drag to reorder, or drag off the bar to remove."] = true
+L["Right-click to remove."] = true
+L["Drag onto the bar, or click to add it at the end."] = true
+L["Done"] = true
 L["Reset to Default Slots"] = true
+L["The Bar Builder can't be opened in combat."] = true
