@@ -49,7 +49,7 @@ local DB_DEFAULTS = {
 
       -- Grid dimensions (only used when layoutMode = "GRID")
       gridRows = 2,
-      gridCols = 5,
+      gridCols = 6,
 
       -- Spacing (separate horizontal/vertical for grid layouts)
       spacingH = 2,  -- Horizontal spacing between buttons
@@ -247,11 +247,11 @@ local function ScheduleBagRefresh()
 end
 
 function DynamicBar:Rebuild(reason)
-  if not (self.db and self.db.profile and self.db.profile.enabled) then
+  if not (self.db and self.db.profile) then
     return
   end
 
-  if InCombatLockdown() then
+  if self._inCombat or InCombatLockdown() then
     self._needsRebuild = true
     self:DPrint("Rebuild queued (in combat)" .. (reason and (": " .. reason) or ""))
     return
@@ -265,6 +265,16 @@ function DynamicBar:Rebuild(reason)
   if self.UI and self.UI.Rebuild then
     self.UI:Rebuild()
   end
+end
+
+function DynamicBar:SetEnabled(enabled)
+  self.db.profile.enabled = enabled
+  if enabled and not InCombatLockdown() then
+    RebuildBagCache()
+    ScheduleBagRefresh()
+  end
+  -- Disabling must also reach UI:Rebuild so actions and flyouts are cleared.
+  self:RequestRebuild(enabled and "enabled" or "disabled")
 end
 
 --
@@ -349,13 +359,13 @@ end
 --
 function DynamicBar:ShowFirstTimeSetup()
   self:DPrint("ShowFirstTimeSetup called, _setupComplete = " .. tostring(self.db.profile._setupComplete))
-  if not self.db.profile._setupComplete then
+  if not self.db.profile._setupComplete and self.db.profile.bar.locked ~= false then
     self:DPrint("Scheduling popup in 8 seconds...")
     -- Delay popup to avoid conflicts with other addon popups (like ElvUI)
     -- Longer delay (8 seconds) to allow ElvUI setup to complete
     C_Timer.After(8, function()
       -- Check again in case user logged out during delay
-      if not self.db.profile._setupComplete then
+      if self.db.profile.enabled and not self.db.profile._setupComplete and self.db.profile.bar.locked ~= false then
         StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
           text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
           button1 = "Position Now",
@@ -367,8 +377,7 @@ function DynamicBar:ShowFirstTimeSetup()
               self.UI:UpdateLockState()
             end
             self:Print(L["Bar unlocked! Drag it to your preferred position, then click 'Save & Lock'"])
-            -- Mark setup complete after user clicks "Position Now"
-            self.db.profile._setupComplete = true
+            -- Setup completes when the user clicks Save & Lock.
           end,
           OnCancel = function()
             self:Print(L["Using default position. Use /dbar config to reposition later."])
@@ -390,6 +399,7 @@ end
 -- Event handlers
 --
 function DynamicBar:OnPlayerEnteringWorld()
+  self._inCombat = InCombatLockdown()
   ScheduleBagRefresh()
 
   -- Show first-time setup on initial login (delayed to avoid ElvUI popup conflicts)
@@ -402,37 +412,22 @@ function DynamicBar:OnPlayerRegenEnabled()
   self._inCombat = false
   self:DPrint("Entering prep mode (combat ended)")
 
-  -- Rebuild to show prep mode slots
-  self:RequestRebuild("combat_leave")
-
-  -- Also process any pending rebuilds from config changes during combat
-  if self._needsRebuild then
-    self:DPrint("Rebuild triggered (combat ended)")
-    self._needsRebuild = false
-    self:RequestRebuild("pending_from_combat")
+  -- Combat refreshes only touch displayed items. Rescan before resolving new
+  -- assignments, including alternatives and items acquired during combat.
+  if self.db.profile.enabled then
+    RebuildBagCache()
+    self._pendingRetryCount = 0
+    ScheduleBagRefresh()
   end
+  self:RequestRebuild("combat_leave")
 end
 
 function DynamicBar:OnPlayerRegenDisabled()
-  self:DPrint("Entering battle mode (combat started)")
-
-  -- Combat started - hide all flyouts for clean combat UX
-  if self.UI and self.UI.Flyouts and self.UI.Flyouts.HideAllImmediate then
-    self.UI.Flyouts:HideAllImmediate(self.UI)
-  end
-
-  -- Set _inCombat BEFORE rebuild so GetCurrentMode() returns "battle"
-  -- This must happen before Rebuild() reads the mode
   self._inCombat = true
-
-  -- Request rebuild to apply battle mode visibility
-  -- Use InCombatLockdown() here since it may still be false briefly
-  if not InCombatLockdown() then
-    self:Rebuild("combat_enter")
-  else
-    self._needsRebuild = true
-    self:DPrint("Rebuild queued (combat already locked)")
-  end
+  self._needsRebuild = true
+  self:DPrint("Entering battle mode (combat started)")
+  -- Secure state drivers handle prep-slot visibility and flyout hiding. Never
+  -- rebuild, reassign items, or hide protected frame ancestors from this event.
 end
 
 function DynamicBar:OnBagUpdate()
@@ -541,16 +536,14 @@ function DynamicBar:HandleSlash(input)
   end
 
   if msg == "enable" then
-    self.db.profile.enabled = true
+    self:SetEnabled(true)
     self:Print(L["Enabled."])
-    ScheduleBagRefresh()
-    self:RequestRebuild("enabled")
     return
   end
 
   if msg == "disable" then
-    self.db.profile.enabled = false
-    self:Print(L["Disabled (UI hiding comes later)."])
+    self:SetEnabled(false)
+    self:Print(InCombatLockdown() and "Disabled (applies after combat)." or "Disabled.")
     return
   end
 

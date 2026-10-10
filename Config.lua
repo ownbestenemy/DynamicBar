@@ -16,9 +16,7 @@ function DynamicBar:InitConfig()
 
   -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
   local function Changed(reason)
-    if not InCombatLockdown() then
-      self:RequestRebuild(reason)
-    end
+    self:RequestRebuild(reason)
   end
 
   -- Position preset definitions
@@ -111,17 +109,12 @@ function DynamicBar:InitConfig()
           enabled = {
             type = "toggle",
             name = "Enabled",
-            desc = "Enable or disable the DynamicBar addon",
+            desc = "Enable or disable the DynamicBar addon. Changes apply after combat.",
             order = 1,
             width = "full",
             get = function() return self.db.profile.enabled end,
             set = function(_, v)
-              self.db.profile.enabled = v
-              if v then
-                self:RequestRebuild("enabled")
-              elseif self.UI and self.UI.bar then
-                self.UI.bar:Hide()
-              end
+              self:SetEnabled(v)
             end,
           },
           debug = {
@@ -289,7 +282,7 @@ function DynamicBar:InitConfig()
           gridRows = {
             type = "range",
             name = "Grid Rows",
-            desc = "Number of rows in grid layout",
+            desc = "Number of rows in grid layout. Rows expand automatically if needed to fit every button.",
             order = 3,
             min = 1,
             max = 12,

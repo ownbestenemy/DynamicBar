@@ -25,3 +25,5 @@ UI/Buttons.lua
 UI/Actions.lua
 UI/Flyouts.lua
 UI/UI.lua
+
+Bindings.lua

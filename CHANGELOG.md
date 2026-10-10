@@ -6,6 +6,14 @@
 - WoW Forever support (Interface 16001, Mainline-based client)
 
 ### Fixed
+- Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons
+- Right-click opens alternatives without consuming the primary item; selecting an alternative closes its flyout
+- Added the documented DynamicBar keybinding section for all 12 buttons
+- Combat exit rescans bags before resolving items
+- Slash and options disabling clear button actions and flyouts, with changes deferred until combat ends
+- Unused buttons clear their flyouts, item identifiers, and cooldown displays
+- Rejuvenation slots only select items classified as rejuvenation potions
+- Save & Lock stays available while positioning; first-time setup completes on locking
 - Item info/count calls fall back to `C_Item` where the old globals are gone
 - Item classification reads tooltip text via `C_TooltipInfo` when available
 - Events the client doesn't know are skipped instead of erroring on load
@@ -21,7 +29,7 @@
 ### Fixed
 - Static mode no longer re-shows a stale flyout when hovering an empty slot
 - Lowering the button count in Dynamic mode now hides the extra buttons
-- Grid column default is consistently 5
+- Grid layouts expand rows when needed to fit every configured button (default 2×6)
 
 ## [1.0] - 2026-02-01
 
