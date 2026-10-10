@@ -4,7 +4,7 @@ assert(loadfile('Core.lua'))('DynamicBar')
 local DB = DynamicBar
 DB.DPrint = function() end
 DB.db = {profile = {enabled = true, _setupComplete = true, bar = {
-  buttons = 12, layoutMode = 'HORIZONTAL', gridRows = 2, gridCols = 5,
+  buttons = 13, layoutMode = 'HORIZONTAL', gridRows = 2, gridCols = 5,
   locked = true, visibilityMode = 'FADE', buttonDisplayMode = 'SMART',
 }}}
 for _, file in ipairs({'Data/Categories.lua','Data/BagCache.lua','Data/Resolver.lua','UI/Buttons.lua','UI/Actions.lua','UI/Flyouts.lua','UI/UI.lua','Bindings.lua','Config.lua'}) do
@@ -41,7 +41,7 @@ end
 
 mock.inventory = {[22829]=1, [118]=2, [22851]=1, [6948]=1}
 rebuild()
-local potion, flask, hearth = UI.buttons[2], UI.buttons[8], UI.buttons[12]
+local potion = UI.buttons[2]
 equal(click(potion, 'RightButton'), false, 'right-click cannot consume')
 equal(potion._dynFlyout:IsShown(), true, 'right-click opens alternatives')
 equal(click(potion, 'LeftButton'), true, 'left-click consumes')
@@ -87,7 +87,7 @@ leaveCombat()
 equal(UI.buttons[2]._dynItemID, 13446, 'new item appears immediately after combat')
 equal(cache:GetCount(118), 0, 'depleted alternative removed on combat exit')
 
--- Incomplete grids, including saved 2x5 defaults, grow to contain all 12 slots.
+-- Incomplete grids, including saved 2x5 defaults, grow to contain every slot.
 cfg.buttonDisplayMode = 'STATIC'; cfg.layoutMode = 'GRID'
 for _, cols in ipairs({1,5,12}) do
   cfg.gridRows = 1; cfg.gridCols = cols
@@ -197,6 +197,6 @@ for index in bindings:gmatch('name="CLICK DynamicBarMainButton(%d+):LeftButton"'
   equal(_G['BINDING_NAME_CLICK DynamicBarMainButton' .. index .. ':LeftButton'], 'Button ' .. index, 'binding label')
   equal(UI.buttons[tonumber(index)] ~= nil, true, 'binding target exists')
 end
-equal(count, 12, 'all 12 click bindings declared')
+equal(count, #UI.DEFAULT_SLOT_ORDER, 'one click binding per slot')
 equal(BINDING_HEADER_DYNAMICBAR, 'DynamicBar', 'binding section registered')
 print('PASS: ' .. checks .. ' regression assertions (mock WoW APIs; in-game validation still required)')

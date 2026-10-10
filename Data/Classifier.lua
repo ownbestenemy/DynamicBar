@@ -135,14 +135,15 @@ function Classifier:InspectItem(itemID)
     return info
   end
 
-  -- Tooltip scan
+  -- Tooltip scan. A consumable whose tooltip shows only its name has not loaded
+  -- yet (its Use:/elixir lines are missing), so retry it like an empty tooltip.
   local lines = TooltipLines(itemID)
-  if #lines == 0 then
+  if #lines == 0 or (classID == 0 and #lines == 1) then
     GetItemInfo(itemID)
     self.cache[itemID] = cached or {}
     self.cache[itemID].itemID = itemID
     self.cache[itemID].pending = true
-    self.cache[itemID].pendingReason = "TooltipLines=0 (tooltip not ready)"
+    self.cache[itemID].pendingReason = "tooltip not ready (" .. #lines .. " lines)"
     return self.cache[itemID]
   end
 
