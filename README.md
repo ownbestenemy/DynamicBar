@@ -110,7 +110,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 **Healthstone:** All warlock variants
 **Battle Elixirs:** First elixir found in bags (use flyout menu to select specific elixir if you have multiple types)
 **Guardian Elixirs:** Fortitude, Defense, Major Defense, etc.
-**Other Buffs:** Oil of Olaf and stat/armor scrolls (not elixirs or flasks)
+**Other Buffs:** Oil of Olaf and stat/armor scrolls
 **Flasks:** Blinding Light, Pure Death, Relentless Assault, Fortification, Chromatic Wonder, Titans, etc.
 **Bandages:** Linen → Netherweave (TBC highest tier)
 **Food:** All Well Fed buff food + basic conjured food

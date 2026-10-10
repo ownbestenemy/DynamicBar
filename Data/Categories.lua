@@ -27,7 +27,7 @@ Cats.AllElixirs = {
   9088,  -- Gift of Arthas (Guardian)
 }
 
--- Buff items that are neither elixirs nor flasks, best first
+-- Buff items with their own slot (kept out of the elixir slots), best first
 Cats.OtherBuffs = {
   1177,  -- Oil of Olaf (+armor)
   27500, -- Scroll of Protection V

@@ -184,6 +184,12 @@ equal(list[3], 900002, 'unlisted elixir ranks last')
 equal(DB.Data.Resolver:ResolveBattleElixir(), nil, 'guardian elixirs not offered as battle')
 
 cache.items = {27500,1177}; cache.counts = {[27500]=1,[1177]=2}
+DB.Data.Classifier.cache = {
+  [27500] = {itemID=27500,isBattleElixir=true},
+  [1177] = {itemID=1177,isGuardianElixir=true},
+}
+equal(DB.Data.Resolver:ResolveGuardianElixir(), nil, 'Oil of Olaf kept out of the guardian elixir slot')
+equal(DB.Data.Resolver:ResolveBattleElixir(), nil, 'scrolls kept out of the battle elixir slot')
 best, list = DB.Data.Resolver:ResolveOtherBuff()
 equal(best, 1177, 'Oil of Olaf fills the other buffs slot')
 equal(#list, 2, 'scrolls offered as alternatives')

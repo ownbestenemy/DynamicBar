@@ -82,15 +82,20 @@ end
 
 -- Any bag item whose tooltip carries the tag counts, so elixirs missing from
 -- AllElixirs still show up; listed elixirs keep their list order and come first.
+-- Items with their own Other Buffs slot are left out even when tagged.
 function Resolver:_ResolveElixirByTag(isTagFn)
   local cache, cls = GetDeps()
   if not cache then return nil, {} end
-  local known = (DB.Data.Categories and DB.Data.Categories.AllElixirs) or {}
+  local cats = DB.Data.Categories or {}
+  local known = cats.AllElixirs or {}
 
-  local rank = {}
+  local rank, otherBuff = {}, {}
   for i = 1, #known do rank[known[i]] = i end
+  for _, id in ipairs(cats.OtherBuffs or {}) do otherBuff[id] = true end
 
-  local have = Collect(cache, cls, function(info) return isTagFn(info) and not info.isFlask end)
+  local have = Collect(cache, cls, function(info)
+    return isTagFn(info) and not info.isFlask and not otherBuff[info.itemID]
+  end)
   if #have == 0 then return nil, {} end
 
   local unknown = #known + 1
