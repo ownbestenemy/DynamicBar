@@ -14,6 +14,13 @@ function DynamicBar:InitConfig()
     return
   end
 
+  -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
+  local function Changed(reason)
+    if not InCombatLockdown() then
+      self:RequestRebuild(reason)
+    end
+  end
+
   -- Position preset definitions
   local POSITION_PRESETS = {
     BOTTOM_CENTER = { point = "CENTER", relPoint = "CENTER", x = 0, y = -180 },
@@ -48,13 +55,6 @@ function DynamicBar:InitConfig()
       end
     end
     return "CUSTOM"
-  end
-
-  -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
-  local function Changed(reason)
-    if not InCombatLockdown() then
-      self:RequestRebuild(reason)
-    end
   end
 
   -- Default get/set for options whose key matches a db.profile.bar field.
