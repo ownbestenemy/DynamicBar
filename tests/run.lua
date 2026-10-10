@@ -188,6 +188,17 @@ best, list = DB.Data.Resolver:ResolveOtherBuff()
 equal(best, 1177, 'Oil of Olaf fills the other buffs slot')
 equal(#list, 2, 'scrolls offered as alternatives')
 
+-- New slots append after existing ones, so saved bindings keep their categories,
+-- and saved custom orders that predate a slot still get it.
+equal(UI.DEFAULT_SLOT_ORDER[12], 'HEARTH', 'hearthstone keeps button 12')
+cfg.slotOrder = {'HEARTH','HEALTHSTONE','HEALTH_POT','MANA_POT','REJUV_POT','BANDAGE',
+  'BATTLE_ELIX','GUARD_ELIX','FLASK','FOOD_BUFF','FOOD_OTHER','DRINK','BOGUS'}
+local keys = UI.GetSlotOrderKeys()
+equal(#keys, #UI.DEFAULT_SLOT_ORDER, 'saved order normalized to every slot')
+equal(keys[1], 'HEARTH', 'saved order kept')
+equal(keys[#keys], 'OTHER_BUFF', 'missing slot appended')
+cfg.slotOrder = nil
+
 local bindingFile = assert(io.open('Bindings.xml'))
 local bindings = bindingFile:read('*a'); bindingFile:close()
 local count = 0

@@ -603,15 +603,7 @@ function DynamicBar:InitConfig()
 
               -- Helper to get current slot order (always returns a fresh copy)
               local function GetCurrentOrder()
-                local source = self.db.profile.bar.slotOrder
-                if not (source and type(source) == "table" and #source > 0) then
-                  source = DEFAULT_ORDER
-                end
-                local order = {}
-                for i, key in ipairs(source) do
-                  order[i] = key
-                end
-                return order
+                return self.UI.GetSlotOrderKeys()
               end
 
               -- Helper to save slot order
