@@ -251,39 +251,42 @@ local SLOT_DEFS = {
   FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff",                       name = "Food (Other)" },
   DRINK       = { key = "DRINK",       resolver = "ResolveDrink",                             name = "Drink" },
   HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth",             battle = true, name = "Hearthstone" },
+  OTHER_BUFF  = { key = "OTHER_BUFF",  resolver = "ResolveOtherBuff",                         name = "Other Buffs" },
 }
 
--- Default slot order (keys)
+-- Default slot order (keys). New slots go at the end so existing slots keep
+-- their button numbers (and keybindings).
 local DEFAULT_SLOT_ORDER = {
   "HEALTHSTONE", "HEALTH_POT", "MANA_POT", "REJUV_POT", "BANDAGE",
   "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
-  "HEARTH",
+  "HEARTH", "OTHER_BUFF",
 }
 
 -- Export for Config.lua
 UI.SLOT_DEFS = SLOT_DEFS
 UI.DEFAULT_SLOT_ORDER = DEFAULT_SLOT_ORDER
 
--- Build ordered slot array from profile or default
-local function GetSlotOrder()
+-- Slot keys in display order: the saved custom order's valid keys, then any
+-- slots it predates, in default order.
+function UI.GetSlotOrderKeys()
   local cfg = DB.db and DB.db.profile and DB.db.profile.bar
-  local customOrder = cfg and cfg.slotOrder
+  local customOrder = type(cfg and cfg.slotOrder) == "table" and cfg.slotOrder or {}
 
-  -- Use custom order if defined and valid
-  if customOrder and type(customOrder) == "table" and #customOrder > 0 then
-    local result = {}
-    for _, key in ipairs(customOrder) do
-      if SLOT_DEFS[key] then
-        result[#result + 1] = SLOT_DEFS[key]
-      end
+  local keys, seen = {}, {}
+  local function add(key)
+    if SLOT_DEFS[key] and not seen[key] then
+      seen[key] = true
+      keys[#keys + 1] = key
     end
-    -- If we got valid slots, use them
-    if #result > 0 then return result end
   end
+  for _, key in ipairs(customOrder) do add(key) end
+  for _, key in ipairs(DEFAULT_SLOT_ORDER) do add(key) end
+  return keys
+end
 
-  -- Default order
+local function GetSlotOrder()
   local result = {}
-  for _, key in ipairs(DEFAULT_SLOT_ORDER) do
+  for _, key in ipairs(UI.GetSlotOrderKeys()) do
     result[#result + 1] = SLOT_DEFS[key]
   end
   return result
@@ -434,7 +437,7 @@ function UI:UpdateLockState(silent)
     -- Show ALL buttons while unlocked (for precise positioning)
     -- Users can see full bar dimensions regardless of what items they have
     if not InCombatLockdown() then
-      local n = cfg.buttons or 12
+      local n = cfg.buttons or #DEFAULT_SLOT_ORDER
       for i = 1, n do
         if self.buttons[i] then
           self.buttons[i]:Show()

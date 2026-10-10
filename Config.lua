@@ -14,6 +14,9 @@ function DynamicBar:InitConfig()
     return
   end
 
+  -- One button per consumable slot at most
+  local MAX_BUTTONS = #self.UI.DEFAULT_SLOT_ORDER
+
   -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
   local function Changed(reason)
     self:RequestRebuild(reason)
@@ -85,7 +88,7 @@ function DynamicBar:InitConfig()
 
   -- Slot order controls only matter when not every slot fits, or when opted in
   local function HideSlotOrder()
-    return (self.db.profile.bar.buttons or 12) >= 12 and not self.db.profile.bar.enableCustomSlotOrder
+    return (self.db.profile.bar.buttons or MAX_BUTTONS) >= MAX_BUTTONS and not self.db.profile.bar.enableCustomSlotOrder
   end
 
   -- =========================================================
@@ -498,7 +501,7 @@ function DynamicBar:InitConfig()
             desc = "Number of buttons to display on the bar",
             order = 2,
             min = 1,
-            max = 12,
+            max = MAX_BUTTONS,
             step = 1,
             width = "full",
           },
@@ -567,14 +570,14 @@ function DynamicBar:InitConfig()
           enableCustomSlotOrder = {
             type = "toggle",
             name = "Enable Custom Slot Order",
-            desc = "Show slot reorder controls even at 12 buttons. Allows you to customize which consumables appear in which position.",
+            desc = "Show slot reorder controls even when every slot fits. Allows you to customize which consumables appear in which position.",
             order = 21,
             width = "full",
           },
           slotPriorityDesc = {
             type = "description",
             name = function()
-              local n = self.db.profile.bar.buttons or 12
+              local n = self.db.profile.bar.buttons or MAX_BUTTONS
               return ("You have %d buttons. Use the buttons below to reorder which slots appear on your bar. Top %d slots will be shown."):format(n, n)
             end,
             order = 22,
@@ -600,15 +603,7 @@ function DynamicBar:InitConfig()
 
               -- Helper to get current slot order (always returns a fresh copy)
               local function GetCurrentOrder()
-                local source = self.db.profile.bar.slotOrder
-                if not (source and type(source) == "table" and #source > 0) then
-                  source = DEFAULT_ORDER
-                end
-                local order = {}
-                for i, key in ipairs(source) do
-                  order[i] = key
-                end
-                return order
+                return self.UI.GetSlotOrderKeys()
               end
 
               -- Helper to save slot order
@@ -654,7 +649,7 @@ function DynamicBar:InitConfig()
                       for i, k in ipairs(order) do
                         if k == key then pos = i break end
                       end
-                      local n = self.db.profile.bar.buttons or 12
+                      local n = self.db.profile.bar.buttons or MAX_BUTTONS
                       local visible = pos <= n
                       local color = visible and "|cff00ff00" or "|cff666666"
                       return ("%s%d. %s|r"):format(color, pos, def.name)

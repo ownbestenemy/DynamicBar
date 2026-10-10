@@ -11,4 +11,5 @@
   <Binding name="CLICK DynamicBarMainButton10:LeftButton"/>
   <Binding name="CLICK DynamicBarMainButton11:LeftButton"/>
   <Binding name="CLICK DynamicBarMainButton12:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton13:LeftButton"/>
 </Bindings>
