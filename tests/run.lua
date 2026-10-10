@@ -236,6 +236,25 @@ equal(keys[1], 'HEARTH', 'saved order kept')
 equal(keys[#keys], 'OTHER_BUFF', 'missing slot appended')
 cfg.slotOrder = nil
 
+-- A consumable tooltip that has only loaded its name stays pending, so the
+-- bounded retry rescans it instead of dropping an unlisted elixir.
+do
+  local stub = DB.Data.Classifier
+  DB.Data.Classifier = nil
+  local tips = {}
+  C_TooltipInfo = {GetItemByID = function(id) return {lines = tips[id]} end}
+  dofile('Data/Classifier.lua')
+  local real = DB.Data.Classifier
+  DB.Data.Classifier = stub
+  tips[900003] = {{leftText = 'Elixir of Something'}}
+  equal(real:InspectItem(900003).pending, true, 'name-only tooltip is pending')
+  tips[900003] = {{leftText = 'Elixir of Something'}, {leftText = 'Guardian Elixir'}, {leftText = 'Use: Increases armor.'}}
+  local info = real:InspectItem(900003)
+  equal(info.pending, false, 'complete tooltip classified')
+  equal(info.isGuardianElixir, true, 'unlisted elixir tagged after retry')
+  C_TooltipInfo = nil
+end
+
 local bindingFile = assert(io.open('Bindings.xml'))
 local bindings = bindingFile:read('*a'); bindingFile:close()
 local count = 0
