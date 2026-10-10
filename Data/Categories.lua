@@ -20,10 +20,10 @@ Cats.AllElixirs = {
   31679, 34537, 22835, 5996, 3828, 10592, 18294, 8529, 9154, 9197, 9233, 22823, 22830,
   5997, 2458, 3383, 3389, 3825, 8951, 9179, 8827, 13445, 13447, 32062, 32063, 32067,
   32068, 22834, 22840, 22848,
-  3382,  -- Weak Troll's Blood Potion (Guardian)
-  3388,  -- Strong Troll's Blood Potion (Guardian)
-  3826,  -- Mighty Troll's Blood Potion (Guardian)
   20004, -- Major Troll's Blood Potion (Guardian)
+  3826,  -- Mighty Troll's Blood Potion (Guardian)
+  3388,  -- Strong Troll's Blood Potion (Guardian)
+  3382,  -- Weak Troll's Blood Potion (Guardian)
   9088,  -- Gift of Arthas (Guardian)
 }
 
