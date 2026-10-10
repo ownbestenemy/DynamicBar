@@ -17,4 +17,5 @@ The mock cannot reproduce Blizzard's taint system, hardware-event dispatch, clie
 - Disable through both slash commands and options, including during combat. Confirm deferred disabling clears the bar, bindings, and flyouts after combat.
 - Use 13 buttons in a saved 2×5 grid, then remove slots in Dynamic mode. Confirm all retained buttons have valid positions and removed slots have no actions or flyouts.
 - Open `/dbar builder`. Drag a category onto the middle of the bar, drag a slot to a new position, drag one off the bar, right-click one, and use the arrows. Confirm the bar updates live and the window closes when combat starts.
+- On WoW Forever, open Edit Mode. Confirm the bar shows a blue DynamicBar handle without Save & Lock, can be dragged, keeps its spot across a bag update, and locks when Edit Mode closes. On TBC, confirm nothing changes.
 - Choose Position Now, trigger a bag update, and click Save & Lock. Repeat positioning after setup is complete.

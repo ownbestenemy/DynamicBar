@@ -61,7 +61,31 @@ local function EnsureBar()
   end)
 
   UI.bar = bar
+  UI:HookEditMode()
   return bar
+end
+
+-- Follow the game's Edit Mode where the client has one (WoW Forever): while it
+-- is open the bar shows a drag handle like Blizzard's frames, and it locks
+-- again when Edit Mode closes. The position is still DynamicBar's own setting.
+function UI:HookEditMode()
+  if self._editModeHooked then return end
+  if not (EventRegistry and EventRegistry.RegisterCallback and EditModeManagerFrame) then return end
+  self._editModeHooked = true
+
+  EventRegistry:RegisterCallback("EditMode.Enter", function()
+    if not DB.db.profile.enabled then return end
+    UI._editMode = true
+    UI:UpdateLockState(true)
+  end, UI)
+
+  EventRegistry:RegisterCallback("EditMode.Exit", function()
+    if not UI._editMode then return end
+    UI._editMode = false
+    DB.db.profile._setupComplete = true
+    UI:UpdateLockState(true)
+    DB:RequestRebuild("edit_mode")
+  end, UI)
 end
 
 local function UpdateBarPosition()
@@ -296,7 +320,7 @@ function UI:UpdateLockState(silent)
   local cfg = self:GetBarConfig()
   if not cfg then return end
 
-  local locked = cfg.locked ~= false  -- Default to locked
+  local locked = cfg.locked ~= false and not self._editMode  -- Default to locked
 
   -- Create background overlay frame if it doesn't exist
   if not self.bar._lockOverlay then
@@ -416,10 +440,19 @@ function UI:UpdateLockState(silent)
 
       -- Keep the way to finish positioning visible on every unlock.
       local overlay = self.bar._lockOverlay
-      local firstTime = not DB.db.profile._setupComplete
-      overlay._bg:SetVertexColor(0, 1, 0, firstTime and 0.4 or 0.15)
-      overlay._label:Show()
-      overlay._lockBtn:Show()
+      if self._editMode then
+        -- Edit Mode closes the handle itself, so no Save & Lock button
+        overlay._bg:SetVertexColor(0.25, 0.6, 1, 0.4)
+        overlay._label:SetText(L["DynamicBar"])
+        overlay._label:Show()
+        overlay._lockBtn:Hide()
+      else
+        local firstTime = not DB.db.profile._setupComplete
+        overlay._bg:SetVertexColor(0, 1, 0, firstTime and 0.4 or 0.15)
+        overlay._label:SetText(L["DRAG ME"])
+        overlay._label:Show()
+        overlay._lockBtn:Show()
+      end
     end
     if not silent then
       DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")

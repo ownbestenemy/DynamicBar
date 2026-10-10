@@ -158,6 +158,27 @@ cfg.locked = false; UI:UpdateLockState(); rebuild()
 equal(UI.bar._lockOverlay._lockBtn:IsShown(), true, 'later unlocks retain Save & Lock')
 cfg.locked = true; UI:UpdateLockState()
 
+-- Edit Mode (Forever): the bar shows a drag handle while it is open and locks again after.
+local editCallbacks = {}
+EventRegistry = {RegisterCallback = function(_, event, fn) editCallbacks[event] = fn end}
+EditModeManagerFrame = CreateFrame('Frame')
+UI:HookEditMode()
+editCallbacks['EditMode.Enter']()
+local overlay = UI.bar._lockOverlay
+equal(overlay:IsShown(), true, 'Edit Mode shows the drag handle')
+equal(overlay._lockBtn:IsShown(), false, 'Edit Mode handle has no Save & Lock button')
+rebuild()
+equal(overlay:IsShown(), true, 'drag handle survives a bag rebuild in Edit Mode')
+editCallbacks['EditMode.Exit']()
+equal(overlay:IsShown(), false, 'leaving Edit Mode locks the bar')
+equal(cfg.locked, true, 'Edit Mode never changes the saved lock setting')
+cfg.locked = false; UI:UpdateLockState(true)
+editCallbacks['EditMode.Enter'](); editCallbacks['EditMode.Exit']()
+equal(overlay:IsShown(), true, 'a bar the player unlocked stays unlocked after Edit Mode')
+equal(overlay._lockBtn:IsShown(), true, 'Save & Lock returns after Edit Mode')
+cfg.locked = true; UI:UpdateLockState(true)
+EventRegistry, EditModeManagerFrame = nil, nil
+
 cache.items = {900001,22850}; cache.counts = {[900001]=1,[22850]=1}
 DB.Data.Classifier.cache = {
   [900001] = {itemID=900001,health=5000,mana=0,isRejuvenationPotion=false},
