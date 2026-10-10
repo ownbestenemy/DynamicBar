@@ -7,7 +7,7 @@ DB.db = {profile = {enabled = true, _setupComplete = true, bar = {
   buttons = 13, layoutMode = 'HORIZONTAL', gridRows = 2, gridCols = 5,
   locked = true, visibilityMode = 'FADE', buttonDisplayMode = 'SMART',
 }}}
-for _, file in ipairs({'Data/Categories.lua','Data/BagCache.lua','Data/Resolver.lua','UI/Buttons.lua','UI/Actions.lua','UI/Flyouts.lua','UI/UI.lua','Bindings.lua','Config.lua'}) do
+for _, file in ipairs({'Data/Categories.lua','Data/BagCache.lua','Data/Resolver.lua','UI/Buttons.lua','UI/Actions.lua','UI/Flyouts.lua','UI/UI.lua','UI/Builder.lua','Bindings.lua','Config.lua'}) do
   dofile(file)
 end
 DB.Data.Classifier = {cache = {}}
@@ -188,6 +188,69 @@ equal(UI.buttons[1]._dynItemID, 22851, 'first slot is the flask')
 equal(UI.buttons[2]._dynItemID, 6948, 'second slot is the hearthstone')
 equal(UI.buttons[4]:IsShown(), false, 'buttons past the slot list hidden')
 cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
+rebuild()
+
+-- Bar Builder: placing, reordering and removing categories.
+local Builder = UI.Builder
+cfg.slots = {'HEALTHSTONE','HEALTH_POT','FLASK'}
+Builder:Place('HEARTH')
+equal(keys(cfg.slots), 'HEALTHSTONE,HEALTH_POT,FLASK,HEARTH', 'click adds at the end')
+Builder:Place('DRINK', 2)
+equal(keys(cfg.slots), 'HEALTHSTONE,DRINK,HEALTH_POT,FLASK,HEARTH', 'drop inserts into the gap')
+Builder:Place('HEALTHSTONE', 4)
+equal(keys(cfg.slots), 'DRINK,HEALTH_POT,HEALTHSTONE,FLASK,HEARTH', 'dragging down lands before the target gap')
+Builder:Place('HEARTH', 1)
+equal(keys(cfg.slots), 'HEARTH,DRINK,HEALTH_POT,HEALTHSTONE,FLASK', 'dragging up lands in the target gap')
+Builder:Move('DRINK', 1)
+equal(keys(cfg.slots), 'HEARTH,HEALTH_POT,DRINK,HEALTHSTONE,FLASK', 'down arrow swaps with the next slot')
+Builder:Move('HEARTH', -1)
+equal(keys(cfg.slots), 'HEARTH,HEALTH_POT,DRINK,HEALTHSTONE,FLASK', 'first slot cannot move up')
+equal(Builder:Remove('DRINK'), true, 'slot removed')
+equal(keys(Builder:GetAvailable()):find('DRINK') ~= nil, true, 'removed slot is available again')
+cfg.slots = {'FLASK'}
+equal(Builder:Remove('FLASK'), false, 'last slot cannot be removed')
+equal(keys(cfg.slots), 'FLASK', 'bar keeps its last slot')
+Builder:Reset()
+equal(#cfg.slots, #Cats.DEFAULT_ORDER, 'reset restores every category')
+equal(#Builder:GetAvailable(), 0, 'nothing left to add after reset')
+
+enterCombat()
+Builder:Open()
+equal(Builder.frame, nil, 'builder refuses to open in combat')
+leaveCombat()
+Builder:Open()
+local win = Builder.frame
+equal(win:IsShown(), true, 'builder opens out of combat')
+equal(#win.barPanel.tiles, #Cats.DEFAULT_ORDER, 'one bar tile per slot')
+equal(win.availPanel.empty:IsShown(), true, 'empty message when every category is on the bar')
+
+-- Drag the first slot off the bar, then back to the top.
+local top, cursorY, overBar = 500, 0, false
+function win.barPanel:GetTop() return top end
+function win.barPanel:IsMouseOver() return overBar end
+function GetCursorPosition() return 0, cursorY end
+win.barPanel.tiles[1].scripts.OnDragStart(win.barPanel.tiles[1])
+equal(win.ghost:IsShown(), true, 'ghost follows the drag')
+win.scripts.OnUpdate()
+win.barPanel.tiles[1].scripts.OnDragStop()
+equal(Builder:IndexOf('HEALTHSTONE'), nil, 'dragging off the bar removes the slot')
+equal(win.ghost:IsShown(), false, 'ghost hidden after the drop')
+equal(#win.availPanel.tiles >= 1 and win.availPanel.tiles[1].key, 'HEALTHSTONE', 'removed slot listed as available')
+overBar, cursorY = true, top - 6 - 4  -- top half of the first row
+win.availPanel.tiles[1].scripts.OnDragStart(win.availPanel.tiles[1])
+win.scripts.OnUpdate()
+equal(win.dropLine:IsShown(), true, 'drop line shows the gap')
+win.availPanel.tiles[1].scripts.OnDragStop()
+equal(cfg.slots[1], 'HEALTHSTONE', 'dropping on the first row inserts at the top')
+win.barPanel.tiles[2].scripts.OnClick(win.barPanel.tiles[2], 'RightButton')
+equal(Builder:IndexOf('HEALTH_POT'), nil, 'right-click removes a bar slot')
+win.availPanel.tiles[1].scripts.OnClick(win.availPanel.tiles[1], 'LeftButton')
+equal(cfg.slots[#cfg.slots], 'HEALTH_POT', 'clicking a category appends it')
+enterCombat()
+win.scripts.OnEvent(win, 'PLAYER_REGEN_DISABLED')
+equal(win:IsShown(), false, 'builder closes when combat starts')
+leaveCombat()
+cfg.slots = nil
 rebuild()
 
 local bindingFile = assert(io.open('Bindings.xml'))

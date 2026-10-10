@@ -29,6 +29,7 @@ DynamicBar is a role-first, context-aware consumable action bar for WoW TBC Clas
 
 - `/dbar` or `/dbar help` - Show all commands
 - `/dbar config` - Open configuration panel
+- `/dbar builder` - Open the Bar Builder to choose which categories are on the bar
 - `/dbar profiles` - Manage character profiles
 - `/dbar debug` - Toggle debug logging
 - `/dbar profileinfo` - Show current profile status
@@ -49,7 +50,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
   - **Horizontal** (default) - Single row of buttons
   - **Vertical** - Single column of buttons
   - **Grid** - Customizable rows × columns (e.g., 2×5, 3×4, 5×2)
-- Choose which consumable categories are on the bar and their order (one button per category)
+- Bar Builder (`/dbar builder`): drag consumable categories onto the bar, reorder them, or drag them off (one button per category)
 - Scale adjustments
 - Horizontal and vertical spacing (grid mode supports both independently)
 - Edge padding (basic unified padding or advanced per-edge control)
