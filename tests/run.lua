@@ -285,4 +285,85 @@ for index in bindings:gmatch('name="CLICK DynamicBarMainButton(%d+):LeftButton"'
 end
 equal(count, #UI.DEFAULT_SLOT_ORDER, 'one click binding per slot')
 equal(BINDING_HEADER_DYNAMICBAR, 'DynamicBar', 'binding section registered')
+-- Real classifier: language-independent signals on a German client, and
+-- WoW Forever's modern (unlisted) potions on an English one.
+local items = {}
+local function item(id, class, sub, level, spell, ...)
+  items[id] = {class = class, sub = sub, level = level, spell = spell, lines = {...}}
+end
+local stubClassifier = DB.Data.Classifier
+local saved = {GetItemInfoInstant = GetItemInfoInstant, GetItemInfo = GetItemInfo}
+GetItemInfoInstant = function(id)
+  local it = items[id] or {}
+  return id, '', '', '', 123, it.class, it.sub
+end
+GetItemInfo = function(id) return 'Item ' .. id, 'item:' .. id, 1, (items[id] or {}).level or 1 end
+GetItemSpell = function(id) local it = items[id]; if it and it.spell then return it.spell, 1 end end
+C_TooltipInfo = {GetItemByID = function(id)
+  local lines = {}
+  for i, text in ipairs((items[id] or {}).lines or {}) do lines[i] = {leftText = text} end
+  return {lines = lines}
+end}
+local spellNames
+C_Spell = {GetSpellName = function(id) return spellNames[id] end}
+ITEM_SPELL_TRIGGER_ONUSE, ITEM_BIND_QUEST = 'Use:', 'Quest Item'
+local function loadClassifier(locale, names)
+  GetLocale = function() return locale end
+  spellNames = names
+  DB.Data.Classifier = nil
+  dofile('Data/Classifier.lua')
+  return DB.Data.Classifier
+end
+
+ITEM_SPELL_TRIGGER_ONUSE = 'Benutzen:'
+local de = loadClassifier('deDE', {[433] = 'Essen', [430] = 'Trinken', [19705] = 'Satt'})
+item(27854, 0, 5, 65, 'Essen', 'Geräuchertes Talbukwildbret', 'Benutzen: Stellt im Verlauf von 30 Sek. 4320 Gesundheit wieder her.')
+item(27860, 0, 5, 65, 'Trinken', 'Gereinigtes draenisches Wasser', 'Benutzen: Stellt im Verlauf von 30 Sek. 7200 Mana wieder her.')
+item(27658, 0, 5, 65, 'Essen', 'Gebratener Grollhufbraten', 'Benutzen: Ihr seid danach satt und erhaltet 20 Ausdauer.')
+item(21991, 0, 7, 70, nil, 'Schwerer Netherstoffverband', 'Benutzen: Heilt 3400 Schaden.')
+item(22850, 0, 1, 70, nil, 'Superverjüngungstrank', 'Benutzen: Stellt Gesundheit und Mana wieder her.')
+item(22829, 0, 1, 70, nil, 'Superheiltrank', 'Benutzen: Stellt Gesundheit wieder her.')
+item(22854, 0, 3, 70, nil, 'Fläschchen des unerbittlichen Angriffs', 'Benutzen: Erhöht die Angriffskraft.')
+equal(de:InspectItem(27854).isFood, true, 'German food found by its use spell')
+equal(de:InspectItem(27854).isDrink, false, 'German food is not a drink')
+equal(de:InspectItem(27860).isDrink, true, 'German drink found by its use spell')
+equal(de:InspectItem(27658).isFoodBuff, true, 'German buff food found by the Well Fed name')
+equal(de:InspectItem(27658).isFood, false, 'buff food not offered as plain food')
+equal(de:InspectItem(21991).isBandage, true, 'German bandage found by item subclass')
+equal(de:InspectItem(22850).isRejuvenationPotion, true, 'listed rejuvenation potion found without English text')
+equal(de:InspectItem(22829).isRejuvenationPotion, false, 'healing potion is not a rejuvenation potion')
+equal(de:InspectItem(22854).isFlask, true, 'German flask found by item subclass')
+equal(de:InspectItem(27854).hasUse, true, 'localized Use: line recognized')
+
+ITEM_SPELL_TRIGGER_ONUSE = 'Use:'
+local en = loadClassifier('enUS', {[433] = 'Food', [430] = 'Drink', [19705] = 'Well Fed'})
+item(211880, 0, 1, 80, nil, 'Algari Healing Potion', 'Use: Instantly restores 3,500,000 health.')
+item(211879, 0, 1, 70, nil, 'Weak Healing Potion', 'Use: Instantly restores 120,000 health.')
+item(212239, 0, 1, 80, nil, 'Algari Mana Potion', 'Use: Instantly restores 270,000 mana.')
+item(19440, 0, 7, 40, nil, 'Powerful Anti-Venom', 'Use: Cures strong poisons.')
+item(18000, 4, 2, 60, nil, 'Some Helm', 'Binds when equipped', 'Head')
+item(27855, 0, 5, 65, 'Food', 'Mag\'har Grainbread', 'Use: Restores 4320 health over 30 sec. Must remain seated while eating.')
+item(27861, 0, 5, 65, 'Drink', 'Purified Draenic Water', 'Use: Restores 7200 mana over 30 sec. Must remain seated while drinking.')
+item(21990, 0, 7, 70, nil, 'Netherweave Bandage', 'Use: Heals 2000 damage over 8 sec.')
+equal(en:InspectItem(27855).isFood and en.cache[27855].health, 4320, 'English food and amount unchanged')
+equal(en:InspectItem(27861).isDrink and en.cache[27861].mana, 7200, 'English drink and amount unchanged')
+equal(en:InspectItem(21990).isBandage and en.cache[21990].bandageHeal, 2000, 'English bandage and amount unchanged')
+equal(en:InspectItem(211880).health, 3500000, 'thousands separators parsed')
+equal(en:InspectItem(19440).isBandage, false, 'English first-aid item that heals nothing is not a bandage')
+en:InspectItem(18000)
+equal(en.cache[18000]._final, true, 'gear is not rescanned once its tooltip has loaded')
+
+DB.Data.Classifier = en
+cache.items = {211879, 211880, 212239}; cache.counts = {[211879]=1, [211880]=1, [212239]=1}
+local bestPot, pots = DB.Data.Resolver:ResolveHealthPotion()
+equal(bestPot, 211880, 'unlisted modern potion fills the health potion slot, strongest first')
+equal(#pots, 2, 'mana potion kept out of the health potion slot')
+equal(DB.Data.Resolver:ResolveManaPotion(), 212239, 'unlisted modern mana potion fills the mana slot')
+cache.items = {211880, 22829}; cache.counts = {[211880]=1, [22829]=1}
+equal(DB.Data.Resolver:ResolveHealthPotion(), 22829, 'listed potions still come first')
+
+DB.Data.Classifier = stubClassifier
+GetItemInfoInstant, GetItemInfo = saved.GetItemInfoInstant, saved.GetItemInfo
+C_TooltipInfo, C_Spell, GetItemSpell, GetLocale = nil, nil, nil, nil
+
 print('PASS: ' .. checks .. ' regression assertions (mock WoW APIs; in-game validation still required)')

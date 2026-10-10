@@ -4,6 +4,8 @@
 
 ### Added
 - WoW Forever support (Interface 16001, Mainline-based client)
+- Item detection no longer depends on English tooltips: food, drink, buff food, bandages, flasks and rejuvenation potions are recognized on any client language. The remaining tooltip phrases are translatable
+- Health potion, mana potion and flask slots also pick up unlisted items the classifier recognizes, so WoW Forever's modern potions and flasks appear
 - Bar Slots: pick which categories appear on the bar and their order; the bar has one button per chosen category (replaces the Button Count slider). Existing button count and slot order settings carry over
 - Bar Builder (`/dbar builder`): drag-and-drop window for choosing and ordering the bar's categories, replacing the checkbox list in settings
 
