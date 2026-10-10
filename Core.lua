@@ -262,6 +262,10 @@ function DynamicBar:Rebuild(reason)
   if self.UI and self.UI.Rebuild then
     self.UI:Rebuild()
   end
+  -- Keep an open Bar Builder's icons and "None in bags" notes current
+  if self.UI and self.UI.Builder then
+    self.UI.Builder:Refresh()
+  end
 end
 
 function DynamicBar:SetEnabled(enabled)

@@ -42,6 +42,8 @@ function methods:GetFrameLevel() return 110 end
 function methods:GetEffectiveScale() return 1 end
 function methods:GetRect() return 500, 500, 36, 36 end
 function methods:GetName() return self.name end
+function methods:SetText(text) self.text = text end
+function methods:GetText() return self.text end
 function methods:Execute(script) restricted(self, script) end
 function methods:CreateTexture() return CreateFrame('Texture') end
 function methods:CreateFontString() return CreateFrame('FontString') end

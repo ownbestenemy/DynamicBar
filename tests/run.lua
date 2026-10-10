@@ -246,6 +246,17 @@ win.barPanel.tiles[2].scripts.OnClick(win.barPanel.tiles[2], 'RightButton')
 equal(Builder:IndexOf('HEALTH_POT'), nil, 'right-click removes a bar slot')
 win.availPanel.tiles[1].scripts.OnClick(win.availPanel.tiles[1], 'LeftButton')
 equal(cfg.slots[#cfg.slots], 'HEALTH_POT', 'clicking a category appends it')
+-- Bag changes while the builder is open update its tiles.
+local function hearthTile()
+  for _, tile in ipairs(win.barPanel.tiles) do
+    if tile.key == 'HEARTH' and tile:IsShown() then return tile end
+  end
+end
+rebuild({})
+equal(hearthTile().note:GetText(), 'None in bags', 'missing item noted')
+rebuild({[6948]=1})
+equal(hearthTile().note:GetText(), '', 'note cleared once the item is in bags')
+
 -- Switching profiles while the builder is open shows the new profile's bar.
 local oldProfile = DB.db.profile
 DB.db.profile = {enabled = true, _setupComplete = true, bar = {slots = {'DRINK'}, layoutMode = 'HORIZONTAL',
