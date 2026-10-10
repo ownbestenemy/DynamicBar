@@ -4,6 +4,7 @@
 
 ### Added
 - WoW Forever support (Interface 16001, Mainline-based client)
+- Bar Slots: pick which categories appear on the bar and their order; the bar has one button per chosen category (replaces the Button Count slider). Existing button count and slot order settings carry over
 
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons

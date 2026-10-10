@@ -18,6 +18,11 @@ function UI:GetBarConfig()
   return DB.db and DB.db.profile and DB.db.profile.bar
 end
 
+-- One button per slot on the bar
+function UI:GetButtonCount()
+  return #DB.Data.Categories:GetSlots(self:GetBarConfig())
+end
+
 -- Save current bar position to config
 local function SaveBarPosition(bar)
   local cfg = UI:GetBarConfig()
@@ -74,7 +79,7 @@ end
 
 -- Horizontal layout (default, backward compatible)
 local function LayoutBarHorizontal(cfg)
-  local buttons = cfg.buttons or 10
+  local buttons = UI:GetButtonCount()
   local spacing = cfg.spacingH or cfg.spacing or 2
   local padLeft = cfg.padLeft or cfg.padding or 2
   local padRight = cfg.padRight or cfg.padding or 2
@@ -110,7 +115,7 @@ end
 
 -- Vertical layout (new)
 local function LayoutBarVertical(cfg)
-  local buttons = cfg.buttons or 10
+  local buttons = UI:GetButtonCount()
   local spacing = cfg.spacingV or 2
   local padTop = cfg.padTop or 2
   local padBottom = cfg.padBottom or 2
@@ -137,7 +142,7 @@ end
 local function LayoutBarGrid(cfg)
   local rows = cfg.gridRows or 2
   local cols = cfg.gridCols or 6
-  local buttons = cfg.buttons or 10
+  local buttons = UI:GetButtonCount()
   -- Preserve the selected column count, expanding rows to fit every button.
   rows = math.max(rows, math.ceil(buttons / cols))
   cfg.gridRows = rows
@@ -194,7 +199,7 @@ end
 
 local function EnsureButtons()
   local cfg = UI:GetBarConfig()
-  local buttons = cfg.buttons or 10
+  local buttons = UI:GetButtonCount()
 
   for i = 1, buttons do
     if not UI.buttons[i] then
@@ -237,57 +242,16 @@ end
   - Battle mode (in combat): only slots flagged `battle` are shown; prep-only
     slots get no macro so their keybinds can't fire in combat
 ]]--
--- Slot definitions keyed by name for reordering support
-local SLOT_DEFS = {
-  HEALTHSTONE = { key = "HEALTHSTONE", resolver = "ResolveHealthstone",        battle = true, name = "Healthstone" },
-  HEALTH_POT  = { key = "HEALTH_POT",  resolver = "ResolveHealthPotion",       battle = true, name = "Health Potion" },
-  MANA_POT    = { key = "MANA_POT",    resolver = "ResolveManaPotion",         battle = true, name = "Mana Potion" },
-  REJUV_POT   = { key = "REJUV_POT",   resolver = "ResolveRejuvenationPotion", battle = true, name = "Rejuv Potion" },
-  BANDAGE     = { key = "BANDAGE",     resolver = "ResolveBandage",            battle = true, name = "Bandage" },
-  BATTLE_ELIX = { key = "BATTLE_ELIX", resolver = "ResolveBattleElixir",                      name = "Battle Elixir" },
-  GUARD_ELIX  = { key = "GUARD_ELIX",  resolver = "ResolveGuardianElixir",                    name = "Guardian Elixir" },
-  FLASK       = { key = "FLASK",       resolver = "ResolveFlask",                             name = "Flask" },
-  FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff",                          name = "Food (Buff)" },
-  FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff",                       name = "Food (Other)" },
-  DRINK       = { key = "DRINK",       resolver = "ResolveDrink",                             name = "Drink" },
-  HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth",             battle = true, name = "Hearthstone" },
-  OTHER_BUFF  = { key = "OTHER_BUFF",  resolver = "ResolveOtherBuff",                         name = "Other Buffs" },
-}
+-- Categories live in Data/Categories.lua; kept here under the old names for compatibility
+local Cats = DB.Data.Categories
+UI.SLOT_DEFS = Cats.Registry
+UI.DEFAULT_SLOT_ORDER = Cats.DEFAULT_ORDER
 
--- Default slot order (keys). New slots go at the end so existing slots keep
--- their button numbers (and keybindings).
-local DEFAULT_SLOT_ORDER = {
-  "HEALTHSTONE", "HEALTH_POT", "MANA_POT", "REJUV_POT", "BANDAGE",
-  "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
-  "HEARTH", "OTHER_BUFF",
-}
-
--- Export for Config.lua
-UI.SLOT_DEFS = SLOT_DEFS
-UI.DEFAULT_SLOT_ORDER = DEFAULT_SLOT_ORDER
-
--- Slot keys in display order: the saved custom order's valid keys, then any
--- slots it predates, in default order.
-function UI.GetSlotOrderKeys()
-  local cfg = DB.db and DB.db.profile and DB.db.profile.bar
-  local customOrder = type(cfg and cfg.slotOrder) == "table" and cfg.slotOrder or {}
-
-  local keys, seen = {}, {}
-  local function add(key)
-    if SLOT_DEFS[key] and not seen[key] then
-      seen[key] = true
-      keys[#keys + 1] = key
-    end
-  end
-  for _, key in ipairs(customOrder) do add(key) end
-  for _, key in ipairs(DEFAULT_SLOT_ORDER) do add(key) end
-  return keys
-end
-
+-- The bar's slots in order, one button each
 local function GetSlotOrder()
   local result = {}
-  for _, key in ipairs(UI.GetSlotOrderKeys()) do
-    result[#result + 1] = SLOT_DEFS[key]
+  for _, key in ipairs(Cats:GetSlots(UI:GetBarConfig())) do
+    result[#result + 1] = Cats.Registry[key]
   end
   return result
 end
@@ -437,7 +401,7 @@ function UI:UpdateLockState(silent)
     -- Show ALL buttons while unlocked (for precise positioning)
     -- Users can see full bar dimensions regardless of what items they have
     if not InCombatLockdown() then
-      local n = cfg.buttons or #DEFAULT_SLOT_ORDER
+      local n = UI:GetButtonCount()
       for i = 1, n do
         if self.buttons[i] then
           self.buttons[i]:Show()
@@ -521,7 +485,7 @@ function UI:Rebuild()
   end
 
   local inBattle = GetCurrentMode() == "battle"
-  local n = cfg.buttons or 10
+  local n = UI:GetButtonCount()
   local displayMode = cfg.buttonDisplayMode or "SMART"
   local visMode = cfg.visibilityMode or "FADE"
 

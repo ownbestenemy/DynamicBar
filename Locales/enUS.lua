@@ -18,8 +18,6 @@ L["Enable debug logging to chat frame"] = true
 -- Bar Layout
 L["Bar Layout"] = true
 L["Configure the size and appearance of the action bar. Changes apply out of combat."] = true
-L["Button Count"] = true
-L["Number of buttons to display on the bar"] = true
 L["Choose how buttons are arranged"] = true
 L["Horizontal (Default)"] = true
 L["Vertical"] = true
@@ -161,3 +159,27 @@ L["Debug log cleared (%d entries removed)."] = true
 
 -- Errors
 L["Error scheduling bag refresh: %s"] = true
+
+-- Categories
+L["Healthstone"] = true
+L["Health Potion"] = true
+L["Mana Potion"] = true
+L["Rejuv Potion"] = true
+L["Bandage"] = true
+L["Battle Elixir"] = true
+L["Guardian Elixir"] = true
+L["Flask"] = true
+L["Food (Buff)"] = true
+L["Food (Other)"] = true
+L["Drink"] = true
+L["Hearthstone"] = true
+L["Other Buffs"] = true
+
+-- Bar Slots
+L["Bar Slots"] = true
+L["Slots"] = true
+L["Tick the categories you want on the bar and use the arrows to order them. The bar has one button per ticked category."] = true
+L["Show this category on the bar"] = true
+L["Move up"] = true
+L["Move down"] = true
+L["Reset to Default Slots"] = true

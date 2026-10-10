@@ -114,3 +114,74 @@ Cats.RejuvenationPotions = {
 Cats.Hearth = {
   6948, -- Hearthstone
 }
+
+-- =========================================================
+-- Category registry: every slot type the bar can show.
+-- The bar, the settings panel and (later) the Bar Builder all read this.
+--   resolver: method name on DB.Data.Resolver
+--   battle:   usable in combat (prep-only slots are cleared in combat)
+-- =========================================================
+local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
+
+Cats.Registry = {
+  HEALTHSTONE = { key = "HEALTHSTONE", resolver = "ResolveHealthstone",        battle = true, name = L["Healthstone"] },
+  HEALTH_POT  = { key = "HEALTH_POT",  resolver = "ResolveHealthPotion",       battle = true, name = L["Health Potion"] },
+  MANA_POT    = { key = "MANA_POT",    resolver = "ResolveManaPotion",         battle = true, name = L["Mana Potion"] },
+  REJUV_POT   = { key = "REJUV_POT",   resolver = "ResolveRejuvenationPotion", battle = true, name = L["Rejuv Potion"] },
+  BANDAGE     = { key = "BANDAGE",     resolver = "ResolveBandage",            battle = true, name = L["Bandage"] },
+  BATTLE_ELIX = { key = "BATTLE_ELIX", resolver = "ResolveBattleElixir",                      name = L["Battle Elixir"] },
+  GUARD_ELIX  = { key = "GUARD_ELIX",  resolver = "ResolveGuardianElixir",                    name = L["Guardian Elixir"] },
+  FLASK       = { key = "FLASK",       resolver = "ResolveFlask",                             name = L["Flask"] },
+  FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff",                          name = L["Food (Buff)"] },
+  FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff",                       name = L["Food (Other)"] },
+  DRINK       = { key = "DRINK",       resolver = "ResolveDrink",                             name = L["Drink"] },
+  HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth",             battle = true, name = L["Hearthstone"] },
+  OTHER_BUFF  = { key = "OTHER_BUFF",  resolver = "ResolveOtherBuff",                         name = L["Other Buffs"] },
+}
+
+-- Default bar: every category, urgency first. New categories go at the end
+-- so existing slots keep their button numbers (and keybindings).
+Cats.DEFAULT_ORDER = {
+  "HEALTHSTONE", "HEALTH_POT", "MANA_POT", "REJUV_POT", "BANDAGE",
+  "BATTLE_ELIX", "GUARD_ELIX", "FLASK", "FOOD_BUFF", "FOOD_OTHER", "DRINK",
+  "HEARTH", "OTHER_BUFF",
+}
+
+-- Copy the valid, non-duplicate keys of `source` (at most `limit` of them)
+local function CleanKeys(source, limit)
+  local out, seen = {}, {}
+  if type(source) ~= "table" then return out end
+  for _, key in ipairs(source) do
+    if limit and #out >= limit then break end
+    if Cats.Registry[key] and not seen[key] then
+      seen[key] = true
+      out[#out + 1] = key
+    end
+  end
+  return out
+end
+
+-- The bar's slots: an ordered list of category keys, one button each.
+-- Profiles from 1.x have no `slots`; they showed `slotOrder` (followed by any
+-- categories it predates, in default order) trimmed to `buttons`, so build the
+-- same bar from those once.
+-- The old keys are left in SavedVariables untouched.
+function Cats:GetSlots(bar)
+  if type(bar) ~= "table" then return CleanKeys(self.DEFAULT_ORDER) end
+
+  local slots
+  if type(bar.slots) == "table" then
+    slots = CleanKeys(bar.slots)
+  else
+    local source = {}
+    for _, key in ipairs(type(bar.slotOrder) == "table" and bar.slotOrder or {}) do
+      source[#source + 1] = key
+    end
+    for _, key in ipairs(self.DEFAULT_ORDER) do source[#source + 1] = key end
+    slots = CleanKeys(source, tonumber(bar.buttons) or #self.DEFAULT_ORDER)
+  end
+
+  if #slots == 0 then slots = CleanKeys(self.DEFAULT_ORDER) end
+  bar.slots = slots
+  return slots
+end

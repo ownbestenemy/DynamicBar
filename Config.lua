@@ -14,9 +14,6 @@ function DynamicBar:InitConfig()
     return
   end
 
-  -- One button per consumable slot at most
-  local MAX_BUTTONS = #self.UI.DEFAULT_SLOT_ORDER
-
   -- Rebuild after a setting change (out of combat; combat rebuilds are deferred)
   local function Changed(reason)
     self:RequestRebuild(reason)
@@ -86,9 +83,50 @@ function DynamicBar:InitConfig()
     return self.db.profile.bar.layoutMode ~= "GRID"
   end
 
-  -- Slot order controls only matter when not every slot fits, or when opted in
-  local function HideSlotOrder()
-    return (self.db.profile.bar.buttons or MAX_BUTTONS) >= MAX_BUTTONS and not self.db.profile.bar.enableCustomSlotOrder
+  -- Bar slots: an ordered list of category keys (see Data/Categories.lua)
+  local Cats = DynamicBar.Data.Categories
+  local function GetSlots() return Cats:GetSlots(self.db.profile.bar) end
+  local function SlotPosition(key)
+    for i, k in ipairs(GetSlots()) do
+      if k == key then return i end
+    end
+  end
+  local function SaveSlots(slots, reason)
+    self.db.profile.bar.slots = slots
+    Changed(reason)
+  end
+  local function CopySlots()
+    local copy = {}
+    for i, k in ipairs(GetSlots()) do copy[i] = k end
+    return copy
+  end
+  local function SetOnBar(key, onBar)
+    local slots = CopySlots()
+    local pos = SlotPosition(key)
+    if onBar and not pos then
+      slots[#slots + 1] = key
+    elseif not onBar and pos and #slots > 1 then
+      table.remove(slots, pos)
+    end
+    SaveSlots(slots, "slot_toggle")
+  end
+  local function MoveSlot(key, delta)
+    local slots = CopySlots()
+    local i = SlotPosition(key)
+    local j = i and i + delta
+    if j and slots[j] then
+      slots[i], slots[j] = slots[j], slots[i]
+      SaveSlots(slots, "slot_order")
+    end
+  end
+  -- List slots on the bar first, in bar order, then the rest in default order
+  local function SlotRowOrder(key)
+    local pos = SlotPosition(key)
+    if pos then return pos * 10 end
+    for i, k in ipairs(Cats.DEFAULT_ORDER) do
+      if k == key then return 1000 + i * 10 end
+    end
+    return 2000
   end
 
   -- =========================================================
@@ -490,22 +528,6 @@ function DynamicBar:InitConfig()
         name = "Behavior",
         order = 3,
         args = {
-          buttonsHeader = {
-            type = "header",
-            name = "Button Configuration",
-            order = 1,
-          },
-          buttons = {
-            type = "range",
-            name = "Button Count",
-            desc = "Number of buttons to display on the bar",
-            order = 2,
-            min = 1,
-            max = MAX_BUTTONS,
-            step = 1,
-            width = "full",
-          },
-
           displayHeader = {
             type = "header",
             name = "Display Behavior",
@@ -561,143 +583,72 @@ function DynamicBar:InitConfig()
             confirmText = "Enable Dynamic Mode (Breaks Keybinds)?",
           },
 
-          slotOrderHeader = {
+          slotsHeader = {
             type = "header",
-            name = "Slot Priority",
+            name = L["Bar Slots"],
             order = 20,
-            hidden = HideSlotOrder,
           },
-          enableCustomSlotOrder = {
-            type = "toggle",
-            name = "Enable Custom Slot Order",
-            desc = "Show slot reorder controls even when every slot fits. Allows you to customize which consumables appear in which position.",
-            order = 21,
-            width = "full",
-          },
-          slotPriorityDesc = {
+          slotsDesc = {
             type = "description",
-            name = function()
-              local n = self.db.profile.bar.buttons or MAX_BUTTONS
-              return ("You have %d buttons. Use the buttons below to reorder which slots appear on your bar. Top %d slots will be shown."):format(n, n)
-            end,
-            order = 22,
+            name = L["Tick the categories you want on the bar and use the arrows to order them. The bar has one button per ticked category."],
+            order = 21,
             fontSize = "medium",
-            hidden = HideSlotOrder,
           },
-          slotPriorityList = {
+          slotList = {
             type = "group",
-            name = "Slot Order",
-            order = 23,
+            name = L["Slots"],
+            order = 22,
             inline = true,
-            hidden = HideSlotOrder,
             args = (function()
-              -- Build slot priority controls dynamically
               local slotArgs = {}
-              local UI = self.UI
-              local SLOT_DEFS = UI and UI.SLOT_DEFS
-              local DEFAULT_ORDER = UI and UI.DEFAULT_SLOT_ORDER
-
-              if not SLOT_DEFS or not DEFAULT_ORDER then
-                return { noUI = { type = "description", name = "UI not loaded yet.", order = 1 } }
+              for _, key in ipairs(Cats.DEFAULT_ORDER) do
+                local def = Cats.Registry[key]
+                slotArgs["slot_" .. key] = {
+                  type = "toggle",
+                  name = function()
+                    local pos = SlotPosition(key)
+                    if pos then return ("|cff00ff00%d.|r %s"):format(pos, def.name) end
+                    return "|cff888888" .. def.name .. "|r"
+                  end,
+                  desc = L["Show this category on the bar"],
+                  order = function() return SlotRowOrder(key) end,
+                  width = 1.5,
+                  get = function() return SlotPosition(key) ~= nil end,
+                  set = function(_, v) SetOnBar(key, v) end,
+                  -- The bar needs at least one slot
+                  disabled = function() return SlotPosition(key) ~= nil and #GetSlots() <= 1 end,
+                }
+                slotArgs["slot_" .. key .. "_up"] = {
+                  type = "execute",
+                  name = "^",
+                  desc = L["Move up"],
+                  order = function() return SlotRowOrder(key) + 1 end,
+                  width = 0.25,
+                  func = function() MoveSlot(key, -1) end,
+                  disabled = function() local pos = SlotPosition(key) return not pos or pos == 1 end,
+                }
+                slotArgs["slot_" .. key .. "_down"] = {
+                  type = "execute",
+                  name = "v",
+                  desc = L["Move down"],
+                  order = function() return SlotRowOrder(key) + 2 end,
+                  width = 0.25,
+                  func = function() MoveSlot(key, 1) end,
+                  disabled = function() local pos = SlotPosition(key) return not pos or pos == #GetSlots() end,
+                }
               end
 
-              -- Helper to get current slot order (always returns a fresh copy)
-              local function GetCurrentOrder()
-                return self.UI.GetSlotOrderKeys()
-              end
-
-              -- Helper to save slot order
-              local function SaveOrder(order)
-                self.db.profile.bar.slotOrder = order
-                Changed("slot_order")
-              end
-
-              -- Helper to move slot up
-              local function MoveUp(key)
-                local order = GetCurrentOrder()
-                for i, k in ipairs(order) do
-                  if k == key and i > 1 then
-                    order[i], order[i-1] = order[i-1], order[i]
-                    break
-                  end
-                end
-                SaveOrder(order)
-              end
-
-              -- Helper to move slot down
-              local function MoveDown(key)
-                local order = GetCurrentOrder()
-                for i, k in ipairs(order) do
-                  if k == key and i < #order then
-                    order[i], order[i+1] = order[i+1], order[i]
-                    break
-                  end
-                end
-                SaveOrder(order)
-              end
-
-              -- Create controls for each slot
-              for idx, key in ipairs(DEFAULT_ORDER) do
-                local def = SLOT_DEFS[key]
-                if def then
-                  -- Slot name with position indicator
-                  slotArgs["slot_" .. key .. "_name"] = {
-                    type = "description",
-                    name = function()
-                      local order = GetCurrentOrder()
-                      local pos = 1
-                      for i, k in ipairs(order) do
-                        if k == key then pos = i break end
-                      end
-                      local n = self.db.profile.bar.buttons or MAX_BUTTONS
-                      local visible = pos <= n
-                      local color = visible and "|cff00ff00" or "|cff666666"
-                      return ("%s%d. %s|r"):format(color, pos, def.name)
-                    end,
-                    order = idx * 10,
-                    width = 1.0,
-                  }
-                  -- Move up button
-                  slotArgs["slot_" .. key .. "_up"] = {
-                    type = "execute",
-                    name = "^",
-                    desc = "Move up",
-                    order = idx * 10 + 1,
-                    width = 0.25,
-                    func = function() MoveUp(key) end,
-                    disabled = function()
-                      local order = GetCurrentOrder()
-                      return order[1] == key
-                    end,
-                  }
-                  -- Move down button
-                  slotArgs["slot_" .. key .. "_down"] = {
-                    type = "execute",
-                    name = "v",
-                    desc = "Move down",
-                    order = idx * 10 + 2,
-                    width = 0.25,
-                    func = function() MoveDown(key) end,
-                    disabled = function()
-                      local order = GetCurrentOrder()
-                      return order[#order] == key
-                    end,
-                  }
-                end
-              end
-
-              -- Reset button
-              slotArgs["resetOrder"] = {
+              slotArgs.resetSlots = {
                 type = "execute",
-                name = "Reset to Default Order",
-                order = 200,
+                name = L["Reset to Default Slots"],
+                order = 5000,
                 width = "full",
                 func = function()
-                  self.db.profile.bar.slotOrder = nil
-                  Changed("slot_order_reset")
+                  local slots = {}
+                  for i, k in ipairs(Cats.DEFAULT_ORDER) do slots[i] = k end
+                  SaveSlots(slots, "slot_reset")
                 end,
               }
-
               return slotArgs
             end)(),
           },

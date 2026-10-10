@@ -34,15 +34,12 @@ local DB_DEFAULTS = {
     _showAdvancedPosition = false,
     _setupComplete = false,  -- Track if first-time setup has been shown
 
-    -- one bar, one button per slot by default (UI.DEFAULT_SLOT_ORDER)
+    -- One bar with one button per slot. `slots` (an ordered list of category
+    -- keys) is not defaulted here: AceDB merges array defaults by index, which
+    -- would bring removed slots back. Data/Categories.lua builds it on first
+    -- use, migrating the 1.x `buttons` / `slotOrder` settings.
     bar = {
-      buttons = 13,
       scale = 1.0,
-
-      -- Custom slot priority order (used when buttons < 13, or when enableCustomSlotOrder = true)
-      -- nil = use default SLOT_ORDER; array of slot keys = user's priority
-      slotOrder = nil,
-      enableCustomSlotOrder = false,  -- Show reorder UI even at 13 buttons
 
       -- Layout mode selection
       layoutMode = "HORIZONTAL",  -- HORIZONTAL | VERTICAL | GRID

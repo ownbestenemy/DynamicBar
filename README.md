@@ -49,7 +49,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
   - **Horizontal** (default) - Single row of buttons
   - **Vertical** - Single column of buttons
   - **Grid** - Customizable rows × columns (e.g., 2×5, 3×4, 5×2)
-- Button count (1-13)
+- Choose which consumable categories are on the bar and their order (one button per category)
 - Scale adjustments
 - Horizontal and vertical spacing (grid mode supports both independently)
 - Edge padding (basic unified padding or advanced per-edge control)

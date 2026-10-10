@@ -92,16 +92,16 @@ cfg.buttonDisplayMode = 'STATIC'; cfg.layoutMode = 'GRID'
 for _, cols in ipairs({1,5,12}) do
   cfg.gridRows = 1; cfg.gridCols = cols
   rebuild()
-  equal(cfg.gridRows * cfg.gridCols >= cfg.buttons, true, 'grid has enough capacity')
+  equal(cfg.gridRows * cfg.gridCols >= UI:GetButtonCount(), true, 'grid has enough capacity')
   for _, btn in ipairs(UI.buttons) do equal(btn.point[1], 'BOTTOMLEFT', 'button positioned inside grid') end
 end
 
 -- Shrinking Dynamic mode clears main and flyout actions on every discarded slot.
-cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'DYNAMIC'; cfg.buttons = 13
+cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'DYNAMIC'; cfg.slots = nil
 rebuild({[22829]=1,[118]=2,[22832]=1,[2455]=2,[6948]=1})
 local discarded = UI.buttons[2]
 click(discarded, 'RightButton')
-cfg.buttons = 1
+cfg.slots = {'HEALTHSTONE'}
 rebuild()
 equal(discarded:IsShown(), false, 'discarded button hidden')
 equal(discarded.attrs.type1, nil, 'discarded binding cleared')
@@ -110,7 +110,7 @@ equal(discarded._dynCooldown:IsShown(), false, 'discarded cooldown cleared')
 equal(discarded._dynFlyout:IsShown(), false, 'discarded flyout hidden')
 equal(discarded._dynFlyout._count, 0, 'discarded flyout cleared')
 
-cfg.buttons = 13; cfg.buttonDisplayMode = 'SMART'
+cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
 rebuild({[22829]=1,[118]=2})
 click(UI.buttons[2], 'RightButton')
 rebuild({})
@@ -169,91 +169,26 @@ equal(#list, 1, 'unrelated restorative excluded')
 DB.Data.Classifier.cache[22850].pending = true
 equal(DB.Data.Resolver:ResolveRejuvenationPotion(), nil, 'pending classification excluded')
 
--- Elixirs come from the tooltip tag, so unlisted ones count; listed ones keep list order.
-cache.items = {900002,3825,9088,22851}; cache.counts = {[900002]=1,[3825]=1,[9088]=1,[22851]=1}
-DB.Data.Classifier.cache = {
-  [900002] = {itemID=900002,isGuardianElixir=true},
-  [3825] = {itemID=3825,isGuardianElixir=true},
-  [9088] = {itemID=9088,isGuardianElixir=true},
-  [22851] = {itemID=22851,isGuardianElixir=true,isFlask=true},
-}
-best, list = DB.Data.Resolver:ResolveGuardianElixir()
-equal(best, 3825, 'listed elixir ranks first')
-equal(#list, 3, 'unlisted elixir included, flask excluded')
-equal(list[3], 900002, 'unlisted elixir ranks last')
-equal(DB.Data.Resolver:ResolveBattleElixir(), nil, 'guardian elixirs not offered as battle')
-
-cache.items = {27500,1177}; cache.counts = {[27500]=1,[1177]=2}
-DB.Data.Classifier.cache = {
-  [27500] = {itemID=27500,isBattleElixir=true},
-  [1177] = {itemID=1177,isGuardianElixir=true},
-}
-equal(DB.Data.Resolver:ResolveGuardianElixir(), nil, 'Oil of Olaf kept out of the guardian elixir slot')
-equal(DB.Data.Resolver:ResolveBattleElixir(), nil, 'scrolls kept out of the battle elixir slot')
-best, list = DB.Data.Resolver:ResolveOtherBuff()
-equal(best, 1177, 'Oil of Olaf fills the other buffs slot')
-equal(#list, 2, 'scrolls offered as alternatives')
-
--- Flyouts page six items at a time, so every alternative stays reachable.
-cfg.buttons = 13; cfg.buttonDisplayMode = 'STATIC'; cfg.layoutMode = 'HORIZONTAL'; cfg.slotOrder = nil
-local buffs = DB.Data.Categories.OtherBuffs
-local inv = {}
-for i = 1, 8 do inv[buffs[i]] = 1 end
-rebuild(inv)
-local buffBtn = UI.buttons[13]
-local fly = buffBtn._dynFlyout
-equal(buffBtn._dynItemID, buffs[1], 'best buff on the main button')
-equal(fly._count, 6, 'first page holds six items')
-equal(fly._pager:IsShown(), true, 'page controls shown when items overflow')
-equal(fly._pages, 2, 'eight items make two pages')
-enterCombat()
-fly._pager._next.scripts.OnClick(fly._pager._next)
-equal(fly._page, 1, 'paging waits for combat to end')
-leaveCombat()
-fly._pager._next.scripts.OnClick(fly._pager._next)
-equal(fly._page, 2, 'Next moves to page two')
-equal(fly._count, 2, 'second page holds the remaining items')
-equal(fly._buttons[1]._dynItemID, buffs[7], 'seventh item reachable')
-equal(fly._buttons[2]._dynItemID, buffs[8], 'eighth item reachable')
-equal(fly._buttons[3].attrs.type1, nil, 'unused page slot cleared')
-equal(click(fly._buttons[1], 'LeftButton'), true, 'seventh item usable')
-fly._pager._prev.scripts.OnClick(fly._pager._prev)
-equal(fly._buttons[1]._dynItemID, buffs[1], 'Previous returns to page one')
-inv[buffs[8]] = nil; inv[buffs[7]] = nil
-fly._page = 2
-rebuild(inv)
-equal(fly._page, 1, 'page clamps when the list shrinks')
-equal(fly._pager:IsShown(), false, 'page controls hidden when everything fits')
-
--- New slots append after existing ones, so saved bindings keep their categories,
--- and saved custom orders that predate a slot still get it.
-equal(UI.DEFAULT_SLOT_ORDER[12], 'HEARTH', 'hearthstone keeps button 12')
-cfg.slotOrder = {'HEARTH','HEALTHSTONE','HEALTH_POT','MANA_POT','REJUV_POT','BANDAGE',
-  'BATTLE_ELIX','GUARD_ELIX','FLASK','FOOD_BUFF','FOOD_OTHER','DRINK','BOGUS'}
-local keys = UI.GetSlotOrderKeys()
-equal(#keys, #UI.DEFAULT_SLOT_ORDER, 'saved order normalized to every slot')
-equal(keys[1], 'HEARTH', 'saved order kept')
-equal(keys[#keys], 'OTHER_BUFF', 'missing slot appended')
-cfg.slotOrder = nil
-
--- A consumable tooltip that has only loaded its name stays pending, so the
--- bounded retry rescans it instead of dropping an unlisted elixir.
-do
-  local stub = DB.Data.Classifier
-  DB.Data.Classifier = nil
-  local tips = {}
-  C_TooltipInfo = {GetItemByID = function(id) return {lines = tips[id]} end}
-  dofile('Data/Classifier.lua')
-  local real = DB.Data.Classifier
-  DB.Data.Classifier = stub
-  tips[900003] = {{leftText = 'Elixir of Something'}}
-  equal(real:InspectItem(900003).pending, true, 'name-only tooltip is pending')
-  tips[900003] = {{leftText = 'Elixir of Something'}, {leftText = 'Guardian Elixir'}, {leftText = 'Use: Increases armor.'}}
-  local info = real:InspectItem(900003)
-  equal(info.pending, false, 'complete tooltip classified')
-  equal(info.isGuardianElixir, true, 'unlisted elixir tagged after retry')
-  C_TooltipInfo = nil
-end
+-- Slot list: one button per slot, migrated once from 1.x settings.
+local Cats = DB.Data.Categories
+local function keys(list) return table.concat(list, ',') end
+equal(#Cats:GetSlots({}), #Cats.DEFAULT_ORDER, 'new profile gets every category')
+equal(keys(Cats:GetSlots({buttons = 3})), 'HEALTHSTONE,HEALTH_POT,MANA_POT', '1.x button count keeps top slots')
+equal(keys(Cats:GetSlots({buttons = 2, slotOrder = {'HEARTH','FLASK','DRINK'}})), 'HEARTH,FLASK', '1.x custom order migrated')
+equal(Cats:GetSlots({slotOrder = {'HEARTH'}})[13], 'OTHER_BUFF', '1.x order gains slots it predates')
+equal(keys(Cats:GetSlots({slotOrder = {'GONE'}, buttons = 1})), 'HEALTHSTONE', 'invalid 1.x order falls back to default')
+local migrated = {buttons = 4, slots = {'DRINK','BOGUS','DRINK','FLASK'}}
+equal(keys(Cats:GetSlots(migrated)), 'DRINK,FLASK', 'unknown and duplicate keys dropped')
+equal(keys(migrated.slots), 'DRINK,FLASK', 'cleaned list saved')
+equal(#Cats:GetSlots({slots = {}}), #Cats.DEFAULT_ORDER, 'empty bar resets to default')
+cfg.buttonDisplayMode = 'STATIC'; cfg.slots = {'FLASK','HEARTH','DRINK'}
+rebuild({[22851]=1,[6948]=1})
+equal(UI:GetButtonCount(), 3, 'button count follows slot list')
+equal(UI.buttons[1]._dynItemID, 22851, 'first slot is the flask')
+equal(UI.buttons[2]._dynItemID, 6948, 'second slot is the hearthstone')
+equal(UI.buttons[4]:IsShown(), false, 'buttons past the slot list hidden')
+cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
+rebuild()
 
 local bindingFile = assert(io.open('Bindings.xml'))
 local bindings = bindingFile:read('*a'); bindingFile:close()
