@@ -246,6 +246,17 @@ win.barPanel.tiles[2].scripts.OnClick(win.barPanel.tiles[2], 'RightButton')
 equal(Builder:IndexOf('HEALTH_POT'), nil, 'right-click removes a bar slot')
 win.availPanel.tiles[1].scripts.OnClick(win.availPanel.tiles[1], 'LeftButton')
 equal(cfg.slots[#cfg.slots], 'HEALTH_POT', 'clicking a category appends it')
+-- Switching profiles while the builder is open shows the new profile's bar.
+local oldProfile = DB.db.profile
+DB.db.profile = {enabled = true, _setupComplete = true, bar = {slots = {'DRINK'}, layoutMode = 'HORIZONTAL',
+  locked = true, visibilityMode = 'FADE', buttonDisplayMode = 'SMART'}}
+DB.ApplyProfileCompat = DB.ApplyProfileCompat or function() end
+DB:OnProfileEvent()
+equal(win.barPanel.tiles[1].key, 'DRINK', 'builder refreshed on profile change')
+equal(win.barPanel.tiles[2]:IsShown(), false, 'old profile tiles hidden')
+DB.db.profile = oldProfile
+cfg = DB.db.profile.bar
+DB:OnProfileEvent()
 enterCombat()
 win.scripts.OnEvent(win, 'PLAYER_REGEN_DISABLED')
 equal(win:IsShown(), false, 'builder closes when combat starts')

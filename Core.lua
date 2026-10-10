@@ -613,6 +613,8 @@ function DynamicBar:OnProfileEvent()
   self:ApplyProfileCompat()
   ScheduleBagRefresh()
   self:RequestRebuild("profile")
+  -- An open Bar Builder must show the new profile's slots
+  if self.UI and self.UI.Builder then self.UI.Builder:Refresh() end
 end
 
 
