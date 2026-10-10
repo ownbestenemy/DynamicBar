@@ -109,7 +109,7 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 ### Q: Does it work on non-English clients?
 
-**A: Mostly.** Food, drink, buff food, bandages, flasks and all listed potions are recognized in any language, using item types and the game's own spell names. Battle vs Guardian elixirs, and ranking food or potions by how much they restore, still read English tooltip text until those phrases are translated for your language. Menu translations are coming.
+**A: Mostly.** Food, drink, buff food, bandages, flasks and all listed potions are recognized in any language, using item types and the game's own spell names. Battle vs Guardian elixirs, and ranking food or potions by how much they restore, still read English tooltip text until those phrases are translated for your language. Menus, popups and messages can all be translated; you can help on the CurseForge localization page.
 
 ### Q: The bar is stuck and I can't move it!
 

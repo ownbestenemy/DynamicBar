@@ -8,6 +8,7 @@
 - Health potion, mana potion and flask slots also pick up unlisted items the classifier recognizes, so WoW Forever's modern potions and flasks appear
 - Bar Slots: pick which categories appear on the bar and their order; the bar has one button per chosen category (replaces the Button Count slider). Existing button count and slot order settings carry over
 - Bar Builder (`/dbar builder`): drag-and-drop window for choosing and ordering the bar's categories, replacing the checkbox list in settings
+- Translations: every menu, popup and chat message reads from the locale files, which the CurseForge packager fills from the project's localization page (German, Spanish, French, Italian, Korean, Portuguese, Russian and Chinese). Untranslated text stays English
 
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons

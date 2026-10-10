@@ -127,34 +127,34 @@ end
 -- Show debug log to chat
 function DynamicBar:ShowDebugLog()
   if not self.db or not self.db.global then
-    self:Print("Debug log not available.")
+    self:Print(L["Debug log not available."])
     return
   end
 
   local log = self.db.global.debugLog or {}
   if #log == 0 then
-    self:Print("Debug log is empty. Enable debug mode with /dbar debug")
+    self:Print(L["Debug log is empty. Enable debug mode with /dbar debug"])
     return
   end
 
-  self:Print(("=== Debug Log (%d entries) ==="):format(#log))
+  self:Print(L["=== Debug Log (%d entries) ==="]:format(#log))
   for i, entry in ipairs(log) do
     self:Print(("[%d] %s - %s"):format(i, entry.time or "??:??:??", entry.message or ""))
   end
-  self:Print("=== End Debug Log ===")
-  self:Print("To share with addon author: Copy messages above or check SavedVariables/DynamicBarDB.lua")
+  self:Print(L["=== End Debug Log ==="])
+  self:Print(L["To share with addon author: Copy messages above or check SavedVariables/DynamicBarDB.lua"])
 end
 
 -- Clear debug log
 function DynamicBar:ClearDebugLog()
   if not self.db or not self.db.global then
-    self:Print("Debug log not available.")
+    self:Print(L["Debug log not available."])
     return
   end
 
   local count = #(self.db.global.debugLog or {})
   self.db.global.debugLog = {}
-  self:Print(("Debug log cleared (%d entries removed)."):format(count))
+  self:Print(L["Debug log cleared (%d entries removed)."]:format(count))
 end
 
 --
@@ -368,9 +368,9 @@ function DynamicBar:ShowFirstTimeSetup()
       -- Check again in case user logged out during delay
       if self.db.profile.enabled and not self.db.profile._setupComplete and self.db.profile.bar.locked ~= false then
         StaticPopupDialogs["DYNAMICBAR_FIRST_TIME_SETUP"] = {
-          text = "Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)",
-          button1 = "Position Now",
-          button2 = "Use Default",
+          text = L["Welcome to DynamicBar!\n\nWould you like to position your consumable bar now?\n\n(You can reposition it anytime via /dbar config)"],
+          button1 = L["Position Now"],
+          button2 = L["Use Default"],
           OnAccept = function()
             -- Unlock the bar for positioning
             self.db.profile.bar.locked = false
@@ -459,7 +459,7 @@ function DynamicBar:OnBagUpdate()
 
   local ok, err = pcall(ScheduleBagRefresh)
   if not ok then
-    self:Print("Error scheduling bag refresh: " .. tostring(err))
+    self:Print(L["Error scheduling bag refresh: %s"]:format(tostring(err)))
   end
 end
 
@@ -549,13 +549,13 @@ function DynamicBar:HandleSlash(input)
 
   if msg == "disable" then
     self:SetEnabled(false)
-    self:Print(InCombatLockdown() and "Disabled (applies after combat)." or "Disabled.")
+    self:Print(InCombatLockdown() and L["Disabled (applies after combat)."] or L["Disabled."])
     return
   end
 
   if msg == "debug" then
     self.db.profile.debug = not self.db.profile.debug
-    self:Print("Debug " .. (self.db.profile.debug and L["Debug ON"] or L["Debug OFF"]))
+    self:Print(self.db.profile.debug and L["Debug ON"] or L["Debug OFF"])
     return
   end
 
@@ -576,12 +576,12 @@ function DynamicBar:HandleSlash(input)
     local setupComplete = self.db.profile._setupComplete
     local expectedProfile = self.db.keys.char
 
-    self:Print("Current profile: " .. tostring(profileName))
-    self:Print("Expected profile: " .. expectedProfile)
-    self:Print("Setup complete: " .. tostring(setupComplete))
+    self:Print(L["Current profile: %s"]:format(tostring(profileName)))
+    self:Print(L["Expected profile: %s"]:format(expectedProfile))
+    self:Print(L["Setup complete: %s"]:format(tostring(setupComplete)))
 
     if profileName ~= expectedProfile then
-      self:Print("|cffff0000WARNING: Profile mismatch!|r")
+      self:Print("|cffff0000" .. L["WARNING: Profile mismatch!"] .. "|r")
     end
     return
   end

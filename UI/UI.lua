@@ -468,7 +468,7 @@ function UI:Rebuild()
   end
 
   if not UI.Actions or not UI.Buttons or not UI.Flyouts then
-    DB:Print("UI modules not loaded")
+    DB:Print(L["UI modules not loaded"])
     return
   end
 
@@ -480,7 +480,7 @@ function UI:Rebuild()
 
   local cfg = UI:GetBarConfig()
   if not cfg then
-    DB:Print("Failed to get bar configuration")
+    DB:Print(L["Failed to get bar configuration"])
     return
   end
 

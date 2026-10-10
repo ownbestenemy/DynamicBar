@@ -120,7 +120,7 @@ Mode switching is automatic and implicit. No manual toggling required.
 
 ## Known Limitations (Beta)
 
-- **Non-English clients** - Most slots work in any language; elixir type and restore amounts need translated tooltip phrases, and menus are English until translations land
+- **Non-English clients** - Most slots work in any language; elixir type and restore amounts need translated tooltip phrases, and menus show English until a translation for your language is entered on CurseForge
 - No quest/contextual items yet
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)
