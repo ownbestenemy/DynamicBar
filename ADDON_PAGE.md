@@ -64,6 +64,7 @@ Choose how empty slots behave:
 - Change button size
 - Choose button skin (Blizzard default or Minimal)
 - Lock/unlock bar position
+- WoW Forever: move the bar from Edit Mode alongside your other frames
 - Show/hide tooltip on item hover
 
 ---
@@ -113,7 +114,7 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 ### Q: The bar is stuck and I can't move it!
 
-**A: The bar is locked.** Type `/db` or `/dynamicbar` to open settings, then uncheck "Lock Bar Position" to move it.
+**A: The bar is locked.** Type `/db` or `/dynamicbar` to open settings, then uncheck "Lock Bar Position" to move it. On WoW Forever you can also open Edit Mode and drag it there.
 
 ### Q: How do I open the settings?
 

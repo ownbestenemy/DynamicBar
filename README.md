@@ -60,6 +60,7 @@ Access via `/dbar config` or ESC → Interface → AddOns → DynamicBar
 - Presets: Bottom Center, Top Center, Screen Center, Custom
 - Manual positioning with anchor points and offsets
 - Lock/unlock toggle with visual "DRAG ME" overlay
+- WoW Forever: opening Edit Mode shows a drag handle on the bar, and it locks again when Edit Mode closes
 
 **Visibility Mode:**
 - **Fade Out (Recommended)** - Prep items fade during combat

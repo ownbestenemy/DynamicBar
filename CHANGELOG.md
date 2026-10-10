@@ -9,6 +9,7 @@
 - Bar Slots: pick which categories appear on the bar and their order; the bar has one button per chosen category (replaces the Button Count slider). Existing button count and slot order settings carry over
 - Bar Builder (`/dbar builder`): drag-and-drop window for choosing and ordering the bar's categories, replacing the checkbox list in settings
 - Translations: every menu, popup and chat message reads from the locale files, which the CurseForge packager fills from the project's localization page (German, Spanish, French, Italian, Korean, Portuguese, Russian and Chinese). Untranslated text stays English
+- WoW Forever: the bar follows Edit Mode, showing a drag handle while Edit Mode is open and locking again when it closes. The position stays DynamicBar's own setting (per profile), not part of Edit Mode layouts
 
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons
