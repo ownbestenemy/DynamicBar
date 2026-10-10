@@ -93,37 +93,11 @@ function BagCache:Has(itemID)
   return (self.counts[itemID] or 0) > 0
 end
 
--- Find bag/slot location of an item (for cooldown lookups)
-function BagCache:FindLocation(itemID)
-  if not itemID then return nil, nil end
+-- Item cooldown by itemID (no bag scan). Values are returned untouched: on
+-- WoW Forever they can be secret in combat, so callers must check before comparing.
+local GetItemCooldownByID = (Container and Container.GetItemCooldown) or GetItemCooldown
 
-  for bag = 0, 4 do
-    local slots = GetNumSlots(bag)
-    for slot = 1, slots do
-      local link = GetItemLink(bag, slot)
-      if link then
-        local id = tonumber(link:match("item:(%d+)"))
-        if id == itemID then
-          return bag, slot
-        end
-      end
-    end
-  end
-
-  return nil, nil
-end
-
--- Get item cooldown (TBC-compatible via bag/slot lookup)
 function BagCache:GetItemCooldown(itemID)
-  if not itemID then return 0, 0, 0 end
-
-  local bag, slot = self:FindLocation(itemID)
-  if not bag or not slot then return 0, 0, 0 end
-
-  if Container and Container.GetContainerItemCooldown then
-    local startTime, duration, isEnabled = Container.GetContainerItemCooldown(bag, slot)
-    return startTime or 0, duration or 0, isEnabled and 1 or 0
-  end
-
-  return 0, 0, 0
+  if not itemID or not GetItemCooldownByID then return 0, 0, 0 end
+  return GetItemCooldownByID(itemID)
 end

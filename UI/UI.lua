@@ -225,43 +225,29 @@ local function GetCurrentMode()
   return DB._inCombat and "battle" or "prep"
 end
 
--- AssignHearth removed - now uses ResolveHearth() like all other slots
-
 --[[
-  SLOT_ORDER defines the role-first priority ordering per Design Contract.
-  Slots are assigned to buttons sequentially - no hardcoded indices.
-
-  Order follows urgency → convenience:
-  1. Emergency Conversion (Healthstone, Dark Rune) - both modes
-  2. Health Potions - both modes
-  3. Mana Potions - both modes
-  4. Bandages - both modes (for bubble-bandage, etc.)
-  5. Battle Elixir - prep only (pre-buff)
-  6. Guardian Elixir - prep only (pre-buff)
-  7. Food (buff) - prep only
-  8. Food (non-buff) - prep only
-  9. Drink - prep only
-  10. Hearthstone (always last) - both modes
+  Slots are assigned to buttons in priority order (urgency -> convenience),
+  customizable via the config panel.
 
   Mode switching (implicit):
-  - Battle mode (in combat): Shows slots with "battle" mode flag
-  - Prep mode (out of combat): Shows slots with "prep" mode flag
-  - Battle slots maintain same positions when switching modes
+  - Prep mode (out of combat): every slot is shown
+  - Battle mode (in combat): only slots flagged `battle` are shown; prep-only
+    slots get no macro so their keybinds can't fire in combat
 ]]--
 -- Slot definitions keyed by name for reordering support
 local SLOT_DEFS = {
-  HEALTHSTONE = { key = "HEALTHSTONE", resolver = "ResolveHealthstone", flyoutField = "_healthstoneFlyout", modes = {"battle", "prep"}, name = "Healthstone" },
-  HEALTH_POT  = { key = "HEALTH_POT",  resolver = "ResolveHealthPotion", flyoutField = "_healthPotionFlyout", modes = {"battle", "prep"}, name = "Health Potion" },
-  MANA_POT    = { key = "MANA_POT",    resolver = "ResolveManaPotion", flyoutField = "_manaPotionFlyout", modes = {"battle", "prep"}, name = "Mana Potion" },
-  REJUV_POT   = { key = "REJUV_POT",   resolver = "ResolveRejuvenationPotion", flyoutField = "_rejuvenationPotionFlyout", modes = {"battle", "prep"}, name = "Rejuv Potion" },
-  BANDAGE     = { key = "BANDAGE",     resolver = "ResolveBandage", flyoutField = "_bandageFlyout", modes = {"battle", "prep"}, name = "Bandage" },
-  BATTLE_ELIX = { key = "BATTLE_ELIX", resolver = "ResolveBattleElixir", flyoutField = "_battleElixirFlyout", modes = {"prep"}, name = "Battle Elixir" },
-  GUARD_ELIX  = { key = "GUARD_ELIX",  resolver = "ResolveGuardianElixir", flyoutField = "_guardianElixirFlyout", modes = {"prep"}, name = "Guardian Elixir" },
-  FLASK       = { key = "FLASK",       resolver = "ResolveFlask", flyoutField = "_flaskFlyout", modes = {"prep"}, name = "Flask" },
-  FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff", flyoutField = "_foodBuffFlyout", modes = {"prep"}, name = "Food (Buff)" },
-  FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff", flyoutField = "_foodNonBuffFlyout", modes = {"prep"}, name = "Food (Other)" },
-  DRINK       = { key = "DRINK",       resolver = "ResolveDrink", flyoutField = "_drinkFlyout", modes = {"prep"}, name = "Drink" },
-  HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth", flyoutField = "_hearthFlyout", modes = {"battle", "prep"}, name = "Hearthstone" },
+  HEALTHSTONE = { key = "HEALTHSTONE", resolver = "ResolveHealthstone",        battle = true, name = "Healthstone" },
+  HEALTH_POT  = { key = "HEALTH_POT",  resolver = "ResolveHealthPotion",       battle = true, name = "Health Potion" },
+  MANA_POT    = { key = "MANA_POT",    resolver = "ResolveManaPotion",         battle = true, name = "Mana Potion" },
+  REJUV_POT   = { key = "REJUV_POT",   resolver = "ResolveRejuvenationPotion", battle = true, name = "Rejuv Potion" },
+  BANDAGE     = { key = "BANDAGE",     resolver = "ResolveBandage",            battle = true, name = "Bandage" },
+  BATTLE_ELIX = { key = "BATTLE_ELIX", resolver = "ResolveBattleElixir",                      name = "Battle Elixir" },
+  GUARD_ELIX  = { key = "GUARD_ELIX",  resolver = "ResolveGuardianElixir",                    name = "Guardian Elixir" },
+  FLASK       = { key = "FLASK",       resolver = "ResolveFlask",                             name = "Flask" },
+  FOOD_BUFF   = { key = "FOOD_BUFF",   resolver = "ResolveFoodBuff",                          name = "Food (Buff)" },
+  FOOD_OTHER  = { key = "FOOD_OTHER",  resolver = "ResolveFoodNonBuff",                       name = "Food (Other)" },
+  DRINK       = { key = "DRINK",       resolver = "ResolveDrink",                             name = "Drink" },
+  HEARTH      = { key = "HEARTH",      resolver = "ResolveHearth",             battle = true, name = "Hearthstone" },
 }
 
 -- Default slot order (keys)
@@ -300,62 +286,33 @@ local function GetSlotOrder()
   return result
 end
 
--- SLOT_ORDER is computed dynamically per Rebuild() call via GetSlotOrder()
-
-local function AssignResolverSlot(slot)
-  local btn = UI.buttons[slot.idx]
-  if not btn then return nil end
-  if InCombatLockdown() then return nil end
-
-  local resolver = DB.Data and DB.Data.Resolver
-  if not resolver then return nil end
-
-  local fn = resolver[slot.resolver]
-  if type(fn) ~= "function" then return nil end
-
-  local itemID, flyout = fn(resolver)
-  if not itemID then
-    UI[slot.flyoutField] = {}
-    return nil
-  end
-
+local function AssignItem(btn, itemID)
   UI.Actions:AssignMacro(btn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
-  UI[slot.flyoutField] = flyout or {}
-  return itemID
 end
 
-local function ApplySlotFlyout(slot)
-  local btn = UI.buttons[slot.idx]
-  if not btn then return end
-  if InCombatLockdown() then return end
+local function CreateFlyoutButton(name, parent, size)
+  return UI.Buttons:CreateSecureButton(name, parent, size)
+end
 
-  local list = UI[slot.flyoutField] or {}
-  if #list <= 1 then
-    if btn._dynFlyout then
-      -- Clear all flyout buttons before hiding (prevents stale items)
-      if btn._dynFlyout._buttons then
-        for i = 1, #btn._dynFlyout._buttons do
-          UI.Actions:Clear(btn._dynFlyout._buttons[i])
-        end
-      end
-      btn._dynFlyout._count = 0  -- Reset count so hover won't re-show the flyout
-      btn._dynFlyout:Hide()
-    end
-    return
-  end
+-- Show the slot's alternatives on hover; a single item (or none) needs no flyout,
+-- and an empty list clears and hides any stale flyout.
+local function ApplySlotFlyout(btn, list)
+  if not list or #list <= 1 then list = {} end
+  UI.Flyouts:ApplyItemFlyout(btn, list, 6, CreateFlyoutButton, BUTTON_SIZE, AssignItem)
+end
 
-  UI.Flyouts:ApplyItemFlyout(
-    btn,
-    list,
-    6,
-    function(name, parent, size)
-      return UI.Buttons:CreateSecureButton(name, parent, size)
-    end,
-    BUTTON_SIZE,
-    function(fbtn, itemID)
-      UI.Actions:AssignMacro(fbtn, "/use item:" .. itemID, GetItemTex(itemID), itemID)
-    end
-  )
+-- Resolve the slot's best item into btn. Returns true if an item was assigned.
+local function FillSlot(btn, slot)
+  local resolver = DB.Data and DB.Data.Resolver
+  local fn = resolver and resolver[slot.resolver]
+  if type(fn) ~= "function" then return false end
+
+  local itemID, flyout = fn(resolver)
+  if not itemID then return false end
+
+  AssignItem(btn, itemID)
+  ApplySlotFlyout(btn, flyout)
+  return true
 end
 
 -- Update bar lock state
@@ -443,6 +400,9 @@ function UI:UpdateLockState(silent)
     end)
 
     overlay:Hide()
+    overlay._bg = bg
+    overlay._label = label
+    overlay._lockBtn = lockBtn
     self.bar._lockOverlay = overlay
   end
 
@@ -478,35 +438,13 @@ function UI:UpdateLockState(silent)
       -- Always show overlay for dragging functionality
       self.bar._lockOverlay:Show()
 
-      -- Get child elements (bg texture is first child, label is fontstring)
-      local children = { self.bar._lockOverlay:GetChildren() }
-      local regions = { self.bar._lockOverlay:GetRegions() }
-
-      if DB.db.profile._setupComplete then
-        -- Subsequent unlocks: dim the background, hide text/button
-        for _, region in ipairs(regions) do
-          if region:GetObjectType() == "Texture" then
-            region:SetVertexColor(0, 1, 0, 0.15)  -- Very subtle green
-          elseif region:GetObjectType() == "FontString" then
-            region:Hide()  -- Hide "DRAG ME" text
-          end
-        end
-        for _, child in ipairs(children) do
-          child:Hide()  -- Hide "Save & Lock" button
-        end
-      else
-        -- First-time setup: show full overlay
-        for _, region in ipairs(regions) do
-          if region:GetObjectType() == "Texture" then
-            region:SetVertexColor(0, 1, 0, 0.4)  -- Bright green
-          elseif region:GetObjectType() == "FontString" then
-            region:Show()  -- Show "DRAG ME" text
-          end
-        end
-        for _, child in ipairs(children) do
-          child:Show()  -- Show "Save & Lock" button
-        end
-      end
+      -- First-time setup: bright overlay with "DRAG ME" and "Save & Lock".
+      -- Subsequent unlocks: subtle tint only.
+      local overlay = self.bar._lockOverlay
+      local firstTime = not DB.db.profile._setupComplete
+      overlay._bg:SetVertexColor(0, 1, 0, firstTime and 0.4 or 0.15)
+      overlay._label:SetShown(firstTime)
+      overlay._lockBtn:SetShown(firstTime)
     end
     if not silent then
       DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")
@@ -562,214 +500,75 @@ function UI:Rebuild()
     return
   end
 
-  local currentMode = GetCurrentMode()
+  local inBattle = GetCurrentMode() == "battle"
   local n = cfg.buttons or 10
   local displayMode = cfg.buttonDisplayMode or "SMART"
   local visMode = cfg.visibilityMode or "FADE"
 
-  -- Get current slot order (may be customized by user)
-  local SLOT_ORDER = GetSlotOrder()
-
-  -- Clear all currently assigned buttons
-  for i = 1, n do
-    if UI.buttons[i] then
-      UI.Actions:Clear(UI.buttons[i])
-    end
+  -- Clear all buttons; slots below re-assign what they need
+  for i = 1, #UI.buttons do
+    UI.Actions:Clear(UI.buttons[i])
   end
 
-  -- Helper: Apply visibility mode for unavailable slots
-  local function ApplyVisibilityMode(btn, validForMode)
-    if not validForMode then
-      -- Unavailable slot - apply user's chosen visibility mode
+  -- Visibility for a slot button: available slots are always full and clickable;
+  -- unavailable ones follow the user's visibility mode.
+  local function ApplyVisibility(btn, available)
+    local alpha, clickable, shown = 1.0, true, true
+    if not available then
       if visMode == "FADE" then
-        btn:SetAlpha(0.3)  -- Fade to 30%
-        btn:EnableMouse(false)
-        btn:Show()  -- Ensure visible (might be hidden from previous mode)
+        alpha, clickable = 0.3, false
       elseif visMode == "HIDE" then
-        btn:Hide()  -- Completely hidden
-        btn:SetAlpha(1.0)  -- Reset alpha for when it shows again
-        btn:EnableMouse(false)
+        clickable, shown = false, false  -- alpha reset for when it shows again
       elseif visMode == "GREY" then
-        btn:SetAlpha(0.4)  -- Grey appearance (original behavior)
-        btn:EnableMouse(false)
-        btn:Show()
-      else  -- ALWAYS
-        btn:SetAlpha(1.0)  -- Full visibility
-        btn:EnableMouse(true)  -- Allow clicks
-        btn:Show()
+        alpha, clickable = 0.4, false
+      end  -- ALWAYS: full visibility, clickable
+    end
+    btn:SetAlpha(alpha)
+    btn:EnableMouse(clickable)
+    btn:SetShown(shown)
+  end
+
+  -- DYNAMIC: collapse empty slots (button positions shift, breaks keybinds)
+  -- SMART:   hide empty slots but keep their positions (stable keybinds)
+  -- STATIC:  always show every slot, empty or not
+  local used = 0
+  for _, slot in ipairs(GetSlotOrder()) do
+    -- Prep-only slots are never assigned in combat, so their keybinds can't fire
+    local allowed = slot.battle or not inBattle
+
+    if displayMode == "DYNAMIC" then
+      if used >= n then break end
+      if allowed and FillSlot(UI.buttons[used + 1], slot) then
+        used = used + 1
+        ApplyVisibility(UI.buttons[used], true)
       end
     else
-      -- Available slot - always full visibility and clickable
-      btn:SetAlpha(1.0)
-      btn:EnableMouse(true)
-      btn:Show()
+      used = used + 1
+      if used > n then used = n; break end
+      local btn = UI.buttons[used]
+      if allowed and FillSlot(btn, slot) then
+        ApplyVisibility(btn, true)
+      else
+        ApplySlotFlyout(btn, nil)
+        if displayMode == "STATIC" then
+          ApplyVisibility(btn, allowed)
+        else
+          btn:Hide()
+        end
+      end
     end
   end
 
-  -- =========================================================================
-  -- DYNAMIC MODE: Collapse empty slots (breaks keybinds - button positions shift)
-  -- =========================================================================
-  if displayMode == "DYNAMIC" then
-    local btnIdx = 1
-    for _, slot in ipairs(SLOT_ORDER) do
-      if btnIdx > n then break end
-
-      -- Check if slot is valid for current mode
-      local validForMode = false
-      for _, mode in ipairs(slot.modes or {"prep"}) do
-        if mode == currentMode then
-          validForMode = true
-          break
-        end
-      end
-
-      -- CRITICAL: Skip prep-only slots entirely during combat
-      -- This prevents macros from being assigned to slots that shouldn't be usable
-      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
-      if not validForMode then
-        slot.idx = nil
-        -- Don't assign anything - slot is completely skipped in combat
-      else
-        -- Assign slot index and try to resolve item
-        slot.idx = btnIdx
-        local itemID = AssignResolverSlot(slot)
-
-        if itemID then
-          -- Item found - assign button and increment index
-          ApplySlotFlyout(slot)
-          ApplyVisibilityMode(UI.buttons[btnIdx], validForMode)
-          btnIdx = btnIdx + 1
-        else
-          -- No item - don't increment btnIdx, slot is skipped
-          slot.idx = nil
-        end
-      end
-    end
-
-    -- Hide and clear unused buttons
-    for i = btnIdx, n do
-      if UI.buttons[i] then
-        UI.buttons[i]:Hide()
-        UI.Actions:Clear(UI.buttons[i])
-      end
-    end
-
-  -- =========================================================================
-  -- SMART MODE: Hide empty buttons but reserve space (stable keybinds)
-  -- =========================================================================
-  elseif displayMode == "SMART" then
-    for i, slot in ipairs(SLOT_ORDER) do
-      if i > n then break end
-
-      slot.idx = i
-
-      -- Check if slot is valid for current mode
-      local validForMode = false
-      for _, mode in ipairs(slot.modes or {"prep"}) do
-        if mode == currentMode then
-          validForMode = true
-          break
-        end
-      end
-
-      -- CRITICAL: Skip prep-only slots entirely during combat
-      -- This prevents macros from being assigned to slots that shouldn't be usable
-      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
-      if not validForMode then
-        -- Clear any existing macro and hide - NO macro assignment
-        UI.Actions:Clear(UI.buttons[i])
-        UI.buttons[i]:Hide()
-      else
-        -- Assign slot and check if item exists
-        local itemID = AssignResolverSlot(slot)
-
-        if not itemID then
-          -- No item - hide button but keep position reserved
-          UI.buttons[i]:Hide()
-          UI.Actions:Clear(UI.buttons[i])
-        else
-          -- Item found - apply normal visibility mode
-          ApplySlotFlyout(slot)
-          ApplyVisibilityMode(UI.buttons[i], validForMode)
-        end
-      end
-    end
-
-    -- Hide buttons beyond SLOT_ORDER (no categories defined for these slots)
-    for i = #SLOT_ORDER + 1, n do
-      if UI.buttons[i] then
-        UI.buttons[i]:Hide()
-        UI.Actions:Clear(UI.buttons[i])
-      end
-    end
-
-    -- Hide buttons beyond configured count
-    for i = n + 1, #UI.buttons do
-      if UI.buttons[i] then
-        UI.buttons[i]:Hide()
-      end
-    end
-
-  -- =========================================================================
-  -- STATIC MODE: Always show all slots (current/legacy behavior)
-  -- =========================================================================
-  else  -- STATIC
-    for i, slot in ipairs(SLOT_ORDER) do
-      if i > n then break end
-
-      slot.idx = i
-
-      -- Check if slot is valid for current mode
-      local validForMode = false
-      for _, mode in ipairs(slot.modes or {"prep"}) do
-        if mode == currentMode then
-          validForMode = true
-          break
-        end
-      end
-
-      -- CRITICAL: Skip prep-only slots entirely during combat
-      -- This prevents macros from being assigned to slots that shouldn't be usable
-      -- Contract requirement: prep-only items must NOT be fireable via keybind in combat
-      if not validForMode then
-        -- Clear any existing macro - NO macro assignment for prep-only in combat
-        UI.Actions:Clear(UI.buttons[i])
-        if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
-        -- Apply visibility (fade/hide/grey) - button has no action
-        ApplyVisibilityMode(UI.buttons[i], false)
-      else
-        -- Assign item regardless of whether it exists
-        local itemID = AssignResolverSlot(slot)
-        if itemID then
-          ApplySlotFlyout(slot)
-        else
-          -- No item - clear button but keep visible (STATIC mode shows empty slots)
-          UI.Actions:Clear(UI.buttons[i])
-          if UI.buttons[i]._dynFlyout then UI.buttons[i]._dynFlyout:Hide() end
-        end
-
-        -- Always show button (even if empty)
-        ApplyVisibilityMode(UI.buttons[i], validForMode)
-      end
-    end
-
-    -- Show empty placeholder buttons for slots beyond SLOT_ORDER (up to configured count)
-    for i = #SLOT_ORDER + 1, n do
-      if UI.buttons[i] then
-        UI.Actions:Clear(UI.buttons[i])
-        UI.buttons[i]:SetAlpha(1.0)
-        UI.buttons[i]:EnableMouse(false)  -- No item, so not clickable
-        UI.buttons[i]:Show()  -- Show as empty placeholder
-      end
-    end
-
-    -- Hide buttons beyond configured count
-    for i = n + 1, #UI.buttons do
-      if UI.buttons[i] then
-        UI.buttons[i]:Hide()
-        UI.Actions:Clear(UI.buttons[i])
-      end
+  -- Buttons past the last slot: STATIC shows empty placeholders up to the
+  -- configured count; everything else (and anything past the count) is hidden.
+  for i = used + 1, #UI.buttons do
+    local btn = UI.buttons[i]
+    if displayMode == "STATIC" and i <= n then
+      btn:SetAlpha(1.0)
+      btn:EnableMouse(false)
+      btn:Show()
+    else
+      btn:Hide()
     end
   end
 end
-

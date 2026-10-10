@@ -14,14 +14,6 @@ Classifier.cache = Classifier.cache or {} -- itemID -> info
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
 
-local function DBG(msg)
-  if DynamicBar and DynamicBar.DPrint then
-    DynamicBar.DPrint(msg)
-  else
-    print(msg)
-  end
-end
-
 local TIP_NAME = "DynamicBarScanTooltip"
 local tip = CreateFrame("GameTooltip", TIP_NAME, UIParent, "GameTooltipTemplate")
 tip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -256,25 +248,6 @@ function Classifier:CountPendingInBagCache(cache)
     end
   end
   return pending
-end
-
-function Classifier:DebugDumpPending()
-  local n = 0
-
-  for itemID, info in pairs(self.cache or {}) do
-    if info and info.pending then
-      n = n + 1
-      local link = select(2, GetItemInfo(itemID)) or ("item:" .. tostring(itemID))
-
-      DBG(("PENDING #%d: itemID=%s link=%s reason=%s"):format(
-        n, tostring(itemID), tostring(link), tostring(info.pendingReason or "unknown")
-      ))
-    end
-  end
-
-  if n == 0 then
-    (DB.DPrint or print)("No pending items in Classifier.cache.")
-  end
 end
 
 function Classifier:Reset()
