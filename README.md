@@ -13,7 +13,7 @@ DynamicBar is a role-first, context-aware consumable action bar for WoW TBC Clas
 - **Role-First Ordering** - Emergency items (Healthstone) → Health/Mana potions → Elixirs → Food/Drink → Hearthstone
 - **Battle/Prep Modes** - Automatically switches between combat (essential items only) and out-of-combat (full suite) layouts
 - **Dynamic Footprint** - Only shows buttons for items you actually have
-- **Flyout Menus** - Right-click buttons to access alternative items
+- **Flyout Menus** - Hover or right-click buttons to access alternative items
 - **Smart Positioning** - Drag-to-move with visual feedback, per-character profiles
 - **Auto-Skinning** - Automatically matches ElvUI, Masque, Dominos, or Bartender4 styling
 

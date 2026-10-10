@@ -1,0 +1,14 @@
+<Bindings>
+  <Binding name="CLICK DynamicBarMainButton1:LeftButton" header="DYNAMICBAR"/>
+  <Binding name="CLICK DynamicBarMainButton2:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton3:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton4:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton5:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton6:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton7:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton8:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton9:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton10:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton11:LeftButton"/>
+  <Binding name="CLICK DynamicBarMainButton12:LeftButton"/>
+</Bindings>

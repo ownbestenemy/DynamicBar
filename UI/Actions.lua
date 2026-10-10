@@ -77,6 +77,12 @@ function Actions:Clear(btn)
 
   btn:SetAttribute("type", nil)
   btn:SetAttribute("macrotext", nil)
+  btn:SetAttribute("type1", nil)
+  btn:SetAttribute("macrotext1", nil)
+  btn:SetAttribute("type2", nil)
+  btn:SetAttribute("macrotext2", nil)
+  btn:SetAttribute("assigned", false)
+  btn._dynItemID = nil
 
   -- Clear tooltip item so hidden buttons don't show tooltips on hover
   btn._dynTooltipItemID = nil
@@ -90,6 +96,7 @@ function Actions:Clear(btn)
   end
 
   if btn._dynIcon then btn._dynIcon:SetTexture(nil) end
+  if btn._dynCooldown then btn._dynCooldown:Hide() end
 end
 
 function Actions:SetTooltipItem(btn, itemID)
@@ -123,9 +130,14 @@ end
 function Actions:AssignMacro(btn, macroText, iconTexture, tooltipItemID)
   if InCombatLockdown() then return end
 
-  -- Unsuffixed attributes apply to every mouse button
-  btn:SetAttribute("type", "macro")
-  btn:SetAttribute("macrotext", macroText)
+  -- No generic action: right-click must never fall back to item consumption.
+  btn:SetAttribute("type", nil)
+  btn:SetAttribute("macrotext", nil)
+  btn:SetAttribute("type1", "macro")
+  btn:SetAttribute("macrotext1", macroText)
+  btn:SetAttribute("type2", nil)
+  btn:SetAttribute("macrotext2", nil)
+  btn:SetAttribute("assigned", true)
 
     -- Ensure the button has an icon texture we can set.
   local icon = btn._dynIcon or btn.icon

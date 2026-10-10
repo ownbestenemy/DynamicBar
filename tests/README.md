@@ -1,0 +1,18 @@
+Run from the repository root with Lua 5.1:
+
+```sh
+lua5.1 tests/run.lua
+```
+
+The suite exercises the production modules against mocked WoW APIs. It executes the actual secure state snippets and rejects ordinary Lua mutations of protected frames during combat. It covers combat visibility and actions across all display modes, frozen assignments, flyout interactions and cleanup, inventory refresh, grid capacity, enabling/disabling, positioning, rejuvenation classification, and binding declarations. GitHub Actions also checks Lua syntax.
+
+The mock cannot reproduce Blizzard's taint system, hardware-event dispatch, client XML loading, or WoW Forever restrictions. Before merging, validate in both supported clients:
+
+- Bind buttons through the DynamicBar section of Key Bindings. Confirm left-click and keypress consume one item, while right-click opens alternatives without consuming anything.
+- Select an alternative from a flyout; confirm the correct item is consumed and the flyout closes.
+- Enter combat with a flyout open and with the positioning overlay unlocked. Confirm both close without blocked-action errors.
+- Test FADE, HIDE, GREY, and ALWAYS in Smart, Static, and Dynamic modes. Prep slots must not execute in combat; battle items must remain usable. No button may move or switch items until combat ends.
+- Consume items, acquire a different potion, and exhaust an alternative during combat. Confirm the bar updates immediately after combat ends.
+- Disable through both slash commands and options, including during combat. Confirm deferred disabling clears the bar, bindings, and flyouts after combat.
+- Use 12 buttons in a saved 2×5 grid and reduce the Dynamic-mode button count. Confirm all retained buttons have valid positions and removed slots have no actions or flyouts.
+- Choose Position Now, trigger a bag update, and click Save & Lock. Repeat positioning after setup is complete.

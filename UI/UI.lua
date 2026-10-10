@@ -136,8 +136,11 @@ end
 -- Grid layout (new)
 local function LayoutBarGrid(cfg)
   local rows = cfg.gridRows or 2
-  local cols = cfg.gridCols or 5
+  local cols = cfg.gridCols or 6
   local buttons = cfg.buttons or 10
+  -- Preserve the selected column count, expanding rows to fit every button.
+  rows = math.max(rows, math.ceil(buttons / cols))
+  cfg.gridRows = rows
   local spacingH = cfg.spacingH or cfg.spacing or 2
   local spacingV = cfg.spacingV or 2
   local padLeft = cfg.padLeft or cfg.padding or 2
@@ -317,6 +320,10 @@ end
 
 -- Update bar lock state
 function UI:UpdateLockState(silent)
+  if InCombatLockdown() then
+    DB._needsRebuild = true
+    return
+  end
   if not self.bar then return end
 
   local cfg = self:GetBarConfig()
@@ -327,7 +334,7 @@ function UI:UpdateLockState(silent)
   -- Create background overlay frame if it doesn't exist
   if not self.bar._lockOverlay then
     -- Create a frame that sits on top of all buttons and handles dragging
-    local overlay = CreateFrame("Frame", nil, self.bar)
+    local overlay = CreateFrame("Frame", nil, self.bar, "SecureHandlerStateTemplate")
     overlay:SetAllPoints(self.bar)
     overlay:SetFrameStrata("HIGH")  -- Higher than buttons
     overlay:SetFrameLevel(200)  -- Much higher than button levels (110+)
@@ -384,6 +391,7 @@ function UI:UpdateLockState(silent)
       local cfg = UI:GetBarConfig()
       if cfg then
         cfg.locked = true
+        DB.db.profile._setupComplete = true
         if UI.UpdateLockState then
           UI:UpdateLockState()
         end
@@ -409,6 +417,7 @@ function UI:UpdateLockState(silent)
   if locked then
     self.bar:EnableMouse(false)
     if self.bar._lockOverlay then
+      UnregisterStateDriver(self.bar._lockOverlay, "visibility")
       self.bar._lockOverlay:Hide()
     end
     -- Request rebuild to restore normal button visibility (only if not already in a rebuild)
@@ -435,16 +444,15 @@ function UI:UpdateLockState(silent)
     end
 
     if self.bar._lockOverlay then
-      -- Always show overlay for dragging functionality
-      self.bar._lockOverlay:Show()
+      -- Hide the positioning overlay securely if combat begins while unlocked.
+      RegisterStateDriver(self.bar._lockOverlay, "visibility", "[combat] hide; show")
 
-      -- First-time setup: bright overlay with "DRAG ME" and "Save & Lock".
-      -- Subsequent unlocks: subtle tint only.
+      -- Keep the way to finish positioning visible on every unlock.
       local overlay = self.bar._lockOverlay
       local firstTime = not DB.db.profile._setupComplete
       overlay._bg:SetVertexColor(0, 1, 0, firstTime and 0.4 or 0.15)
-      overlay._label:SetShown(firstTime)
-      overlay._lockBtn:SetShown(firstTime)
+      overlay._label:Show()
+      overlay._lockBtn:Show()
     end
     if not silent then
       DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")
@@ -476,8 +484,18 @@ function UI:UpdateButtonsInCombat()
 end
 
 function UI:Rebuild()
+  if InCombatLockdown() then
+    DB._needsRebuild = true
+    return
+  end
   local DB = DynamicBar
   if not DB.db or not DB.db.profile or not DB.db.profile.enabled then
+    for _, btn in ipairs(self.buttons) do
+      self.Actions:Clear(btn)
+      if btn._dynFlyout then ApplySlotFlyout(btn, nil) end
+      btn:Hide()
+      self.Buttons:ConfigureCombat(btn, false, "HIDE")
+    end
     if self.bar then self.bar:Hide() end
     return
   end
@@ -491,7 +509,6 @@ function UI:Rebuild()
   UpdateBarPosition()
   EnsureButtons()
   LayoutBar()
-  UI:UpdateLockState(true)  -- Update lock/unlock state (silent - no chat messages during rebuild)
   UI.bar:Show()
 
   local cfg = UI:GetBarConfig()
@@ -508,6 +525,7 @@ function UI:Rebuild()
   -- Clear all buttons; slots below re-assign what they need
   for i = 1, #UI.buttons do
     UI.Actions:Clear(UI.buttons[i])
+    UI.buttons[i]._dynPrepOnly = false
   end
 
   -- Visibility for a slot button: available slots are always full and clickable;
@@ -540,12 +558,14 @@ function UI:Rebuild()
       if used >= n then break end
       if allowed and FillSlot(UI.buttons[used + 1], slot) then
         used = used + 1
+        UI.buttons[used]._dynPrepOnly = not slot.battle
         ApplyVisibility(UI.buttons[used], true)
       end
     else
       used = used + 1
       if used > n then used = n; break end
       local btn = UI.buttons[used]
+      btn._dynPrepOnly = not slot.battle
       if allowed and FillSlot(btn, slot) then
         ApplyVisibility(btn, true)
       else
@@ -563,6 +583,7 @@ function UI:Rebuild()
   -- configured count; everything else (and anything past the count) is hidden.
   for i = used + 1, #UI.buttons do
     local btn = UI.buttons[i]
+    if btn._dynFlyout then ApplySlotFlyout(btn, nil) end
     if displayMode == "STATIC" and i <= n then
       btn:SetAlpha(1.0)
       btn:EnableMouse(false)
@@ -571,4 +592,11 @@ function UI:Rebuild()
       btn:Hide()
     end
   end
+
+  -- Install secure combat behavior after the prep layout is fully resolved.
+  -- Dynamic mode keeps these exact positions for the duration of combat.
+  for _, btn in ipairs(UI.buttons) do
+    UI.Buttons:ConfigureCombat(btn, btn._dynPrepOnly, visMode)
+  end
+  UI:UpdateLockState(true)  -- Apply the positioning overlay after normal visibility.
 end

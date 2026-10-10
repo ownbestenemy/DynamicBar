@@ -1,6 +1,6 @@
 -- UI/Flyouts.lua
 -- Flyouts: direction UP, max default 6.
--- Buttons are secure; show/hide is handled out of combat.
+-- Buttons are secure; combat hiding is handled by a secure state driver.
 -- Keeps flyout open while hovering child flyout buttons.
 
 local DB = DynamicBar
@@ -117,7 +117,11 @@ end
 function Flyouts:_EnsureContainer(anchorBtn)
   if anchorBtn._dynFlyout then return anchorBtn._dynFlyout end
 
-  local f = CreateFrame("Frame", nil, UIParent)
+  local f = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
+  f:SetAttribute("_onstate-combat", [[
+    if newstate == "battle" then self:Hide() end
+  ]])
+  RegisterStateDriver(f, "combat", "[combat] battle; prep")
   f:Hide()
   f:SetFrameStrata(anchorBtn:GetFrameStrata() or "DIALOG")
   f:SetFrameLevel((anchorBtn:GetFrameLevel() or 100) + 20)
@@ -210,6 +214,14 @@ function Flyouts:_BindHover(anchorBtn, flyoutFrame)
   if flyoutFrame._dynBound then return end
   flyoutFrame._dynBound = true
 
+  -- Preserve hover access while making the documented right-click safe.
+  anchorBtn:HookScript("OnClick", function(_, button, down)
+    if button == "RightButton" and not down then
+      flyoutFrame._wantHide = false
+      self:_Show(flyoutFrame)
+    end
+  end)
+
   -- Anchor enter/leave
   local prevEnter = anchorBtn:GetScript("OnEnter")
   anchorBtn:SetScript("OnEnter", function(btn, ...)
@@ -241,16 +253,10 @@ end
 -- assignFn: function(button, itemID) -- MUST assign action+icon
 function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, buttonSize, assignFn)
   if not anchorBtn then return end
+  if InCombatLockdown() then return end
 
   local flyout = self:_EnsureContainer(anchorBtn)
   self:_BindHover(anchorBtn, flyout)
-
-  -- Combat-safe: cannot modify flyouts during combat
-  if InCombatLockdown() then
-    -- Just mark as wanting to hide, don't actually hide (protected in combat)
-    flyout._wantHide = true
-    return
-  end
 
   itemIDs = itemIDs or {}
   maxButtons = maxButtons or self.MAX_DEFAULT
@@ -299,6 +305,13 @@ function Flyouts:ApplyItemFlyout(anchorBtn, itemIDs, maxButtons, buttonFactory, 
     if not btn._dynFlyoutHoverBound then
       btn._dynFlyoutHoverBound = true
 
+      btn:HookScript("OnClick", function(_, button, down)
+        if button == "LeftButton" and not down and not InCombatLockdown() then
+          flyout:Hide()
+          flyout._wantHide = false
+        end
+      end)
+
       btn:HookScript("OnEnter", function()
         flyout._wantHide = false
         self:_Show(flyout)
@@ -322,16 +335,7 @@ function Flyouts:HideAll(UI)
   end
 end
 
--- Hide all flyouts immediately, even during combat (flyout containers are non-secure frames)
+-- Compatibility entry point: secure state drivers handle combat entry.
 function Flyouts:HideAllImmediate(UI)
-  if not UI or not UI.buttons then return end
-  for i = 1, #UI.buttons do
-    local b = UI.buttons[i]
-    if b and b._dynFlyout then
-      -- Flyout container is a regular Frame (not secure), safe to hide in combat
-      b._dynFlyout:Hide()
-      b._dynFlyout._wantHide = false  -- Clear pending hide requests
-      b._dynFlyout._combatHideScheduled = false  -- Cancel any scheduled cleanup
-    end
-  end
+  self:HideAll(UI)
 end
