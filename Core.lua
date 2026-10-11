@@ -34,6 +34,9 @@ local DB_DEFAULTS = {
     _showAdvancedPosition = false,
     _setupComplete = false,  -- Track if first-time setup has been shown
 
+    -- BASIC | ADVANCED. Not defaulted: ResolveMode picks Basic for new
+    -- profiles and Advanced for profiles that predate the setting.
+
     -- One bar with one button per slot. `slots` (an ordered list of category
     -- keys) is not defaulted here: AceDB merges array defaults by index, which
     -- would bring removed slots back. Data/Categories.lua builds it on first
@@ -300,6 +303,8 @@ function DynamicBar:OnInitialize()
   -- TEMP COMPAT: legacy code expects DynamicBarDB.profile.*
   self:ApplyProfileCompat()
 
+  self:ResolveMode()
+
   -- Profile callbacks (Step 4)
   self:InitProfileCallbacks()
 
@@ -353,6 +358,39 @@ function DynamicBar:OnEnable()
   -- Initial build
   RebuildBagCache()
   ScheduleBagRefresh()
+end
+
+--
+-- Basic / Advanced mode
+--
+-- Basic is plug and play: every category in the default order with the
+-- default look, and only position, lock and scale to set. Advanced is the full
+-- settings panel and the Bar Builder. Basic never overwrites the Advanced
+-- settings, so switching back restores them.
+--
+function DynamicBar:ResolveMode()
+  local profile = self.db.profile
+  if profile.mode ~= "BASIC" and profile.mode ~= "ADVANCED" then
+    -- A profile that has already been set up predates modes: keep its bar.
+    profile.mode = profile._setupComplete and "ADVANCED" or "BASIC"
+  end
+end
+
+function DynamicBar:IsBasicMode()
+  return self.db and self.db.profile and self.db.profile.mode == "BASIC"
+end
+
+function DynamicBar:SetMode(mode)
+  if mode ~= "BASIC" and mode ~= "ADVANCED" then return end
+  -- The mode changes the bar's buttons, which can't change in combat
+  if InCombatLockdown() then
+    self:Print(L["The mode can't be changed in combat."])
+    return
+  end
+  self.db.profile.mode = mode
+  local builder = self.UI and self.UI.Builder
+  if mode == "BASIC" and builder and builder.frame then builder.frame:Hide() end
+  self:RequestRebuild("mode")
 end
 
 --
@@ -510,6 +548,10 @@ function DynamicBar:HandleSlash(input)
     return
   end
   if msg == "builder" or msg == "slots" then
+    if self:IsBasicMode() then
+      self:Print(L["The Bar Builder is part of Advanced mode. Switch modes in /dbar config."])
+      return
+    end
     self.UI.Builder:Toggle()
     return
   end
@@ -615,6 +657,7 @@ end
 
 function DynamicBar:OnProfileEvent()
   self:ApplyProfileCompat()
+  self:ResolveMode()
   ScheduleBagRefresh()
   self:RequestRebuild("profile")
   -- An open Bar Builder must show the new profile's slots

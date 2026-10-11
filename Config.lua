@@ -71,7 +71,10 @@ function DynamicBar:InitConfig()
   }
   local ANCHOR_SORTING = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
+  local function IsBasic() return self:IsBasicMode() end
+
   local function HideManualPosition()
+    if IsBasic() then return true end
     return GetCurrentPreset() ~= "CUSTOM" and not self.db.profile._showAdvancedPosition
   end
 
@@ -101,6 +104,21 @@ function DynamicBar:InitConfig()
         name = L["General"],
         order = 1,
         args = {
+          mode = {
+            type = "select",
+            name = L["Mode"],
+            desc = L["Basic: plug and play. Every consumable category in the recommended order, with only position, lock and scale to set."] .. "\n\n" ..
+                   L["Advanced: the full settings and the Bar Builder. Switching to Basic keeps your Advanced settings for later."],
+            order = 0,
+            values = {
+              BASIC = L["Basic (plug and play)"],
+              ADVANCED = L["Advanced (full control)"],
+            },
+            sorting = { "BASIC", "ADVANCED" },
+            width = "full",
+            get = function() return self.db.profile.mode end,
+            set = function(_, v) self:SetMode(v) end,
+          },
           enabled = {
             type = "toggle",
             name = L["Enabled"],
@@ -174,7 +192,7 @@ function DynamicBar:InitConfig()
             desc = L["Display manual position adjustment controls"],
             order = 13,
             width = "full",
-            hidden = function() return GetCurrentPreset() == "CUSTOM" end,
+            hidden = function() return IsBasic() or GetCurrentPreset() == "CUSTOM" end,
             get = function() return self.db.profile._showAdvancedPosition end,
             set = function(_, v) self.db.profile._showAdvancedPosition = v end,
           },
@@ -234,6 +252,23 @@ function DynamicBar:InitConfig()
               end
             end,
           },
+          basicScale = {
+            type = "range",
+            name = L["Bar Scale"],
+            desc = L["Overall scale of the bar and all buttons"],
+            order = 18,
+            min = 0.5,
+            max = 2.0,
+            step = 0.05,
+            isPercent = true,
+            width = "full",
+            hidden = function() return not IsBasic() end,
+            get = function() return self.db.profile.bar.scale end,
+            set = function(_, v)
+              self.db.profile.bar.scale = v
+              Changed("scale")
+            end,
+          },
           resetPosition = {
             type = "execute",
             name = L["Reset Position"],
@@ -255,6 +290,7 @@ function DynamicBar:InitConfig()
         type = "group",
         name = L["Appearance"],
         order = 2,
+        hidden = IsBasic,
         args = {
           layoutHeader = {
             type = "header",
@@ -481,6 +517,7 @@ function DynamicBar:InitConfig()
         type = "group",
         name = L["Behavior"],
         order = 3,
+        hidden = IsBasic,
         args = {
           displayHeader = {
             type = "header",

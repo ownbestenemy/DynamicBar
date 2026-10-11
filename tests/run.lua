@@ -211,6 +211,47 @@ equal(UI.buttons[4]:IsShown(), false, 'buttons past the slot list hidden')
 cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
 rebuild()
 
+-- Basic mode: default slots and look, Advanced settings kept for later.
+equal(DB:IsBasicMode(), false, 'profile without a mode runs Advanced')
+local profile = DB.db.profile
+cfg.slots = {'FLASK','HEARTH'}; cfg.layoutMode = 'VERTICAL'; cfg.buttonDisplayMode = 'STATIC'
+DB.options.args.general.args.mode.set(nil, 'BASIC')
+rebuild()
+equal(profile.mode, 'BASIC', 'mode saved from options')
+equal(UI:GetButtonCount(), #Cats.DEFAULT_ORDER, 'Basic shows every category')
+equal(UI:GetBarConfig().layoutMode, 'HORIZONTAL', 'Basic uses the default layout')
+equal(DB.options.args.appearance.hidden(), true, 'Basic hides the Appearance tab')
+equal(DB.options.args.general.args.basicScale.hidden(), false, 'Basic shows scale on General')
+UI:GetBarConfig().x = 42
+UI:GetBarConfig().slots = {'DRINK'}
+equal(cfg.x, 42, 'Basic position saved to the profile')
+equal(keys(cfg.slots), 'FLASK,HEARTH', 'Basic leaves Advanced slots alone')
+local builderOpen = false
+local realToggle = UI.Builder.Toggle
+UI.Builder.Toggle = function() builderOpen = true end
+DB:HandleSlash('builder')
+equal(builderOpen, false, 'Bar Builder not opened in Basic')
+mock.setCombat(true)
+DB:SetMode('ADVANCED')
+equal(profile.mode, 'BASIC', 'mode not changed in combat')
+mock.setCombat(false)
+DB:SetMode('ADVANCED')
+rebuild()
+DB:HandleSlash('builder')
+equal(builderOpen, true, 'Bar Builder opens in Advanced')
+UI.Builder.Toggle = realToggle
+equal(keys(Cats:GetSlots(UI:GetBarConfig())), 'FLASK,HEARTH', 'Advanced slots restored')
+equal(UI:GetBarConfig().layoutMode, 'VERTICAL', 'Advanced layout restored')
+local fresh = {}
+DB.db.profile = fresh; DB:ResolveMode()
+equal(fresh.mode, 'BASIC', 'new profile starts in Basic')
+fresh = {_setupComplete = true}
+DB.db.profile = fresh; DB:ResolveMode()
+equal(fresh.mode, 'ADVANCED', 'existing profile keeps Advanced')
+DB.db.profile = profile
+cfg.slots = nil; cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'SMART'; cfg.x = 0
+rebuild()
+
 -- Bar Builder: placing, reordering and removing categories.
 local Builder = UI.Builder
 cfg.slots = {'HEALTHSTONE','HEALTH_POT','FLASK'}

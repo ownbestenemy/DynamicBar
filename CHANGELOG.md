@@ -10,6 +10,7 @@
 - Bar Builder (`/dbar builder`): drag-and-drop window for choosing and ordering the bar's categories, replacing the checkbox list in settings
 - Translations: every menu, popup and chat message reads from the locale files, which the CurseForge packager fills from the project's localization page (German, Spanish, French, Italian, Korean, Portuguese, Russian and Chinese). Untranslated text stays English
 - WoW Forever: the bar follows Edit Mode, showing a drag handle while Edit Mode is open and locking again when it closes. The position stays DynamicBar's own setting (per profile), not part of Edit Mode layouts
+- Basic and Advanced modes (`/dbar config`, General tab). Basic is plug and play: every category in the recommended order with the default look, and only position, lock and scale to set. Advanced is the full settings panel and the Bar Builder. New characters start in Basic; existing profiles stay in Advanced. Switching to Basic keeps the Advanced settings for when you switch back
 
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons

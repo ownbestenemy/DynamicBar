@@ -38,8 +38,9 @@ function Flyouts:GetOptimalDirection(anchorBtn, buttonCount, buttonSize)
 
   -- Get layout mode from config
   local layoutMode = "HORIZONTAL"
-  if DB and DB.db and DB.db.profile and DB.db.profile.bar then
-    layoutMode = DB.db.profile.bar.layoutMode or "HORIZONTAL"
+  local cfg = DB and DB.UI and DB.UI:GetBarConfig()
+  if cfg then
+    layoutMode = cfg.layoutMode or "HORIZONTAL"
   end
 
   -- For VERTICAL layout, prefer horizontal flyout directions

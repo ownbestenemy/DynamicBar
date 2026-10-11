@@ -13,9 +13,46 @@ local BUTTON_SIZE = 36
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
 
+-- Basic mode shows these instead of the saved Advanced settings
+local BASIC_SETTINGS = {
+  layoutMode = "HORIZONTAL",
+  spacingH = 2, spacingV = 2, spacing = 2,
+  padLeft = 2, padRight = 2, padTop = 2, padBottom = 2, padding = 2,
+  visibilityMode = "FADE",
+  buttonDisplayMode = "SMART",
+  inheritElvUI = true,
+}
+
+-- In Basic mode, a view of the saved bar settings with BASIC_SETTINGS and the
+-- default slots on top. Writes (position, lock) reach the saved settings;
+-- writes to a Basic-controlled key are dropped so Advanced settings survive.
+local basicView, basicViewOf
+local function BasicView(bar)
+  if basicViewOf ~= bar then
+    local slots = {}
+    for i, key in ipairs(DB.Data.Categories.DEFAULT_ORDER) do slots[i] = key end
+    basicViewOf = bar
+    basicView = setmetatable({}, {
+      __index = function(_, k)
+        if k == "slots" then return slots end
+        local v = BASIC_SETTINGS[k]
+        if v ~= nil then return v end
+        return bar[k]
+      end,
+      __newindex = function(_, k, v)
+        if k == "slots" or BASIC_SETTINGS[k] ~= nil then return end
+        bar[k] = v
+      end,
+    })
+  end
+  return basicView
+end
+
 -- Get bar configuration from AceDB (not global DynamicBarDB)
 function UI:GetBarConfig()
-  return DB.db and DB.db.profile and DB.db.profile.bar
+  local bar = DB.db and DB.db.profile and DB.db.profile.bar
+  if bar and DB:IsBasicMode() then return BasicView(bar) end
+  return bar
 end
 
 -- One button per slot on the bar

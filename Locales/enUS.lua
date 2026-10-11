@@ -250,3 +250,12 @@ L["must remain seated while drinking"] = true
 L["battle elixir"] = true
 L["guardian elixir"] = true
 L["flask"] = true
+
+-- Basic / Advanced mode
+L["Mode"] = true
+L["Basic: plug and play. Every consumable category in the recommended order, with only position, lock and scale to set."] = true
+L["Advanced: the full settings and the Bar Builder. Switching to Basic keeps your Advanced settings for later."] = true
+L["Basic (plug and play)"] = true
+L["Advanced (full control)"] = true
+L["The Bar Builder is part of Advanced mode. Switch modes in /dbar config."] = true
+L["The mode can't be changed in combat."] = true
