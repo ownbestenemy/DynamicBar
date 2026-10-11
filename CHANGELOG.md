@@ -12,6 +12,7 @@
 - WoW Forever: the bar follows Edit Mode, showing a drag handle while Edit Mode is open and locking again when it closes. The position stays DynamicBar's own setting (per profile), not part of Edit Mode layouts
 - Basic and Advanced modes (`/dbar config`, General tab). Basic is plug and play: every category in the recommended order with the default look, and only position, lock and scale to set. Advanced is the full settings panel and the Bar Builder. New characters start in Basic; existing profiles stay in Advanced. Switching to Basic keeps the Advanced settings for when you switch back
 - About tab in settings showing the installed version, client, interface number and mode. The version also appears in the settings window title
+- Items Bar: an optional second bar for quest items and other usable items that no main bar category takes (drums, gadgets, quest items you click on targets). Quest items come first; gear, mounts and pets are left out. It shows only what's in your bags, hides when empty, has its own position and keybindings, and unlocks with the main bar. Shift+Right-click hides an item. Turn it on under General in `/dbar config`; Advanced mode adds layout, scale, button limit and resetting hidden items
 
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons

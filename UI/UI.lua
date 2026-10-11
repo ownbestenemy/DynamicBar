@@ -495,12 +495,23 @@ function UI:UpdateLockState(silent)
       DB:Print("|cff00ff00" .. L["Bar UNLOCKED - You can now drag the bar!"] .. "|r")
     end
   end
+
+  -- The items bar shares the lock (and shows its own handle when unlocked)
+  UI.ItemsBar:Rebuild()
+end
+
+-- Buttons on both bars, for count and cooldown refreshes
+function UI:AllButtons()
+  local all = {}
+  for _, btn in ipairs(self.buttons) do all[#all + 1] = btn end
+  for _, btn in ipairs(self.ItemsBar.buttons) do all[#all + 1] = btn end
+  return all
 end
 
 -- Collect itemIDs from all visible buttons (for targeted cache refresh)
 function UI:GetButtonItemIDs()
   local itemIDs = {}
-  for i, btn in ipairs(self.buttons) do
+  for _, btn in ipairs(self:AllButtons()) do
     if btn and btn:IsShown() and btn._dynItemID then
       itemIDs[#itemIDs + 1] = btn._dynItemID
     end
@@ -513,7 +524,7 @@ end
 function UI:UpdateButtonsInCombat()
   if not InCombatLockdown() then return end  -- Only for combat updates
 
-  for i, btn in ipairs(self.buttons) do
+  for _, btn in ipairs(self:AllButtons()) do
     if btn and btn:IsShown() and UI.Actions then
       UI.Actions:UpdateInCombat(btn)
     end
@@ -534,6 +545,7 @@ function UI:Rebuild()
       self.Buttons:ConfigureCombat(btn, false, "HIDE")
     end
     if self.bar then self.bar:Hide() end
+    UI.ItemsBar:Rebuild()
     return
   end
 

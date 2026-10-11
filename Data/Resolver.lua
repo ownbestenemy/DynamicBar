@@ -202,3 +202,66 @@ function Resolver:ResolveBandage()
   return Resolve(function(info) return info.isBandage end, "bandageHeal")
 end
 
+
+-- =========================================================
+-- Usable items (the items bar): bag items with a use effect that no main bar
+-- category takes, quest items first, then bag order. Gear, mounts and pets
+-- are left out. Signals are item IDs, classes and the use spell, so this
+-- works in any client language.
+-- =========================================================
+-- Looked up per call (WoW Forever only has the C_Item versions)
+local function ItemSpell(id)
+  local fn = GetItemSpell or (C_Item and C_Item.GetItemSpell)
+  return fn and fn(id)
+end
+local function Equippable(id)
+  local fn = IsEquippableItem or (C_Item and C_Item.IsEquippableItem)
+  return fn and fn(id)
+end
+local function ItemClass(id)
+  local fn = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+  return select(6, fn(id))
+end
+
+local CLASS_RECIPE, CLASS_QUEST, CLASS_MISC = 9, 12, 15
+local MISC_PET, MISC_MOUNT = 2, 5
+
+-- Every item any category could show, whether or not its slot is on the bar,
+-- so removing the Food slot doesn't send food to the items bar
+local function ClaimedByCategories()
+  local claimed = {}
+  local cats = DB.Data and DB.Data.Categories
+  for _, cat in pairs((cats and cats.Registry) or {}) do
+    local fn = Resolver[cat.resolver]
+    if type(fn) == "function" then
+      local _, list = fn(Resolver)
+      for _, id in ipairs(list or {}) do claimed[id] = true end
+    end
+  end
+  return claimed
+end
+
+function Resolver:ResolveUsableItems(hidden)
+  local cache, cls = GetDeps()
+  if not cache then return {} end
+  hidden = hidden or {}
+
+  local claimed = ClaimedByCategories()
+  local quest, other = {}, {}
+  for i = 1, #cache.items do
+    local id = cache.items[i]
+    local info = cls.cache[id]
+    if (cache.counts[id] or 0) > 0 and not claimed[id] and not hidden[id]
+       and not (info and info.pending)
+       and ItemSpell(id) and not Equippable(id) then
+      local classID, subClassID = ItemClass(id)
+      local companion = classID == CLASS_MISC and (subClassID == MISC_PET or subClassID == MISC_MOUNT)
+      if classID ~= CLASS_RECIPE and not companion then
+        local into = classID == CLASS_QUEST and quest or other
+        into[#into + 1] = id
+      end
+    end
+  end
+  for _, id in ipairs(other) do quest[#quest + 1] = id end
+  return quest
+end

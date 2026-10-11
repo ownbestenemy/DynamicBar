@@ -164,7 +164,7 @@ function Actions:UpdateAllCooldowns()
   local UI = DB.UI
   if not UI or not UI.buttons then return end
 
-  for _, btn in ipairs(UI.buttons) do
+  for _, btn in ipairs(UI:AllButtons()) do
     if btn and btn._dynItemID and btn:IsShown() then
       UpdateCooldown(btn, btn._dynItemID)
     end

@@ -7,7 +7,7 @@ DB.db = {profile = {enabled = true, _setupComplete = true, bar = {
   buttons = 13, layoutMode = 'HORIZONTAL', gridRows = 2, gridCols = 5,
   locked = true, visibilityMode = 'FADE', buttonDisplayMode = 'SMART',
 }}}
-for _, file in ipairs({'Data/Categories.lua','Data/BagCache.lua','Data/Resolver.lua','UI/Buttons.lua','UI/Actions.lua','UI/Flyouts.lua','UI/UI.lua','UI/Builder.lua','Bindings.lua','Config.lua'}) do
+for _, file in ipairs({'Data/Categories.lua','Data/BagCache.lua','Data/Resolver.lua','UI/Buttons.lua','UI/Actions.lua','UI/Flyouts.lua','UI/UI.lua','UI/ItemsBar.lua','UI/Builder.lua','Bindings.lua','Config.lua'}) do
   dofile(file)
 end
 DB.Data.Classifier = {cache = {}}
@@ -266,6 +266,88 @@ DB.db.profile = profile
 cfg.slots = nil; cfg.layoutMode = 'HORIZONTAL'; cfg.buttonDisplayMode = 'SMART'; cfg.x = 0
 rebuild()
 
+-- Items bar: usable items no category takes, quest items first.
+local ItemsBar = UI.ItemsBar
+local itemDefs = {
+  [5001] = {class = 15, sub = 0, spell = 'Drums'},       -- usable misc item
+  [5002] = {class = 12, sub = 0, spell = 'Use Totem'},   -- quest item
+  [5003] = {class = 4, sub = 0, spell = 'Trinket', equip = true},
+  [5004] = {class = 15, sub = 5, spell = 'Summon Mount'},
+  [5005] = {class = 15, sub = 0},                        -- no use effect
+  [22829] = {class = 0, sub = 1, spell = 'Healing Potion'}, -- main bar potion
+}
+local savedInstant = GetItemInfoInstant
+GetItemInfoInstant = function(id)
+  local d = itemDefs[id]
+  if d then return id, '', '', '', 123, d.class, d.sub end
+  return savedInstant(id)
+end
+GetItemSpell = function(id) local d = itemDefs[id]; return d and d.spell end
+IsEquippableItem = function(id) local d = itemDefs[id]; return d and d.equip or false end
+IsShiftKeyDown = function() return true end
+DB.db.profile.itemsBar = {enabled = false, point = 'CENTER', relPoint = 'CENTER', x = 0, y = -230,
+  scale = 1.0, layoutMode = 'HORIZONTAL', maxButtons = 12}
+local itemBag = {[5001]=1,[5002]=1,[5003]=1,[5004]=1,[5005]=1,[22829]=2}
+rebuild(itemBag)
+equal(ItemsBar.bar == nil or not ItemsBar.bar:IsShown(), true, 'items bar off by default')
+DB.options.args.general.args.itemsEnabled.set(nil, true)
+rebuild()
+equal(ItemsBar.bar:IsShown(), true, 'items bar shown when enabled')
+equal(ItemsBar.buttons[1]._dynItemID, 5002, 'quest item first')
+equal(ItemsBar.buttons[2]._dynItemID, 5001, 'other usable item next')
+equal(ItemsBar.buttons[3] == nil or not ItemsBar.buttons[3]:IsShown(), true, 'gear, mounts, plain items and main bar potions left out')
+equal(ItemsBar.buttons[1].attrs.macrotext1, '/use item:5002', 'items bar button uses the item')
+equal(ItemsBar.bar.w > ItemsBar.bar.h, true, 'items bar horizontal by default')
+enterCombat()
+rebuild({[5001]=1})
+equal(ItemsBar.buttons[1]._dynItemID, 5002, 'items bar frozen in combat')
+leaveCombat()
+rebuild(itemBag)
+ItemsBar.buttons[2].scripts.OnClick(ItemsBar.buttons[2], 'RightButton', false)
+rebuild()
+equal(ItemsBar.buttons[1]._dynItemID, 5002, 'hidden item removed, others kept')
+equal(ItemsBar.buttons[2]:IsShown(), false, 'Shift+Right-click hides an item')
+ItemsBar:ResetHidden()
+rebuild()
+equal(ItemsBar.buttons[2]._dynItemID, 5001, 'reset brings hidden items back')
+DB.db.profile.itemsBar.maxButtons = 1
+rebuild()
+equal(ItemsBar.buttons[2]:IsShown(), false, 'maximum button count respected')
+DB.db.profile.itemsBar.maxButtons = 12
+DB.db.profile.itemsBar.layoutMode = 'VERTICAL'
+rebuild()
+equal(ItemsBar.bar.h > ItemsBar.bar.w, true, 'vertical items bar')
+DB:SetMode('BASIC')
+rebuild()
+equal(ItemsBar.bar.w > ItemsBar.bar.h, true, 'Basic uses a horizontal items bar')
+cfg.scale = 1.5
+equal(ItemsBar:GetConfig().scale, 1.5, 'Basic items bar follows the main scale')
+cfg.scale = 1.0
+DB:SetMode('ADVANCED')
+DB.db.profile.itemsBar.layoutMode = 'HORIZONTAL'
+rebuild({[22829]=1})
+equal(ItemsBar.bar:IsShown(), false, 'empty items bar hidden')
+cfg.locked = false
+UI:UpdateLockState(true)
+equal(ItemsBar.bar:IsShown(), true, 'empty items bar shown while unlocked for placing')
+equal(ItemsBar.bar._overlay:IsShown(), true, 'items bar drag handle shown while unlocked')
+cfg.locked = true
+UI:UpdateLockState(true)
+equal(ItemsBar.bar._overlay:IsShown(), false, 'items bar handle hidden when locked')
+rebuild({[5001]=3})
+DB.Data.BagCache.counts[5001] = 1
+UI:UpdateButtonsInCombat()
+local ids = table.concat(UI:GetButtonItemIDs(), ',')
+equal(ids:find('5001', 1, true) ~= nil, true, 'combat count refresh covers the items bar')
+DB:SetEnabled(false)
+rebuild()
+equal(ItemsBar.bar:IsShown(), false, 'items bar hidden when the addon is disabled')
+DB:SetEnabled(true)
+DB.db.profile.itemsBar.enabled = false
+GetItemInfoInstant, GetItemSpell, IsEquippableItem, IsShiftKeyDown = savedInstant, nil, nil, nil
+rebuild({})
+equal(_G['BINDING_NAME_CLICK DynamicBarItemsButton12:LeftButton'], 'Item 12', 'items bar bindings labelled')
+
 -- Bar Builder: placing, reordering and removing categories.
 local Builder = UI.Builder
 cfg.slots = {'HEALTHSTONE','HEALTH_POT','FLASK'}
@@ -446,7 +528,7 @@ C_TooltipInfo, C_Spell, GetItemSpell, GetLocale = nil, nil, nil, nil
 local function readAll(path) local f = assert(io.open(path)); local t = f:read('*a'); f:close(); return t end
 local english = {}
 for key in readAll('Locales/enUS.lua'):gmatch('\nL%["(.-)"%] = true') do english[key] = true end
-for _, file in ipairs({'Core.lua','Config.lua','UI/UI.lua','UI/Builder.lua','Data/Categories.lua','Data/Classifier.lua'}) do
+for _, file in ipairs({'Core.lua','Config.lua','UI/UI.lua','UI/ItemsBar.lua','UI/Builder.lua','Data/Categories.lua','Data/Classifier.lua'}) do
   for key in readAll(file):gmatch('L%["(.-)"%]') do
     equal(english[key], true, file .. ' locale key "' .. key .. '"')
   end

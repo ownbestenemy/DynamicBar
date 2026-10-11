@@ -270,3 +270,15 @@ L["Website:"] = true
 L["WoW Forever"] = true
 L["TBC Classic"] = true
 L["This is a test build from the experimental branch. Features here may change or be removed before release."] = true
+
+-- Items bar
+L["Items"] = true
+L["Items Bar"] = true
+L["Show Items Bar"] = true
+L["A second bar for quest items and other usable items that aren't on the main bar. It shows only what's in your bags and hides when there's nothing to use."] = true
+L["It unlocks and locks together with the main bar. Shift+Right-click an item to hide it."] = true
+L["Maximum Buttons"] = true
+L["Items beyond this many are left off. Quest items come first."] = true
+L["Hidden items: %d. Shift+Right-click an item on the bar to hide it."] = true
+L["Reset Hidden Items"] = true
+L["%s hidden from the items bar. Reset hidden items in /dbar config."] = true

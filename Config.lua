@@ -277,6 +277,24 @@ function DynamicBar:InitConfig()
               Changed("scale")
             end,
           },
+          itemsHeader = {
+            type = "header",
+            name = L["Items Bar"],
+            order = 30,
+          },
+          itemsEnabled = {
+            type = "toggle",
+            name = L["Show Items Bar"],
+            desc = L["A second bar for quest items and other usable items that aren't on the main bar. It shows only what's in your bags and hides when there's nothing to use."] .. "\n\n" ..
+                   L["It unlocks and locks together with the main bar. Shift+Right-click an item to hide it."],
+            order = 31,
+            width = "full",
+            get = function() return self.db.profile.itemsBar.enabled end,
+            set = function(_, v)
+              self.db.profile.itemsBar.enabled = v
+              Changed("items_bar")
+            end,
+          },
           resetPosition = {
             type = "execute",
             name = L["Reset Position"],
@@ -607,6 +625,73 @@ function DynamicBar:InitConfig()
               if AceConfigDialog then AceConfigDialog:Close("DynamicBar") end
               self.UI.Builder:Open()
             end,
+          },
+        },
+      },
+
+      -- =====================================================
+      -- ITEMS BAR (Advanced)
+      -- =====================================================
+      itemsBar = {
+        type = "group",
+        name = L["Items Bar"],
+        order = 3.5,
+        hidden = IsBasic,
+        get = function(info) return self.db.profile.itemsBar[info[#info]] end,
+        set = function(info, v)
+          self.db.profile.itemsBar[info[#info]] = v
+          Changed("items_bar")
+        end,
+        args = {
+          enabled = {
+            type = "toggle",
+            name = L["Show Items Bar"],
+            order = 1,
+            width = "full",
+          },
+          layoutMode = {
+            type = "select",
+            name = L["Bar Layout"],
+            order = 2,
+            values = { HORIZONTAL = L["Horizontal (Default)"], VERTICAL = L["Vertical"] },
+            sorting = { "HORIZONTAL", "VERTICAL" },
+            width = "full",
+          },
+          scale = {
+            type = "range",
+            name = L["Bar Scale"],
+            order = 3,
+            min = 0.5,
+            max = 2.0,
+            step = 0.05,
+            isPercent = true,
+            width = "full",
+          },
+          maxButtons = {
+            type = "range",
+            name = L["Maximum Buttons"],
+            desc = L["Items beyond this many are left off. Quest items come first."],
+            order = 4,
+            min = 1,
+            max = 12,
+            step = 1,
+            width = "full",
+          },
+          hiddenInfo = {
+            type = "description",
+            order = 5,
+            fontSize = "medium",
+            name = function()
+              local n = 0
+              for _ in pairs(self.db.profile.itemsBar.hidden or {}) do n = n + 1 end
+              return "\n" .. (L["Hidden items: %d. Shift+Right-click an item on the bar to hide it."]):format(n)
+            end,
+          },
+          resetHidden = {
+            type = "execute",
+            name = L["Reset Hidden Items"],
+            order = 6,
+            func = function() self.UI.ItemsBar:ResetHidden() end,
           },
         },
       },

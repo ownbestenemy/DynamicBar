@@ -74,6 +74,19 @@ local DB_DEFAULTS = {
       inheritElvUI = true,  -- Automatically use ElvUI spacing if available
       locked = true,  -- Bar is locked (not draggable) by default
     },
+
+    -- Second bar for quest and other usable items (UI/ItemsBar.lua).
+    -- `hidden` (itemID -> true) is created on first use.
+    itemsBar = {
+      enabled = false,
+      point = "CENTER",
+      relPoint = "CENTER",
+      x = 0,
+      y = -230,
+      scale = 1.0,
+      layoutMode = "HORIZONTAL",  -- HORIZONTAL | VERTICAL
+      maxButtons = 12,
+    },
   },
 
   -- Global (non-profile) debug log (shared across characters for easier support)
