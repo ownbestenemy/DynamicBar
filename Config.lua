@@ -5,6 +5,12 @@ local L = LibStub("AceLocale-3.0"):GetLocale("DynamicBar")
 -- Cache global function (TBC/Vanilla compatibility)
 local IsAddOnLoaded = IsAddOnLoaded or (C_AddOns and C_AddOns.IsAddOnLoaded)
 
+-- A field from DynamicBar.toc, or nil
+local function Meta(field)
+  local get = GetAddOnMetadata or (C_AddOns and C_AddOns.GetAddOnMetadata)
+  return get and get(ADDON_NAME or "DynamicBar", field)
+end
+
 function DynamicBar:InitConfig()
   local AceConfig = LibStub("AceConfig-3.0", true)
   local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
@@ -89,9 +95,11 @@ function DynamicBar:InitConfig()
   -- =========================================================
   -- BUILD OPTIONS TABLE WITH TABS
   -- =========================================================
+  local version = Meta("Version") or L["Unknown"]
+
   local options = {
     type = "group",
-    name = L["DynamicBar"],
+    name = L["DynamicBar"] .. " " .. version,
     childGroups = "tab",
     get = BarGet,
     set = BarSet,
@@ -624,6 +632,42 @@ function DynamicBar:InitConfig()
   else
     self:Print(L["AceDBOptions not loaded (Profiles UI unavailable)."])
   end
+
+  -- About tab: what's installed, for testing builds and bug reports
+  local function Line(label, value)
+    return "|cffffd200" .. label .. "|r  " .. tostring(value or L["Unknown"]) .. "\n"
+  end
+  options.args.about = {
+    type = "group",
+    name = L["About"],
+    order = 5,
+    args = {
+      info = {
+        type = "description",
+        order = 1,
+        fontSize = "medium",
+        name = function()
+          local _, build, _, interface = GetBuildInfo()
+          -- WoW Forever runs on the Mainline client
+          local forever = WOW_PROJECT_ID ~= nil and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+          local client = forever and L["WoW Forever"] or L["TBC Classic"]
+          local mode = self:IsBasicMode() and L["Basic (plug and play)"] or L["Advanced (full control)"]
+          return Line(L["Version:"], version)
+            .. Line(L["Author:"], Meta("Author"))
+            .. Line(L["Client:"], ("%s (%s, %s)"):format(client, tostring(interface), tostring(build)))
+            .. Line(L["Mode:"], mode)
+            .. Line(L["Website:"], Meta("X-Website"))
+        end,
+      },
+      experimental = {
+        type = "description",
+        order = 2,
+        fontSize = "medium",
+        name = "\n|cffff8000" .. L["This is a test build from the experimental branch. Features here may change or be removed before release."] .. "|r",
+        hidden = function() return not version:find("experimental", 1, true) end,
+      },
+    },
+  }
 
   -- Register main options table
   AceConfig:RegisterOptionsTable("DynamicBar", options)

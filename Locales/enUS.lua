@@ -259,3 +259,14 @@ L["Basic (plug and play)"] = true
 L["Advanced (full control)"] = true
 L["The Bar Builder is part of Advanced mode. Switch modes in /dbar config."] = true
 L["The mode can't be changed in combat."] = true
+
+-- About tab
+L["About"] = true
+L["Version:"] = true
+L["Author:"] = true
+L["Client:"] = true
+L["Mode:"] = true
+L["Website:"] = true
+L["WoW Forever"] = true
+L["TBC Classic"] = true
+L["This is a test build from the experimental branch. Features here may change or be removed before release."] = true
