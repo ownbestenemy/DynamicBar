@@ -104,3 +104,34 @@ end
 function Debug:Enabled()
   return IsDebugOn()
 end
+
+-- Lists every bag item with a use effect and the signals that tell item
+-- types apart in any language (class, subclass, use spell), marking which
+-- ones the items bar shows. Output is plain so it can be copied from chat.
+function Debug:DumpUsable()
+  local cache = DynamicBar.Data and DynamicBar.Data.BagCache
+  local resolver = DynamicBar.Data and DynamicBar.Data.Resolver
+  if not cache or not resolver then
+    self:Print("Item list unavailable (bag cache not loaded).")
+    return
+  end
+  local itemSpell = GetItemSpell or (C_Item and C_Item.GetItemSpell)
+  local instant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+  local hidden = DynamicBar.db.profile.itemsBar and DynamicBar.db.profile.itemsBar.hidden
+  local onBar = {}
+  for _, id in ipairs(resolver:ResolveUsableItems(hidden)) do onBar[id] = true end
+
+  self:Print("Usable items in bags (itemID | class/subclass | use spell | on items bar):")
+  local n = 0
+  for _, id in ipairs(cache.items) do
+    local spellName, spellID = itemSpell and itemSpell(id)
+    if spellName then
+      n = n + 1
+      local classID, subClassID = select(6, instant(id))
+      self:Print(("%d %s | %s/%s | %s (%s) | %s"):format(id, GetItemInfo(id) or "?",
+        tostring(classID), tostring(subClassID), tostring(spellName), tostring(spellID),
+        onBar[id] and "yes" or "no"))
+    end
+  end
+  if n == 0 then self:Print("None found.") end
+end

@@ -282,3 +282,4 @@ L["Items beyond this many are left off. Quest items come first."] = true
 L["Hidden items: %d. Shift+Right-click an item on the bar to hide it."] = true
 L["Reset Hidden Items"] = true
 L["%s hidden from the items bar. Reset hidden items in /dbar config."] = true
+L["  /dbar items   - list usable items in your bags with their item details"] = true

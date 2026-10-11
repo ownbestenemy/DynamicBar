@@ -340,6 +340,13 @@ DB.Data.BagCache.counts[5001] = 1
 UI:UpdateButtonsInCombat()
 local ids = table.concat(UI:GetButtonItemIDs(), ',')
 equal(ids:find('5001', 1, true) ~= nil, true, 'combat count refresh covers the items bar')
+dofile('Debug.lua')
+local printed = {}
+local realPrint = DB.Print
+DB.Print = function(a, b) printed[#printed + 1] = b or a end
+DB:HandleSlash('items')
+DB.Print = realPrint
+equal(table.concat(printed, '\n'):find('5001 Item 5001 | 15/0 | Drums (nil) | yes', 1, true) ~= nil, true, '/dbar items lists item details')
 DB:SetEnabled(false)
 rebuild()
 equal(ItemsBar.bar:IsShown(), false, 'items bar hidden when the addon is disabled')

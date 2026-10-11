@@ -546,6 +546,7 @@ function DynamicBar:HandleSlash(input)
     self:Print(L["  /dbar profiles - open profile management"])
     self:Print(L["  /dbar profileinfo - show current profile name and setup status"])
     self:Print(L["  /dbar dump    - dump bag/classifier/resolver state (debug on)"])
+    self:Print(L["  /dbar items   - list usable items in your bags with their item details"])
     self:Print(L["  /dbar pending - list pending items (debug on)"])
     self:Print(L["  /dbar debuglog - show persistent debug log (last 100 entries)"])
     self:Print(L["  /dbar clearlog - clear persistent debug log"])
@@ -581,6 +582,15 @@ function DynamicBar:HandleSlash(input)
   if msg == "dump" then
     if self.Debug and self.Debug.Dump then
       self.Debug:Dump()
+    else
+      self:Print(L["Debug module not available."])
+    end
+    return
+  end
+
+  if msg == "items" then
+    if self.Debug and self.Debug.DumpUsable then
+      self.Debug:DumpUsable()
     else
       self:Print(L["Debug module not available."])
     end
