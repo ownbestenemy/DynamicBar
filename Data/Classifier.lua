@@ -235,6 +235,9 @@ function Classifier:InspectItem(itemID)
   local isDrinking      = UseSpellIn(itemID, n.drinkSpells) or Has(j, Phrase("must remain seated while drinking"))
   info.isBattleElixir   = Has(j, Phrase("battle elixir"))
   info.isGuardianElixir = Has(j, Phrase("guardian elixir"))
+  -- WoW Forever camping: campfire kits and the features placed beside them
+  info.isCamping        = InList(cats.CampingItems, itemID) or Has(j, Phrase("campfire"))
+                          or Has(j, Phrase("camping features"))
   info.isFlask          = (consumable and subClassID == SUB_FLASK) or InList(cats.Flasks, itemID) or Has(j, Phrase("flask"))
 
   -- Restores parsing
@@ -252,7 +255,8 @@ function Classifier:InspectItem(itemID)
   end
   -- English tooltips also rule out first-aid items that heal nothing (Anti-Venom)
   local bandageText = info.bandageHeal > 0 and Has(j, "damage")
-  info.isBandage = bandageText or (consumable and subClassID == SUB_BANDAGE and not ENGLISH)
+  -- Camping first aid kits share the bandage subclass but go on the items bar
+  info.isBandage = (bandageText or (consumable and subClassID == SUB_BANDAGE and not ENGLISH)) and not info.isCamping
 
   -- Robust pending: on some clients the first tooltip render contains only the item name.
   -- For Food & Drink, if we don't see Use:/restores/seated text yet, treat as pending so we rescan.

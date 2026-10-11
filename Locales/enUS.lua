@@ -248,6 +248,8 @@ L["well fed"] = true
 L["must remain seated while eating"] = true
 L["must remain seated while drinking"] = true
 L["battle elixir"] = true
+L["campfire"] = true
+L["camping features"] = true
 L["guardian elixir"] = true
 L["flask"] = true
 

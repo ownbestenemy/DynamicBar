@@ -205,7 +205,8 @@ end
 
 -- =========================================================
 -- Usable items (the items bar): bag items with a use effect that no main bar
--- category takes, quest items first, then bag order. Gear, mounts and pets
+-- category takes. Camping items (WoW Forever) first, then quest items, then
+-- bag order. Gear, mounts and pets
 -- are left out. Signals are item IDs, classes and the use spell, so this
 -- works in any client language.
 -- =========================================================
@@ -247,7 +248,7 @@ function Resolver:ResolveUsableItems(hidden)
   hidden = hidden or {}
 
   local claimed = ClaimedByCategories()
-  local quest, other = {}, {}
+  local camping, quest, other = {}, {}, {}
   for i = 1, #cache.items do
     local id = cache.items[i]
     local info = cls.cache[id]
@@ -257,11 +258,13 @@ function Resolver:ResolveUsableItems(hidden)
       local classID, subClassID = ItemClass(id)
       local companion = classID == CLASS_MISC and (subClassID == MISC_PET or subClassID == MISC_MOUNT)
       if classID ~= CLASS_RECIPE and not companion then
-        local into = classID == CLASS_QUEST and quest or other
+        local into = (info and info.isCamping) and camping
+          or classID == CLASS_QUEST and quest or other
         into[#into + 1] = id
       end
     end
   end
-  for _, id in ipairs(other) do quest[#quest + 1] = id end
-  return quest
+  for _, id in ipairs(quest) do camping[#camping + 1] = id end
+  for _, id in ipairs(other) do camping[#camping + 1] = id end
+  return camping
 end

@@ -110,6 +110,11 @@ Cats.RejuvenationPotions = {
   2456,  -- Minor Rejuvenation Potion (Classic: 90-150 HP + 90-150 Mana)
 }
 
+-- WoW Forever camping items (campfire kits and camp features). The items bar
+-- also recognizes them by tooltip; IDs here work in every client language.
+Cats.CampingItems = {
+}
+
 -- ordered highest priority first
 Cats.Hearth = {
   6948, -- Hearthstone
