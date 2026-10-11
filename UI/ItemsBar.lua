@@ -174,6 +174,8 @@ function ItemsBar:Rebuild()
   local active = profile and profile.enabled and cfg and cfg.enabled
 
   local items = active and self:GetItems() or {}
+  -- The bar first: buttons must be its children to follow its scale
+  if active then EnsureBar() end
   for i = 1, #items do EnsureButton(i) end
 
   for i, btn in ipairs(self.buttons) do
