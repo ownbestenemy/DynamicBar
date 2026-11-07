@@ -212,12 +212,12 @@ cfg.slots = nil; cfg.buttonDisplayMode = 'SMART'
 rebuild()
 
 -- About tab shows the installed version and client
-GetAddOnMetadata = function(_, field) return ({Version = '2.1-experimental', Author = 'Mark'})[field] end
+GetAddOnMetadata = function(_, field) return ({Version = 'b2.01', Author = 'Mark'})[field] end
 GetBuildInfo = function() return '2.5.5', '12345', '', 20505 end
 DB:InitConfig()
 local about = DB.options.args.about.args
-equal(DB.options.name, 'DynamicBar 2.1-experimental', 'version in window title')
-equal(about.info.name():find('2.1-experimental', 1, true) ~= nil, true, 'About shows the version')
+equal(DB.options.name, 'DynamicBar b2.01', 'version in window title')
+equal(about.info.name():find('b2.01', 1, true) ~= nil, true, 'About shows the version')
 equal(about.info.name():find('TBC Classic', 1, true) ~= nil, true, 'About names the client')
 equal(about.experimental.hidden(), false, 'experimental note shown on test builds')
 WOW_PROJECT_ID, WOW_PROJECT_MAINLINE = 1, 1

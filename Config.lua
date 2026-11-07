@@ -749,7 +749,7 @@ function DynamicBar:InitConfig()
         order = 2,
         fontSize = "medium",
         name = "\n|cffff8000" .. L["This is a test build from the experimental branch. Features here may change or be removed before release."] .. "|r",
-        hidden = function() return not version:find("experimental", 1, true) end,
+        hidden = function() return not (version:find("experimental", 1, true) or version:find("^b%d")) end,
       },
     },
   }
