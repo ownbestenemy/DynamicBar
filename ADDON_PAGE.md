@@ -13,7 +13,7 @@ Use the sections below for your CurseForge addon page.
 DynamicBar creates a single action bar with one button per consumable category (13 by default; choose and order them in the Bar Builder). The bar automatically:
 
 - **Shows your best available item** in each slot (highest-level health potion you have, best food, etc.)
-- **Shows alternatives on right-click** - right-click a slot to see every item you have for that category
+- **Reveals alternatives on hover** - mouse over (or right-click) a slot to see every item you have for that category
 - **Hides prep-only items during combat** - elixirs, flasks, food, and drink buttons are cleared when combat starts (no accidental buff food clicks mid-fight)
 - **Fades depleted items** - when you use your last potion, the button fades to show it's empty
 
@@ -37,7 +37,7 @@ DynamicBar creates a single action bar with one button per consumable category (
 
 ### Flyout System
 
-**Right-click any slot** to see a flyout with all matching items in your bags, then click the one you want. With more than six items, Previous/Next arrows page through them (out of combat).
+**Hover over (or right-click) any slot** to see a flyout with all matching items in your bags, then click the one you want. With more than six items, Previous/Next arrows page through them (out of combat).
 
 ---
 
@@ -61,9 +61,11 @@ Choose how empty slots behave:
 
 - Bar Builder: drag categories onto the bar and into the order you want
 - Horizontal, vertical, or grid layout, with scale and spacing
-- Buttons follow ElvUI or Masque styling when either is installed
+- Buttons follow ElvUI or Masque styling when either is installed (Masque covers Dominos and Bartender4 setups that use it)
 - Lock/unlock bar position
 - WoW Forever: move the bar from Edit Mode alongside your other frames
+
+**Planned:** a Utility slot (Limited Invulnerability Potion and similar), a button skin choice, and a tooltip on/off option.
 
 ---
 
@@ -86,7 +88,7 @@ The buttons return when you leave combat.
 
 ### Q: How do I see all my potions, not just the "best" one?
 
-**A: Right-click the slot.** A flyout menu appears showing all items you have in that category. Click the one you want to use.
+**A: Hover over the slot** (or right-click it). A flyout menu appears showing all items you have in that category. Click the one you want to use.
 
 ### Q: What does "Smart" display mode do?
 

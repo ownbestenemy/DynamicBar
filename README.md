@@ -12,9 +12,9 @@ DynamicBar is a role-first, context-aware consumable action bar for TBC Classic 
 - **Role-First Ordering** - Emergency items (Healthstone) → Health/Mana potions → Elixirs → Food/Drink → Hearthstone
 - **Battle/Prep Modes** - Automatically switches between combat (essential items only) and out-of-combat (full suite) layouts
 - **Dynamic Footprint** - Only shows buttons for items you actually have
-- **Flyout Menus** - Right-click a button to pick an alternative item
+- **Flyout Menus** - Hover over or right-click a button to pick an alternative item
 - **Smart Positioning** - Drag-to-move with visual feedback, per-character profiles
-- **Auto-Skinning** - Uses ElvUI's button style, or your Masque skin, when either is installed
+- **Auto-Skinning** - Uses ElvUI's button style, or your Masque skin (which also covers Dominos and Bartender4 setups that use Masque)
 
 ### Design Philosophy
 
@@ -125,6 +125,8 @@ Mode switching is automatic and implicit. No manual toggling required.
 - No weapon buffs/oils yet
 - No visual mode indicators (implicit modes only)
 - No export/import profile strings
+
+**Planned:** a Utility slot (Limited Invulnerability Potion and similar), a button skin choice, and a tooltip on/off option.
 
 ## Attribution
 
