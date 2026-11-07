@@ -6,39 +6,38 @@ Use the sections below for your CurseForge addon page.
 
 ## Description (Main)
 
-**DynamicBar** is a smart consumable action bar for TBC Classic that automatically shows the right items at the right time.
+**DynamicBar** is a consumable action bar for TBC Classic and WoW Forever that automatically shows the right items at the right time.
 
 ### How It Works
 
-DynamicBar creates a single action bar with 12 slots, each dedicated to a specific consumable category. The bar automatically:
+DynamicBar creates a single action bar with one button per consumable category (13 by default; choose and order them in the Bar Builder). The bar automatically:
 
 - **Shows your best available item** in each slot (highest-level health potion you have, best food, etc.)
-- **Reveals alternatives on hover** - mouse over a slot to see all items you have for that category
+- **Shows alternatives on right-click** - right-click a slot to see every item you have for that category
 - **Hides prep-only items during combat** - elixirs, flasks, food, and drink buttons are cleared when combat starts (no accidental buff food clicks mid-fight)
 - **Fades depleted items** - when you use your last potion, the button fades to show it's empty
 
-### The 12 Slots
+### Default Slots
 
 | Slot | Category | Combat? | Notes |
 |------|----------|---------|-------|
-| 1 | Health Potion | ✓ | Shows best healing potion |
-| 2 | Mana Potion | ✓ | Shows best mana potion |
-| 3 | Rejuv Potion | ✓ | Dual health+mana pots |
-| 4 | Healthstone | ✓ | Warlock stones |
+| 1 | Healthstone | ✓ | Warlock stones |
+| 2 | Health Potion | ✓ | Shows best healing potion |
+| 3 | Mana Potion | ✓ | Shows best mana potion |
+| 4 | Rejuv Potion | ✓ | Dual health+mana pots |
 | 5 | Bandage | ✓ | First aid |
 | 6 | Battle Elixir | Prep | Attack power, spell power, etc. |
 | 7 | Guardian Elixir | Prep | Armor, health, resistances |
 | 8 | Flask | Prep | If you have one |
-| 9 | Food | Prep | Buff food priority |
-| 10 | Drink | Prep | Mana drinks |
-| 11 | Utility | ✓ | Limited Invulnerability Potion, etc. |
-| 12 | Hearthstone | ✓ | Always available |
+| 9 | Food (Buff) | Prep | Well Fed food |
+| 10 | Food (Other) | Prep | Plain food |
+| 11 | Drink | Prep | Mana drinks |
+| 12 | Hearthstone | ✓ | |
+| 13 | Other Buffs | Prep | Oil of Olaf, scrolls |
 
 ### Flyout System
 
-**Hover over any slot** to see a flyout with all matching items in your bags. Items are sorted by quality/level with the best at the bottom (closest to your cursor).
-
-Example: Hover over Health Potion slot → see all your healing potions from best to worst.
+**Right-click any slot** to see a flyout with all matching items in your bags, then click the one you want. With more than six items, Previous/Next arrows page through them (out of combat).
 
 ---
 
@@ -49,7 +48,7 @@ Example: Hover over Health Potion slot → see all your healing potions from bes
 Choose how empty slots behave:
 
 - **Smart (Default)** - Empty buttons are hidden but keep their position. Your keybinds stay stable.
-- **Static** - All 12 slots always visible, even when empty. Keybinds stable.
+- **Static** - All slots always visible, even when empty. Keybinds stable.
 - **Dynamic** - Bar auto-sizes to only show available items. **Warning:** This mode shifts button positions, which breaks keybinds.
 
 ### Combat Safety
@@ -61,11 +60,10 @@ Choose how empty slots behave:
 ### Customization
 
 - Bar Builder: drag categories onto the bar and into the order you want
-- Change button size
-- Choose button skin (Blizzard default or Minimal)
+- Horizontal, vertical, or grid layout, with scale and spacing
+- Buttons follow ElvUI or Masque styling when either is installed
 - Lock/unlock bar position
 - WoW Forever: move the bar from Edit Mode alongside your other frames
-- Show/hide tooltip on item hover
 
 ---
 
@@ -73,7 +71,7 @@ Choose how empty slots behave:
 
 ### Q: Do my keybinds follow the items or the button positions?
 
-**A: Keybinds follow button positions.** If you bind "E" to button slot 1, it will always activate whatever is in slot 1 (Health Potion category), regardless of which specific potion is shown.
+**A: Keybinds follow button positions.** If you bind "E" to button 2, it will always activate whatever is in slot 2 (Health Potion category on the default bar), regardless of which specific potion is shown.
 
 This is intentional - your muscle memory stays consistent. "E" always means "use a health potion."
 
@@ -88,15 +86,15 @@ The buttons return when you leave combat.
 
 ### Q: How do I see all my potions, not just the "best" one?
 
-**A: Hover over the slot.** A flyout menu appears showing all items you have in that category. Click the one you want to use.
+**A: Right-click the slot.** A flyout menu appears showing all items you have in that category. Click the one you want to use.
 
 ### Q: What does "Smart" display mode do?
 
 **A: Smart mode hides empty buttons while keeping keybinds stable.**
 
 - If you have no mana potions, the mana potion slot is hidden
-- But slot 3 (Rejuv Potion) is still in position 3 on the bar
-- Your keybind for slot 3 still works
+- But slot 4 (Rejuv Potion) is still in position 4 on the bar
+- Your keybind for slot 4 still works
 
 Compare to "Dynamic" mode which removes empty slots entirely and shifts everything - this breaks keybinds.
 
@@ -114,44 +112,23 @@ Compare to "Dynamic" mode which removes empty slots entirely and shifts everythi
 
 ### Q: The bar is stuck and I can't move it!
 
-**A: The bar is locked.** Type `/db` or `/dynamicbar` to open settings, then uncheck "Lock Bar Position" to move it. On WoW Forever you can also open Edit Mode and drag it there.
+**A: The bar is locked.** Type `/dbar config` to open settings, then uncheck "Lock Bar Position" to move it. On WoW Forever you can also open Edit Mode and drag it there.
 
 ### Q: How do I open the settings?
 
-**A: Type `/db` or `/dynamicbar` in chat.**
+**A: Type `/dbar config` in chat**, or find DynamicBar in the game's AddOns options.
 
 ---
 
-## Changelog (v0.6.5)
+## Changelog
 
-### v0.6.5
-- Fixed: Lock/unlock bar error in config panel
-
-### v0.6.4
-- Fixed: Empty flyout buttons appearing after selling items
-
-### v0.6.3
-- Fixed: Stale flyout items after consuming/deleting items
-
-### v0.6.2
-- Fixed: Item counts not updating mid-combat
-- Fixed: CurseForge app installation (directory structure)
-
-### v0.6.1
-- Fixed: Depleted items now fade during combat
-- Fixed: Prep-only slots fully cleared in combat (keybinds safe)
-
-### v0.6
-- Added: Flask support
-- Added: Rejuvenation Potion slot
-- Added: Display modes (Smart/Static/Dynamic)
-- Fixed: Flyout performance (95%+ improvement)
+See CHANGELOG.md (also shown on the Changelog tab).
 
 ---
 
 ## Tips
 
-1. **Bind your combat slots** (1-5, 11-12) to keys you can hit quickly
+1. **Bind your combat slots** (1-5 and Hearthstone on the default bar) to keys you can hit quickly
 2. **Use Smart display mode** (default) for the best experience
 3. **Don't worry about slot order** - the categories are designed for typical raid/dungeon flow
 4. **Check flyouts** before fights to verify you have the consumables you need

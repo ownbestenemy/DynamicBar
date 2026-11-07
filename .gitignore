@@ -12,3 +12,6 @@ Thumbs.db
 *.bak
 *.old
 DynamicBar-0.5-beta.zip
+
+# Local Claude Code settings
+.claude/

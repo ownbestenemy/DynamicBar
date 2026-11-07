@@ -17,6 +17,8 @@ ignore:
   - Design Contract.txt
   - DynamicBar-*.zip
   - README.md
+  - ADDON_PAGE.md
+  - "Bug Reports"
 
 externals:
   Libs/Ace3:

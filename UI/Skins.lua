@@ -1,22 +1,17 @@
 -- UI/Skins.lua
--- Button skinning system with auto-detection for ElvUI, Masque, Dominos, Bartender4
+-- Button skins: ElvUI if loaded, else Masque if loaded, else a Blizzard-style default.
 local DB = DynamicBar
 DB.UI = DB.UI or {}
 DB.UI.Skins = DB.UI.Skins or {}
 local Skins = DB.UI.Skins
 
--- Cache global function (TBC/Vanilla compatibility)
 local IsAddOnLoaded = IsAddOnLoaded or (C_AddOns and C_AddOns.IsAddOnLoaded)
 
--- Skin detection state
 Skins.skinSource = nil       -- "ElvUI", "Masque", or "Blizzard"
 Skins.applyElvUI = false     -- ElvUI S:HandleButton available
 Skins.masqueGroup = nil      -- Masque group instance
 Skins.initialized = false    -- Initialize only once
 
---
--- Initialize: Detect available skinning systems
---
 function Skins:Initialize()
   if self.initialized then return end
   self.initialized = true
@@ -28,7 +23,7 @@ function Skins:Initialize()
     return
   end
 
-  -- Priority 2: Masque (covers Dominos, Bartender4, custom skins)
+  -- Priority 2: Masque
   if self:DetectMasque() then
     self.skinSource = "Masque"
     DB:DPrint("Button skin: Masque detected")
@@ -40,9 +35,6 @@ function Skins:Initialize()
   DB:DPrint("Button skin: Blizzard (default)")
 end
 
---
--- Detect ElvUI
---
 function Skins:DetectElvUI()
   if not IsAddOnLoaded or not IsAddOnLoaded("ElvUI") then return false end
 
@@ -56,28 +48,18 @@ function Skins:DetectElvUI()
   return true
 end
 
---
--- Detect Masque (LibMasque-1.0)
---
 function Skins:DetectMasque()
   local Masque = LibStub and LibStub("Masque", true)
   if not Masque then return false end
 
-  -- Create DynamicBar button group
   self.masqueGroup = Masque:Group("DynamicBar")
   return true
 end
 
---
--- Get active skin source name
---
 function Skins:GetActiveSkinName()
   return self.skinSource or "Unknown"
 end
 
---
--- Get ElvUI action bar settings (spacing, padding, size)
---
 function Skins:GetElvUIBarSettings()
   if not IsAddOnLoaded or not IsAddOnLoaded("ElvUI") then return nil end
 
@@ -95,16 +77,11 @@ function Skins:GetElvUIBarSettings()
   }
 end
 
---
--- Apply skin to a button
---
 function Skins:ApplyButtonSkin(button)
   if not button then return end
 
-  -- Create button texture regions if needed
   self:EnsureButtonRegions(button)
 
-  -- Apply skin based on detected source
   if self.skinSource == "ElvUI" then
     self:ApplyElvUISkin(button)
   elseif self.skinSource == "Masque" then
@@ -114,9 +91,6 @@ function Skins:ApplyButtonSkin(button)
   end
 end
 
---
--- Ensure button has all required texture regions
---
 function Skins:EnsureButtonRegions(button)
   -- Normal texture (background/border)
   if not button._dynNormal then
@@ -163,9 +137,6 @@ function Skins:EnsureButtonRegions(button)
   end
 end
 
---
--- Apply ElvUI skin
---
 function Skins:ApplyElvUISkin(button)
   if not self.applyElvUI then return end
 
@@ -173,17 +144,12 @@ function Skins:ApplyElvUISkin(button)
   local S = E:GetModule("Skins", true)
   if not S or not S.HandleButton then return end
 
-  -- Let ElvUI handle all button styling
   S:HandleButton(button)
 end
 
---
--- Apply Masque skin
---
 function Skins:ApplyMasqueSkin(button)
   if not self.masqueGroup then return end
 
-  -- Register button with Masque
   -- Masque will automatically apply the active skin
   self.masqueGroup:AddButton(button, {
     Normal = button._dynNormal,
@@ -194,9 +160,6 @@ function Skins:ApplyMasqueSkin(button)
   })
 end
 
---
--- Apply enhanced Blizzard default skin
---
 function Skins:ApplyBlizzardSkin(button)
   if not button._dynNormal then return end
 

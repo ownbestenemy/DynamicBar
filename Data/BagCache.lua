@@ -75,16 +75,6 @@ function BagCache:RefreshCounts(itemIDs)
   end
 end
 
-function BagCache:FindFirst(candidates)
-  for i = 1, #candidates do
-    local id = candidates[i]
-    if (self.counts[id] or 0) > 0 then
-      return id, self.counts[id]
-    end
-  end
-  return nil, 0
-end
-
 function BagCache:GetCount(itemID)
   return self.counts[itemID] or 0
 end

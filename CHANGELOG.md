@@ -14,7 +14,7 @@
 ### Fixed
 - Combat transitions use secure state drivers: prep-only actions are disabled, visibility preferences apply, and open flyouts close without reassigning buttons
 - Right-click opens alternatives without consuming the primary item; selecting an alternative closes its flyout
-- Added the documented DynamicBar keybinding section for all 12 buttons
+- Added the documented DynamicBar keybinding section for all 13 buttons
 - Combat exit rescans bags before resolving items
 - Slash and options disabling clear button actions and flyouts, with changes deferred until combat ends
 - Unused buttons clear their flyouts, item identifiers, and cooldown displays
@@ -26,16 +26,14 @@
 - Cooldown spirals handle secret cooldown values in combat
 - Item icon lookup read the wrong return from `GetItemInfoInstant`
 - Config panel error on WoW Forever (bundled Ace3 updated to r1403)
+- Static mode no longer re-shows a stale flyout when hovering an empty slot
+- Lowering the button count in Dynamic mode now hides the extra buttons
+- Grid layouts expand rows when needed to fit every configured button (default 2×6)
 
 ### Changed
 - Code cleanup: shared bar rebuild logic across display modes, shared config get/set, table-driven resolvers and flyout layouts
 - Cooldowns are looked up by item instead of scanning every bag slot
 - Removed unused Ace3 modules
-
-### Fixed
-- Static mode no longer re-shows a stale flyout when hovering an empty slot
-- Lowering the button count in Dynamic mode now hides the extra buttons
-- Grid layouts expand rows when needed to fit every configured button (default 2×6)
 
 ## [1.0] - 2026-02-01
 
