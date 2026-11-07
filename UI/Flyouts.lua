@@ -416,8 +416,3 @@ function Flyouts:HideAll(UI)
     end
   end
 end
-
--- Compatibility entry point: secure state drivers handle combat entry.
-function Flyouts:HideAllImmediate(UI)
-  self:HideAll(UI)
-end

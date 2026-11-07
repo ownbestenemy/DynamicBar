@@ -1,21 +1,20 @@
 # DynamicBar
 
-**Version:** 0.6
 **Author:** Mark Sheldahl
-**AI-Assisted Development:** This addon was created with assistance from Claude (Anthropic). While AI helped with code generation and problem-solving, all design decisions, testing, and creative direction came from human input and assisted in code creation.
+**AI use:** Much of the code is written by AI coding assistants (Claude and Codex) at Mark's direction. Mark decides what goes in and tests in game; an automated test suite runs on every push. Details under [AI Development Transparency](#attribution).
 
 ## About
 
-DynamicBar is a role-first, context-aware consumable action bar for WoW TBC Classic that reduces cognitive load during combat while remaining predictable and fully ToS-compliant.
+DynamicBar is a role-first, context-aware consumable action bar for TBC Classic and WoW Forever that reduces cognitive load during combat while remaining predictable and fully ToS-compliant.
 
 ### Core Features
 
 - **Role-First Ordering** - Emergency items (Healthstone) → Health/Mana potions → Elixirs → Food/Drink → Hearthstone
 - **Battle/Prep Modes** - Automatically switches between combat (essential items only) and out-of-combat (full suite) layouts
 - **Dynamic Footprint** - Only shows buttons for items you actually have
-- **Flyout Menus** - Hover or right-click buttons to access alternative items
+- **Flyout Menus** - Hover over or right-click a button to pick an alternative item
 - **Smart Positioning** - Drag-to-move with visual feedback, per-character profiles
-- **Auto-Skinning** - Automatically matches ElvUI, Masque, Dominos, or Bartender4 styling
+- **Auto-Skinning** - Uses ElvUI's button style, or your Masque skin (which also covers Dominos and Bartender4 setups that use Masque)
 
 ### Design Philosophy
 
@@ -36,7 +35,7 @@ DynamicBar is a role-first, context-aware consumable action bar for WoW TBC Clas
 
 ## Installation
 
-1. Extract to `World of Warcraft\_classic_\Interface\AddOns\`
+1. Extract to the `Interface\AddOns\` folder of your game client
 2. Ensure the folder is named `DynamicBar`
 3. Restart WoW or type `/reload`
 4. On first login, you'll see a welcome popup to position the bar
@@ -91,6 +90,7 @@ To set keybinds: Press `ESC` → `Key Bindings` → scroll to `DynamicBar` secti
 - Mana Potions
 - Rejuvenation Potions
 - Bandages
+- Hearthstone
 
 **Prep Mode (Out of Combat):**
 - All battle items +
@@ -100,7 +100,6 @@ To set keybinds: Press `ESC` → `Key Bindings` → scroll to `DynamicBar` secti
 - Other Buffs (Oil of Olaf, scrolls)
 - Food (buff and non-buff)
 - Drink
-- Hearthstone
 
 Mode switching is automatic and implicit. No manual toggling required.
 
@@ -127,14 +126,11 @@ Mode switching is automatic and implicit. No manual toggling required.
 - No visual mode indicators (implicit modes only)
 - No export/import profile strings
 
+**Planned:** a Utility slot (Limited Invulnerability Potion and similar), a button skin choice, and a tooltip on/off option.
+
 ## Attribution
 
 This addon stands on the shoulders of decades of WoW addon innovation:
-
-**Inspired By:**
-- Action bar addons (Bartender, Dominos, ElvUI)
-- Consumable management tools
-- Combat UX improvements pioneered by the addon community
 
 **Built With:**
 - **Ace3 Framework** - nevcairiel, Mikk, Ammo, and contributors
@@ -142,13 +138,13 @@ This addon stands on the shoulders of decades of WoW addon innovation:
 - **CallbackHandler** - Nevcairiel and team
 
 **AI Development Transparency:**
-This addon was created with assistance from Claude (Anthropic's AI). The AI helped with:
-- Code generation and structure
-- Problem-solving and debugging
-- WoW API usage and best practices
-- Design pattern implementation
+Much of DynamicBar's code is written by AI coding assistants (Claude by Anthropic, and Codex by OpenAI), working from Mark's requests. Mark chooses the features, merges each change, and tests in game.
 
-However, all creative decisions, feature prioritization, testing, and user experience design came from human direction. This project represents a collaboration between human creativity and AI technical assistance.
+What is checked, and how:
+- `tests/run.lua` runs the addon's real modules against mocked WoW APIs on every push (GitHub Actions). It cannot reproduce taint, real key presses, or client differences.
+- `tests/README.md` lists the in-game checks for both clients. Features not yet confirmed in game are listed in the changelog or Known Limitations.
+
+If something does not work as described here, please report it.
 
 ## Feedback & Support
 
@@ -160,7 +156,7 @@ However, all creative decisions, feature prioritization, testing, and user exper
 - Cross-addon compatibility
 
 **Report Issues:**
-- Include WoW version (TBC Classic 2.5.x)
+- Include your client (TBC Classic 2.5.x or WoW Forever) and its version
 - Steps to reproduce
 - Enable debug mode with `/dbar debug` and reproduce the issue
 - Use `/dbar debuglog` to view persistent debug messages
@@ -176,9 +172,7 @@ However, all creative decisions, feature prioritization, testing, and user exper
 
 ## License
 
-All Rights Reserved (Beta)
-
-This is pre-release software. Distribution, modification, and commercial use are not permitted during beta testing phase.
+MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgments
 
