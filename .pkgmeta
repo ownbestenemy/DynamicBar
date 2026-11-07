@@ -13,7 +13,6 @@ ignore:
   - .gitignore
   - .vscode
   - .claude
-  - BETA_TESTING.md
   - Design Contract.txt
   - DynamicBar-*.zip
   - README.md
